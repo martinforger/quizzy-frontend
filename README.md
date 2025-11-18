@@ -1,6 +1,6 @@
 # quizzy
 
-A new Flutter project.
+A Kahoot Clone for the Software Development subject
 
 ## Getting Started
 
