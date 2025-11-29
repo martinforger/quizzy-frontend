@@ -1,4 +1,6 @@
-# Miscellaneous
+# ============================================================
+# MISCELLANEOUS
+# ============================================================
 *.class
 *.log
 *.pyc
@@ -12,34 +14,97 @@
 .swiftpm/
 migrate_working_dir/
 
-# IntelliJ related
+# ============================================================
+# INTELLIJ / IDEA
+# ============================================================
 *.iml
 *.ipr
 *.iws
 .idea/
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to be included in version control, so this line
-# is commented out by default.
+# ============================================================
+# VS CODE
+# ------------------------------------------------------------
+# Si deseas ignorar configuraciones personales de VSCode
 #.vscode/
+# ============================================================
 
-# Flutter/Dart/Pub related
+# ============================================================
+# FLUTTER / DART / PUB
+# ============================================================
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
-/coverage/
+build/
+coverage/
 
-# Symbolication related
-app.*.symbols
+# Generated plugin registrants
+.flutter-plugins
+.flutter-plugins-dependencies
 
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
+# ============================================================
+# ANDROID BUILD ARTIFACTS
+# ============================================================
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Java & Kotlin build
+**/android/.gradle/
+**/android/captures/
+**/android/local.properties
+**/android/app/*.keystore
+
+# ============================================================
+# IOS BUILD ARTIFACTS
+# ============================================================
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/.generated/
+**/ios/Pods/
+**/ios/Runner.xcworkspace/
+**/ios/Runner.xcodeproj/project.xcworkspace/
+**/ios/Runner.xcodeproj/xcuserdata/
+
+# ============================================================
+# WEB BUILD
+# ============================================================
+/web/.dart_tool/
+.dart_tool/
+
+# ============================================================
+# WINDOWS, LINUX, MACOS BUILD
+# ============================================================
+/windows/flutter/
+windows/runner/Debug/
+/linux/flutter/
+macos/Flutter/ephemeral/
+
+# ============================================================
+# APP SYMBOLICATION
+# ============================================================
+app.*.symbols
+
+# ============================================================
+# OBFUSCATION
+# ============================================================
+app.*.map.json
+
+# ============================================================
+# PROJECT-SPECIFIC IGNORE RULES
+# ============================================================
+
+/context/
+
+# Archivos temporales de anotaciones o documentación
+/docs/private/
+notes/
+tmp/
+
+# Local environment configs
+.env
+.env.*
