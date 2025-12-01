@@ -22,7 +22,8 @@ class MockGameService implements GameRemoteDataSource {
       "questionType": "QUIZ",
       "questionText": "¿Cuál es la capital de Francia?",
       "timeLimitSeconds": 30,
-      "mediaID": null,
+      "mediaID":
+          "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?auto=format&fit=crop&q=80&w=1000",
       "options": [
         {"index": "1", "text": "Madrid", "mediaID": null},
         {
@@ -47,16 +48,6 @@ class MockGameService implements GameRemoteDataSource {
       "options": [
         {"index": "1", "text": "Gato", "mediaID": null},
         {"index": "2", "text": "Perro", "mediaID": null}, // Correcta
-        {
-          "index": "3",
-          "text": null,
-          "mediaID": "https://placehold.co/100x100/png?text=Ave",
-        },
-        {
-          "index": "4",
-          "text": null,
-          "mediaID": "https://placehold.co/100x100/png?text=Pez",
-        },
       ],
       "correctIndex": ["2"],
     },
