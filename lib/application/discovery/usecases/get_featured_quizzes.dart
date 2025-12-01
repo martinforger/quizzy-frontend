@@ -7,7 +7,7 @@ class GetFeaturedQuizzesUseCase {
   final DiscoveryRepository repository;
 
   // Ejecuta el flujo para obtener los quizzes destacados.
-  Future<List<QuizSummary>> call() {
-    return repository.getFeaturedQuizzes();
+  Future<List<QuizSummary>> call({int limit = 10}) {
+    return repository.getFeaturedQuizzes(limit: limit);
   }
 }

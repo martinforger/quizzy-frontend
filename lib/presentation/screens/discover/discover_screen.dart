@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:quizzy/domain/discovery/entities/category.dart';
 import 'package:quizzy/domain/discovery/entities/quiz_summary.dart';
+import 'package:quizzy/domain/discovery/entities/quiz_theme.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'package:quizzy/presentation/widgets/quizzy_logo.dart';
@@ -15,89 +18,293 @@ class DiscoverScreen extends StatefulWidget {
 }
 
 class _DiscoverScreenState extends State<DiscoverScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
   late Future<List<Category>> _categoriesFuture;
-  late Future<List<QuizSummary>> _featuredFuture;
+  late Future<List<QuizTheme>> _themesFuture;
+  List<QuizSummary> _quizzes = [];
+  List<QuizSummary> _filteredQuizzes = [];
+  final Set<String> _selectedThemes = {};
+  bool _isLoadingQuizzes = true;
+  bool _isSearching = false;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
     _categoriesFuture = widget.controller.fetchCategories();
-    _featuredFuture = widget.controller.fetchFeaturedQuizzes();
+    _themesFuture = widget.controller.fetchThemes();
+    _loadFeaturedQuizzes();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    _debounce?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: RefreshIndicator(
-          color: Theme.of(context).colorScheme.primary,
-          onRefresh: () async {
-            setState(() {
-              _categoriesFuture = widget.controller.fetchCategories();
-              _featuredFuture = widget.controller.fetchFeaturedQuizzes();
-            });
-            await Future.wait([_categoriesFuture, _featuredFuture]);
-          },
-          child: ListView(
-            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-            children: [
-              _buildHeader(context),
-              const SizedBox(height: 18),
-              _QuickActionsRow(),
-              const SizedBox(height: 18),
-              const _RewardCard(),
-              const SizedBox(height: 18),
-              const _LearnCard(),
-              const SizedBox(height: 18),
-              _SectionHeader(title: 'Categories', actionText: 'See all'),
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 140,
-                child: FutureBuilder<List<Category>>(
-                  future: _categoriesFuture,
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _SearchBar(
+                    controller: _searchController,
+                    onChanged: _onQueryChanged,
+                  ),
+                  const SizedBox(height: 12),
+                  FutureBuilder<List<QuizTheme>>(
+                    future: _themesFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const SizedBox(
+                          height: 36,
+                          child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return _InlineError(
+                          message: 'No pudimos cargar los temas',
+                          onRetry: () => setState(() => _themesFuture = widget.controller.fetchThemes()),
+                        );
+                      }
+                      final themes = snapshot.data ?? [];
+                      if (themes.isEmpty) {
+                        return const SizedBox.shrink();
+                      }
+                      return Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: themes.map((theme) {
+                          final isSelected = _selectedThemes.contains(theme.id);
+                          return ChoiceChip(
+                            label: Text(theme.name),
+                            selected: isSelected,
+                            onSelected: (_) => _onThemeToggled(theme.id),
+                            labelStyle: TextStyle(
+                              color: isSelected ? Colors.black : Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            selectedColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.85),
+                            backgroundColor: const Color(0xFF2A272D),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          );
+                        }).toList(),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                color: Theme.of(context).colorScheme.primary,
+                onRefresh: () async {
+                  setState(() {
+                    _categoriesFuture = widget.controller.fetchCategories();
+                    _themesFuture = widget.controller.fetchThemes();
+                    _errorMessage = null;
+                  });
+                  await Future.wait([
+                    _categoriesFuture,
+                    _themesFuture,
+                    _loadFeaturedQuizzes(),
+                  ]);
+                  await _refreshSearchIfNeeded();
+                },
+                child: ListView(
+                  padding: EdgeInsets.fromLTRB(
+                    18,
+                    0,
+                    18,
+                    100 + MediaQuery.of(context).padding.bottom,
+                  ),
+                  children: [
+                    _buildHeader(context),
+                    const SizedBox(height: 24),
+                    _SectionHeader(title: 'Categories', actionText: 'See all'),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      height: 140,
+                      child: FutureBuilder<List<Category>>(
+                        future: _categoriesFuture,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return _InlineError(
+                        message: 'No pudimos cargar las categorías',
+                        onRetry: () => setState(() => _categoriesFuture = widget.controller.fetchCategories()),
+                      );
                     }
                     final categories = snapshot.data ?? [];
                     return ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemBuilder: (context, index) => _CategoryCard(category: categories[index]),
                       separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemCount: categories.length,
-                    );
-                  },
+                            itemCount: categories.length,
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Builder(
+                      builder: (context) {
+                        final hasQuery = _searchController.text.trim().isNotEmpty;
+                        final isDefaultView = !hasQuery && _selectedThemes.isEmpty;
+                        final quizzesToShow = isDefaultView ? _quizzes : _filteredQuizzes;
+                        final isLoading = isDefaultView ? _isLoadingQuizzes : _isSearching;
+                        final title = isDefaultView ? 'Featured Quizzes' : 'Results';
+
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _SectionHeader(
+                              title: title,
+                              actionText: isDefaultView ? 'See all' : '',
+                            ),
+                            const SizedBox(height: 12),
+                            if (isLoading)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 24),
+                                child: Center(child: CircularProgressIndicator()),
+                              )
+                            else if (_errorMessage != null)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 16),
+                                child: _InlineError(
+                                  message: _errorMessage!,
+                                  onRetry: () {
+                                    if (isDefaultView) {
+                                      _loadFeaturedQuizzes();
+                                    } else {
+                                      _runSearch();
+                                    }
+                                  },
+                                ),
+                              )
+                            else if (quizzesToShow.isEmpty)
+                              const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 32),
+                                child: Center(child: Text('No quizzes found')),
+                              )
+                            else
+                              Column(
+                                children: quizzesToShow
+                                    .map((quiz) => Padding(
+                                          padding: const EdgeInsets.only(bottom: 12),
+                                          child: _FeaturedCard(quiz: quiz),
+                                        ))
+                                    .toList(),
+                              ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 16),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-              _SectionHeader(title: 'Featured Quizzes', actionText: 'See all'),
-              const SizedBox(height: 12),
-              FutureBuilder<List<QuizSummary>>(
-                future: _featuredFuture,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 24),
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-                  final quizzes = snapshot.data ?? [];
-                  return Column(
-                    children: quizzes
-                        .map((quiz) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _FeaturedCard(quiz: quiz),
-                            ))
-                        .toList(),
-                  );
-                },
-              ),
-              const SizedBox(height: 16),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Future<void> _loadFeaturedQuizzes() async {
+    setState(() {
+      _isLoadingQuizzes = true;
+      _errorMessage = null;
+    });
+    try {
+      final quizzes = await widget.controller.fetchFeaturedQuizzes();
+      if (!mounted) return;
+      setState(() {
+        _quizzes = quizzes;
+        if (_selectedThemes.isEmpty && _searchController.text.trim().isEmpty) {
+          _filteredQuizzes = quizzes;
+        }
+        _isLoadingQuizzes = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingQuizzes = false;
+        _errorMessage = 'No pudimos cargar los destacados';
+      });
+    }
+  }
+
+  Future<void> _runSearch({String? query}) async {
+    final trimmed = query?.trim() ?? _searchController.text.trim();
+    final hasFilters = _selectedThemes.isNotEmpty;
+    if (trimmed.isEmpty && !hasFilters) {
+      setState(() {
+        _filteredQuizzes = List.of(_quizzes);
+        _isSearching = false;
+        _errorMessage = null;
+      });
+      return;
+    }
+
+    setState(() {
+      _isSearching = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final result = await widget.controller.searchQuizzes(
+        query: trimmed.isEmpty ? null : trimmed,
+        themes: _selectedThemes.toList(),
+        page: 1,
+        limit: 20,
+      );
+      if (!mounted) return;
+      setState(() {
+        _filteredQuizzes = result.items;
+        _isSearching = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSearching = false;
+        _errorMessage = 'No se pudieron cargar los resultados';
+      });
+    }
+  }
+
+  Future<void> _refreshSearchIfNeeded() {
+    final trimmed = _searchController.text.trim();
+    final hasFilters = _selectedThemes.isNotEmpty;
+    if (trimmed.isEmpty && !hasFilters) return Future.value();
+    return _runSearch(query: trimmed);
+  }
+
+  void _onQueryChanged(String query) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 250), () {
+      _runSearch(query: query);
+    });
+  }
+
+  void _onThemeToggled(String themeId) {
+    setState(() {
+      if (_selectedThemes.contains(themeId)) {
+        _selectedThemes.remove(themeId);
+      } else {
+        _selectedThemes.add(themeId);
+      }
+    });
+    _runSearch();
   }
 
   Widget _buildHeader(BuildContext context) {
@@ -121,6 +328,32 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           child: const QuizzyLogo(size: 38),
         ),
       ],
+    );
+  }
+}
+
+class _SearchBar extends StatelessWidget {
+  const _SearchBar({required this.controller, required this.onChanged});
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: controller,
+      decoration: InputDecoration(
+        hintText: 'Search for a quiz...',
+        filled: true,
+        fillColor: const Color(0xFF2A272D),
+        prefixIcon: const Icon(Icons.search, color: Colors.white70),
+        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+      ),
+      onChanged: onChanged,
     );
   }
 }
@@ -192,7 +425,7 @@ class _FeaturedCard extends StatelessWidget {
       ),
       child: Row(
         children: [
-          _Thumb(tag: quiz.tag),
+          _Thumb(quiz: quiz),
           Expanded(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
@@ -232,15 +465,15 @@ class _FeaturedCard extends StatelessWidget {
 }
 
 class _Thumb extends StatelessWidget {
-  const _Thumb({required this.tag});
+  const _Thumb({required this.quiz});
 
-  final String tag;
+  final QuizSummary quiz;
 
   @override
   Widget build(BuildContext context) {
-    final color = tag.toLowerCase().contains('science')
+    final color = quiz.tag.toLowerCase().contains('science')
         ? Colors.deepPurple
-        : tag.toLowerCase().contains('history')
+        : quiz.tag.toLowerCase().contains('history')
             ? Colors.orangeAccent
             : Colors.teal;
     return Container(
@@ -252,11 +485,17 @@ class _Thumb extends StatelessWidget {
           topLeft: Radius.circular(16),
           bottomLeft: Radius.circular(16),
         ),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/logo.png'),
-          fit: BoxFit.cover,
-          opacity: 0.15,
-        ),
+        image: quiz.thumbnailUrl.isNotEmpty
+            ? DecorationImage(
+                image: NetworkImage(quiz.thumbnailUrl),
+                fit: BoxFit.cover,
+                opacity: 0.9,
+              )
+            : const DecorationImage(
+                image: AssetImage('assets/images/logo.png'),
+                fit: BoxFit.cover,
+                opacity: 0.15,
+              ),
       ),
       child: Center(
         child: Icon(Icons.play_arrow_rounded, color: Colors.white.withValues(alpha: 0.9)),
@@ -272,162 +511,6 @@ Color _hexToColor(String hex) {
   return Color(int.parse(buffer.toString(), radix: 16));
 }
 
-class _QuickActionsRow extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: _QuickAction(icon: Icons.add_circle_outline, label: 'Create quiz')),
-        SizedBox(width: 12),
-        Expanded(child: _QuickAction(icon: Icons.school_outlined, label: 'Study')),
-        SizedBox(width: 12),
-        Expanded(child: _QuickAction(icon: Icons.qr_code_scanner, label: 'Scan')),
-      ],
-    );
-  }
-}
-
-class _QuickAction extends StatelessWidget {
-  const _QuickAction({required this.icon, required this.label});
-
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        boxShadow: AppShadows.soft,
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 30, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(height: 8),
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        ],
-      ),
-    );
-  }
-}
-
-class _RewardCard extends StatelessWidget {
-  const _RewardCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        boxShadow: AppShadows.medium,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: const [
-              Icon(Icons.local_offer_outlined, color: Colors.white70),
-              SizedBox(width: 8),
-              Text('Tropical Triumph', style: TextStyle(fontWeight: FontWeight.w700)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Text('You unlocked a new theme!', style: TextStyle(color: Colors.white70)),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Theme.of(context).colorScheme.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-              ),
-              onPressed: () {},
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 12),
-                child: Text('Claim Reward'),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _LearnCard extends StatelessWidget {
-  const _LearnCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadii.card),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Learn better this year', style: TextStyle(fontWeight: FontWeight.w700)),
-                const SizedBox(height: 6),
-                const Text(
-                  'Power up your studying with our fun and engaging tools.',
-                  style: TextStyle(color: Colors.white70),
-                ),
-                const SizedBox(height: 12),
-                _PillButton(label: 'Learn more'),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Container(
-            width: 76,
-            height: 76,
-            decoration: BoxDecoration(
-              color: Theme.of(context).colorScheme.surface,
-              borderRadius: BorderRadius.circular(AppRadii.card),
-            ),
-            child: const Icon(Icons.person_outline, size: 34, color: Colors.white70),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _PillButton extends StatelessWidget {
-  const _PillButton({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(AppRadii.pill),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: Theme.of(context).colorScheme.surface,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
-
 IconData _iconForCategory(String icon) {
   switch (icon.toLowerCase()) {
     case 'science':
@@ -438,5 +521,34 @@ IconData _iconForCategory(String icon) {
       return Icons.map_rounded;
     default:
       return Icons.category;
+  }
+}
+
+class _InlineError extends StatelessWidget {
+  const _InlineError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          message,
+          style: const TextStyle(color: Colors.white70),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        TextButton(
+          onPressed: onRetry,
+          style: TextButton.styleFrom(
+            foregroundColor: Theme.of(context).colorScheme.primary,
+          ),
+          child: const Text('Reintentar'),
+        ),
+      ],
+    );
   }
 }

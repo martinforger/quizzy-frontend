@@ -41,7 +41,7 @@ class _ShellScreenState extends State<ShellScreen> {
               shape: const CircularNotchedRectangle(),
               notchMargin: 8,
               child: Container(
-                height: 70,
+                height: 78,
                 decoration: BoxDecoration(
                   color: AppColors.card,
                   borderRadius: BorderRadius.circular(AppRadii.card),
@@ -64,10 +64,22 @@ class _ShellScreenState extends State<ShellScreen> {
                   selectedFontSize: 12,
                   unselectedFontSize: 11,
                   items: const [
-                    BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-                    BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: 'Discover'),
-                    BottomNavigationBarItem(icon: Icon(Icons.bookmarks_rounded), label: 'Library'),
-                    BottomNavigationBarItem(icon: Icon(Icons.qr_code_rounded), label: 'Join'),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.home_rounded),
+                      label: 'Home',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.explore_rounded),
+                      label: 'Discover',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.bookmarks_rounded),
+                      label: 'Library',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.qr_code_rounded),
+                      label: 'Join',
+                    ),
                   ],
                 ),
               ),
@@ -85,9 +97,9 @@ class _ShellScreenState extends State<ShellScreen> {
 
   // Accion temporal para el boton central.
   void _onCreatePressed() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Crear Quiz - proximamente')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Crear Quiz - proximamente')));
   }
 }
 
@@ -101,10 +113,7 @@ class _PlaceholderScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
       body: Center(
-        child: Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        child: Text(title, style: Theme.of(context).textTheme.titleMedium),
       ),
     );
   }
