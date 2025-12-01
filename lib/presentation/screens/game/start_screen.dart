@@ -1,0 +1,144 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../bloc/game_cubit.dart';
+
+class StartScreen extends StatelessWidget {
+  const StartScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final tertiary = Theme.of(context).colorScheme.tertiary;
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [primary, tertiary],
+          ),
+        ),
+        child: SafeArea(
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo or Title Placeholder
+                const Text(
+                  'Quizzy',
+                  style: TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 1.5,
+                    shadows: [
+                      Shadow(
+                        offset: Offset(0, 4),
+                        blurRadius: 8.0,
+                        color: Colors.black26,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Listo para jugar?',
+                  style: TextStyle(
+                    fontSize: 20,
+                    color: Colors.white70,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 60),
+
+                // Start Button
+                _StartButton(
+                  onPressed: () {
+                    // Hardcoded ID for now as per flow example
+                    context.read<GameCubit>().startGame("kahoot-demo-id");
+                  },
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _StartButton extends StatefulWidget {
+  final VoidCallback onPressed;
+
+  const _StartButton({required this.onPressed});
+
+  @override
+  State<_StartButton> createState() => _StartButtonState();
+}
+
+class _StartButtonState extends State<_StartButton>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 150),
+    );
+    _scaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.95,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.forward(),
+      onTapUp: (_) {
+        _controller.reverse();
+        widget.onPressed();
+      },
+      onTapCancel: () => _controller.reverse(),
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 48, vertical: 20),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(8),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    offset: const Offset(0, 4),
+                    blurRadius: 0,
+                  ),
+                ],
+              ),
+              child: Text(
+                'Empezar Juego',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.primary,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}

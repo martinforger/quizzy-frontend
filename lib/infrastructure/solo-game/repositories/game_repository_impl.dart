@@ -40,7 +40,7 @@ class GameRepositoryImpl implements GameRepository {
     try {
       final body = {
         "slideId": slideId,
-        "answerIndex": answerIndices,
+        "answerIndexes": answerIndices,
         "timeElapsedSeconds": timeElapsed,
       };
 
