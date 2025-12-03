@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import '../profile/profile_screen.dart'; // Asegúrate de importar tu screen de perfil
 
 class UserTypeScreen extends StatelessWidget {
-  final void Function(String userType) onSelectUserType;
+    final void Function(String userType)? onSelectUserType;
 
-  const UserTypeScreen({super.key, required this.onSelectUserType});
+  const UserTypeScreen({super.key, this.onSelectUserType});
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +27,6 @@ class UserTypeScreen extends StatelessWidget {
                     ),
                     child: Column(
                       children: [
-                        // Header
                         const SizedBox(height: 16),
                         const Text(
                           '¡Bienvenido a Quizzy!',
@@ -40,8 +40,6 @@ class UserTypeScreen extends StatelessWidget {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 32),
-
-                        // User Type Cards
                         LayoutBuilder(
                           builder: (context, constraints) {
                             bool isWide = constraints.maxWidth > 600;
@@ -60,7 +58,18 @@ class UserTypeScreen extends StatelessWidget {
                                     end: Alignment.bottomRight,
                                   ),
                                   icon: Icons.school,
-                                  onTap: () => onSelectUserType('student'),
+                                  onTap: () {
+                                    // notify parent if provided
+                                    if (onSelectUserType != null) onSelectUserType!('student');
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => ProfileScreen(
+                                          initialUserType: 'student',
+                                        ),
+                                      ),
+                                    );
+                                  },
                                   width: isWide ? (constraints.maxWidth - 32) / 2 : constraints.maxWidth,
                                 ),
                                 _buildUserTypeCard(
@@ -73,7 +82,17 @@ class UserTypeScreen extends StatelessWidget {
                                     end: Alignment.bottomRight,
                                   ),
                                   icon: Icons.menu_book,
-                                  onTap: () => onSelectUserType('teacher'),
+                                  onTap: () {
+                                    if (onSelectUserType != null) onSelectUserType!('teacher');
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => ProfileScreen(
+                                          initialUserType: 'teacher',
+                                        ),
+                                      ),
+                                    );
+                                  },
                                   width: isWide ? (constraints.maxWidth - 32) / 2 : constraints.maxWidth,
                                 ),
                               ],
@@ -86,8 +105,6 @@ class UserTypeScreen extends StatelessWidget {
                 ),
               ),
             ),
-
-
           ],
         ),
       ),
@@ -117,7 +134,6 @@ class UserTypeScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            // Icon with gradient background
             Container(
               width: 96,
               height: 96,
@@ -142,9 +158,9 @@ class UserTypeScreen extends StatelessWidget {
                 gradient: gradient,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Text(
+              child: const Text(
                 'Seleccionar',
-                style: const TextStyle(color: Colors.white, fontSize: 16),
+                style: TextStyle(color: Colors.white, fontSize: 16),
               ),
             ),
           ],

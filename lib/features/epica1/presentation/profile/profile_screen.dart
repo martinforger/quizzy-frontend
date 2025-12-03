@@ -1,10 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import '../login/login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
-  final VoidCallback onLogout;
+  final FutureOr<void> Function()? onLogout;
   final VoidCallback? onBack;
+  final String? initialUserType;
 
-  const ProfileScreen({super.key, required this.onLogout, this.onBack});
+  const ProfileScreen({super.key, this.onLogout, this.onBack, this.initialUserType});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -48,6 +51,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       newPassword = '';
       confirmPassword = '';
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialUserType != null && widget.initialUserType!.isNotEmpty) {
+      userType = widget.initialUserType!;
+    }
   }
 
   Widget buildInput({
@@ -381,13 +392,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
 
-            // Logout
+            // Logout button: always visible. Call optional callback then navigate to LoginScreen.
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 18),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: widget.onLogout,
+                  onPressed: () async {
+                    // Debug/log to ensure handler is invoked
+                    // ignore: avoid_print
+                    print('ProfileScreen: logout button pressed');
+
+                    // call optional external logout handler and await if it returns a Future
+                    final result = widget.onLogout?.call();
+                    if (result is Future) {
+                      await result;
+                    }
+
+                    // If widget was unmounted by the external handler, stop here
+                    if (!mounted) return;
+
+                    // navigate to login and clear navigation stack
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => LoginScreen(onLogin: () {})),
+                      (route) => false,
+                    );
+                  },
                   icon: const Icon(Icons.logout),
                   label: const Padding(
                     padding: EdgeInsets.symmetric(vertical: 14),

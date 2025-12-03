@@ -5,17 +5,17 @@ void main() {
   runApp(MyApp());
 }
 
-/*class MyApp extends StatelessWidget {
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: LoginScreen( onLogin: () {print('El usuario a iniciado sesion');}),
+      home: LoginScreen( onLogin: () {print('El usuario ha iniciado sesion');}),
     );
   }
-}*/
+}
 
-class MyApp extends StatelessWidget {
+/*class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
   @override
@@ -27,4 +27,4 @@ class MyApp extends StatelessWidget {
       ),
     );
   }
-}
+}*/

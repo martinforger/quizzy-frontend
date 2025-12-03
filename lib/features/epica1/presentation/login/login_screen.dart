@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../signup/signup_screen.dart';
+import '../profile/profile_screen.dart';
 
 
 class LoginScreen extends StatefulWidget {
@@ -27,7 +28,17 @@ class _LoginScreenState extends State<LoginScreen> {
   /// Método que simula el login
   /// --------------------------------------------------------------
   void handleLogin() {
+    // Call the provided onLogin hook (if any) and navigate to ProfileScreen
     widget.onLogin();
+
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ProfileScreen(
+          initialUserType: 'student',
+        ),
+      ),
+    );
   }
 
   /// --------------------------------------------------------------
