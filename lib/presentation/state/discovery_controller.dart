@@ -30,6 +30,26 @@ class DiscoveryController {
     return getFeaturedQuizzesUseCase(limit: limit);
   }
 
+  // Realiza una búsqueda y devuelve solo los items para simplificar la UI.
+  Future<List<QuizSummary>> searchQuizSummaries({
+    String? query,
+    List<String> themes = const [],
+    int page = 1,
+    int limit = 20,
+    String? orderBy,
+    String? order,
+  }) async {
+    final result = await searchQuizzesUseCase(
+      query: query,
+      themes: themes,
+      page: page,
+      limit: limit,
+      orderBy: orderBy,
+      order: order,
+    );
+    return result.items;
+  }
+
   Future<PaginatedQuizzes> searchQuizzes({
     String? query,
     List<String> themes = const [],
