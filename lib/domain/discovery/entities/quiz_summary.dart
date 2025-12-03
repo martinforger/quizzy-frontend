@@ -5,6 +5,8 @@ class QuizSummary {
     required this.author,
     required this.tag,
     this.thumbnailUrl = '',
+    this.description,
+    this.playCount,
   });
 
   final String id;
@@ -12,4 +14,6 @@ class QuizSummary {
   final String author;
   final String tag;
   final String thumbnailUrl;
+  final String? description;
+  final int? playCount;
 }
