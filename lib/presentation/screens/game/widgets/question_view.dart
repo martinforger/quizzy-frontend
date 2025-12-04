@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../domain/solo-game/entities/slide_entity.dart';
 import 'answer_grid.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class QuestionView extends StatelessWidget {
   final SlideEntity slide;
@@ -61,7 +62,7 @@ class QuestionView extends StatelessWidget {
                 fontWeight: FontWeight.bold,
                 color: Colors.white,
               ),
-            ),
+            ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.2, end: 0),
           ),
 
           const SizedBox(height: 20),
@@ -85,7 +86,7 @@ class QuestionView extends StatelessWidget {
                       child: Icon(Icons.image, size: 64, color: Colors.grey),
                     )
                   : null,
-            ),
+            ).animate().fadeIn(delay: 200.ms, duration: 500.ms).scale(),
           ),
 
           const SizedBox(height: 20),
