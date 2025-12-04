@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../domain/solo-game/entities/slide_entity.dart';
 import '../../../bloc/game_cubit.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class AnswerGrid extends StatelessWidget {
   final List<OptionEntity> options;
@@ -20,21 +21,39 @@ class AnswerGrid extends StatelessWidget {
               children: [
                 if (options.isNotEmpty)
                   Expanded(
-                    child: _AnswerCard(
-                      option: options[0],
-                      color: Colors.red,
-                      icon: Icons.change_history,
-                      slideId: slideId,
-                    ),
+                    child:
+                        _AnswerCard(
+                              option: options[0],
+                              color: Colors.red,
+                              icon: Icons.change_history,
+                              slideId: slideId,
+                            )
+                            .animate()
+                            .slideY(
+                              begin: 1,
+                              end: 0,
+                              delay: 300.ms,
+                              duration: 400.ms,
+                            )
+                            .fadeIn(),
                   ),
                 if (options.length > 1)
                   Expanded(
-                    child: _AnswerCard(
-                      option: options[1],
-                      color: Colors.blue,
-                      icon: Icons.diamond,
-                      slideId: slideId,
-                    ),
+                    child:
+                        _AnswerCard(
+                              option: options[1],
+                              color: Colors.blue,
+                              icon: Icons.diamond,
+                              slideId: slideId,
+                            )
+                            .animate()
+                            .slideY(
+                              begin: 1,
+                              end: 0,
+                              delay: 400.ms,
+                              duration: 400.ms,
+                            )
+                            .fadeIn(),
                   ),
               ],
             ),
@@ -44,21 +63,39 @@ class AnswerGrid extends StatelessWidget {
               children: [
                 if (options.length > 2)
                   Expanded(
-                    child: _AnswerCard(
-                      option: options[2],
-                      color: Colors.amber,
-                      icon: Icons.circle,
-                      slideId: slideId,
-                    ),
+                    child:
+                        _AnswerCard(
+                              option: options[2],
+                              color: Colors.amber,
+                              icon: Icons.circle,
+                              slideId: slideId,
+                            )
+                            .animate()
+                            .slideY(
+                              begin: 1,
+                              end: 0,
+                              delay: 500.ms,
+                              duration: 400.ms,
+                            )
+                            .fadeIn(),
                   ),
                 if (options.length > 3)
                   Expanded(
-                    child: _AnswerCard(
-                      option: options[3],
-                      color: Colors.green,
-                      icon: Icons.square,
-                      slideId: slideId,
-                    ),
+                    child:
+                        _AnswerCard(
+                              option: options[3],
+                              color: Colors.green,
+                              icon: Icons.square,
+                              slideId: slideId,
+                            )
+                            .animate()
+                            .slideY(
+                              begin: 1,
+                              end: 0,
+                              delay: 600.ms,
+                              duration: 400.ms,
+                            )
+                            .fadeIn(),
                   ),
               ],
             ),

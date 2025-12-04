@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../bloc/game_cubit.dart';
 import '../../../bloc/game_state.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 
 class FeedbackOverlay extends StatelessWidget {
   final GameAnswerFeedback state;
@@ -22,16 +23,23 @@ class FeedbackOverlay extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: color, size: 100),
+            Icon(icon, color: color, size: 100)
+                .animate()
+                .scale(duration: 400.ms, curve: Curves.elasticOut)
+                .then(delay: 200.ms)
+                .shake(),
             const SizedBox(height: 16),
             Text(
-              text,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 48,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
+                  text,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 48,
+                    fontWeight: FontWeight.w900,
+                  ),
+                )
+                .animate()
+                .fadeIn(duration: 400.ms)
+                .slideY(begin: 0.3, end: 0, curve: Curves.easeOutBack),
             const SizedBox(height: 16),
             if (state.wasCorrect)
               Text(
@@ -41,6 +49,10 @@ class FeedbackOverlay extends StatelessWidget {
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
                 ),
+              ).animate().scale(
+                delay: 300.ms,
+                duration: 400.ms,
+                curve: Curves.elasticOut,
               ),
             const SizedBox(height: 8),
             Text(
@@ -71,7 +83,7 @@ class FeedbackOverlay extends StatelessWidget {
               child: Text(
                 state.nextSlide != null ? "Siguiente" : "Ver Resumen",
               ),
-            ),
+            ).animate().fadeIn(delay: 600.ms, duration: 400.ms),
           ],
         ),
       ),
