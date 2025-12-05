@@ -68,26 +68,20 @@ class QuestionView extends StatelessWidget {
           const SizedBox(height: 20),
 
           // Media Placeholder (Image/Video)
-          Expanded(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(8),
-                image: slide.mediaUrl != null
-                    ? DecorationImage(
-                        image: NetworkImage(slide.mediaUrl!),
-                        fit: BoxFit.cover,
-                      )
-                    : null,
-              ),
-              child: slide.mediaUrl == null
-                  ? const Center(
-                      child: Icon(Icons.image, size: 64, color: Colors.grey),
-                    )
-                  : null,
-            ).animate().fadeIn(delay: 200.ms, duration: 500.ms).scale(),
-          ),
+          if (slide.mediaUrl != null)
+            Expanded(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 20),
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(8),
+                  image: DecorationImage(
+                    image: NetworkImage(slide.mediaUrl!),
+                    fit: BoxFit.cover,
+                  ),
+                ),
+              ).animate().fadeIn(delay: 200.ms, duration: 500.ms).scale(),
+            ),
 
           const SizedBox(height: 20),
 

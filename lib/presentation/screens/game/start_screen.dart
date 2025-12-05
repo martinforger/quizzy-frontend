@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/game_cubit.dart';
 
 class StartScreen extends StatelessWidget {
-  const StartScreen({super.key});
+  final String quizId;
+
+  const StartScreen({super.key, required this.quizId});
 
   @override
   Widget build(BuildContext context) {
@@ -54,8 +56,7 @@ class StartScreen extends StatelessWidget {
                 // Start Button
                 _StartButton(
                   onPressed: () {
-                    // Hardcoded ID for now as per flow example
-                    context.read<GameCubit>().startGame("kahoot-demo-id");
+                    context.read<GameCubit>().startGame(quizId);
                   },
                 ),
               ],
