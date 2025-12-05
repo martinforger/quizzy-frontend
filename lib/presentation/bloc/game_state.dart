@@ -1,4 +1,3 @@
-import '../../../domain/solo-game/entities/attempt_entity.dart';
 import '../../../domain/solo-game/entities/slide_entity.dart';
 import '../../../domain/solo-game/entities/summary_entity.dart';
 

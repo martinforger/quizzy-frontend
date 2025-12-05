@@ -59,7 +59,7 @@ class _ShellScreenState extends State<ShellScreen> {
               shape: const CircularNotchedRectangle(),
               notchMargin: 10,
               child: Container(
-                height: 70,
+                height: 78,
                 clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E1B21), // Dark card color
