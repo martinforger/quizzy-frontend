@@ -1,0 +1,9 @@
+[
+  { "id": "science", "name": "Science", "description": "STEM and experiments", "kahootCount": 1200 },
+  { "id": "history", "name": "History", "description": "Events, people and timelines", "kahootCount": 980 },
+  { "id": "geography", "name": "Geography", "description": "Maps, countries and capitals", "kahootCount": 760 },
+  { "id": "movies", "name": "Movies", "description": "Cinema, actors and awards", "kahootCount": 530 },
+  { "id": "sports", "name": "Sports", "description": "Teams, leagues and records", "kahootCount": 610 },
+  { "id": "technology", "name": "Technology", "description": "Innovation and gadgets", "kahootCount": 420 },
+  { "id": "music", "name": "Music", "description": "Theory, genres and artists", "kahootCount": 390 }
+]
