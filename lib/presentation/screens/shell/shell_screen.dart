@@ -3,7 +3,9 @@ import 'package:quizzy/presentation/screens/discover/discover_screen.dart';
 import 'package:quizzy/presentation/screens/join/join_screen.dart';
 import 'package:quizzy/presentation/screens/library/library_screen.dart';
 import 'package:quizzy/presentation/screens/home/home_screen.dart';
+import 'package:quizzy/presentation/screens/kahoots/slides_manager_screen.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
+import 'package:quizzy/presentation/state/slide_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
@@ -17,12 +19,14 @@ class ShellScreen extends StatefulWidget {
     required this.startAttemptUseCase,
     required this.submitAnswerUseCase,
     required this.getSummaryUseCase,
+    required this.slideController,
   });
 
   final DiscoveryController discoveryController;
   final StartAttemptUseCase startAttemptUseCase;
   final SubmitAnswerUseCase submitAnswerUseCase;
   final GetSummaryUseCase getSummaryUseCase;
+  final SlideController slideController;
 
   @override
   State<ShellScreen> createState() => _ShellScreenState();
@@ -128,9 +132,14 @@ class _ShellScreenState extends State<ShellScreen> {
 
   // Accion temporal para el boton central.
   void _onCreatePressed() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Crear Quiz - proximamente')));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SlidesManagerScreen(
+          slideController: widget.slideController,
+          initialKahootId: 'q4',
+        ),
+      ),
+    );
   }
 }
 
