@@ -77,7 +77,7 @@ El proyecto está modularizado por características ("features") que atraviesan 
 
 1.  **Clonar el repositorio**:
     ```bash
-    git clone <url-del-repositorio>
+    git clone https://github.com/martinforger/quizzy-frontend
     ```
 2.  **Instalar dependencias**:
     ```bash
