@@ -5,14 +5,22 @@ import 'package:quizzy/application/discovery/usecases/get_featured_quizzes.dart'
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/get_summary_use_case.dart';
+import 'package:quizzy/application/kahoots/usecases/create_slide.dart';
+import 'package:quizzy/application/kahoots/usecases/delete_slide.dart';
+import 'package:quizzy/application/kahoots/usecases/duplicate_slide.dart';
+import 'package:quizzy/application/kahoots/usecases/get_slide.dart';
+import 'package:quizzy/application/kahoots/usecases/list_slides.dart';
+import 'package:quizzy/application/kahoots/usecases/update_slide.dart';
 import 'package:quizzy/infrastructure/discovery/repositories_impl/http_discovery_repository.dart';
 import 'package:quizzy/infrastructure/solo-game/data_sources/mock_game_service.dart';
 import 'package:quizzy/infrastructure/solo-game/repositories/game_repository_impl.dart';
+import 'package:quizzy/infrastructure/kahoots/repositories_impl/http_slides_repository.dart';
 import 'package:quizzy/application/discovery/usecases/get_themes.dart';
 import 'package:quizzy/application/discovery/usecases/search_quizzes.dart';
 import 'package:quizzy/presentation/screens/shell/shell_screen.dart';
 
 import 'package:quizzy/presentation/state/discovery_controller.dart';
+import 'package:quizzy/presentation/state/slide_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'package:http/http.dart' as http;
 
@@ -46,6 +54,17 @@ class QuizzyApp extends StatelessWidget {
     final submitAnswerUseCase = SubmitAnswerUseCase(gameRepository);
     final getSummaryUseCase = GetSummaryUseCase(gameRepository);
 
+    // Slides (épica 3)
+    final slidesRepository = HttpSlidesRepository(client: http.Client(), baseUrl: mockBaseUrl);
+    final slideController = SlideController(
+      listSlidesUseCase: ListSlidesUseCase(slidesRepository),
+      getSlideUseCase: GetSlideUseCase(slidesRepository),
+      createSlideUseCase: CreateSlideUseCase(slidesRepository),
+      updateSlideUseCase: UpdateSlideUseCase(slidesRepository),
+      duplicateSlideUseCase: DuplicateSlideUseCase(slidesRepository),
+      deleteSlideUseCase: DeleteSlideUseCase(slidesRepository),
+    );
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Quizzy',
@@ -55,6 +74,7 @@ class QuizzyApp extends StatelessWidget {
         startAttemptUseCase: startAttemptUseCase,
         submitAnswerUseCase: submitAnswerUseCase,
         getSummaryUseCase: getSummaryUseCase,
+        slideController: slideController,
       ),
     );
   }
