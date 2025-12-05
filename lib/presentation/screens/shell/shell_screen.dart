@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:quizzy/presentation/screens/discover/discover_screen.dart';
 import 'package:quizzy/presentation/screens/join/join_screen.dart';
 import 'package:quizzy/presentation/screens/library/library_screen.dart';
+import 'package:quizzy/presentation/screens/home/home_screen.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 
@@ -33,7 +34,7 @@ class _ShellScreenState extends State<ShellScreen> {
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
-      const _PlaceholderScreen(title: 'Inicio (Proximamente)'),
+      const HomeScreen(),
       DiscoverScreen(
         controller: widget.discoveryController,
         startAttemptUseCase: widget.startAttemptUseCase,
