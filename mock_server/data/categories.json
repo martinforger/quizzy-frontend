@@ -1,0 +1,7 @@
+[
+  { "id": "science", "name": "Science", "icon": "science", "gradientStart": "#8358FF", "gradientEnd": "#6B3FFF" },
+  { "id": "history", "name": "History", "icon": "history", "gradientStart": "#F9B234", "gradientEnd": "#F79B0C" },
+  { "id": "geography", "name": "Geography", "icon": "map", "gradientStart": "#1DD8D2", "gradientEnd": "#11BFB9" },
+  { "id": "movies", "name": "Movies", "icon": "movie", "gradientStart": "#FF6F61", "gradientEnd": "#F54EA2" },
+  { "id": "sports", "name": "Sports", "icon": "sports", "gradientStart": "#2BCB5E", "gradientEnd": "#1FA34A" }
+]
