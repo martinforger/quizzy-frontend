@@ -80,12 +80,17 @@ class GameRepositoryImpl implements GameRepository {
   }
 
   @override
-  Future<Map<String, dynamic>?> getLocalGameSession() async {
-    return _localGameStorage.getSession();
+  Future<Map<String, dynamic>?> getLocalGameSession(String quizId) async {
+    return _localGameStorage.getSession(quizId);
   }
 
   @override
-  Future<void> clearLocalGameSession() async {
-    return _localGameStorage.clearSession();
+  Future<Map<String, Map<String, dynamic>>> getAllLocalGameSessions() async {
+    return _localGameStorage.getAllSessions();
+  }
+
+  @override
+  Future<void> clearLocalGameSession(String quizId) async {
+    return _localGameStorage.clearSession(quizId);
   }
 }

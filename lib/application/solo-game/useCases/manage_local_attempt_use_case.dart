@@ -19,17 +19,21 @@ class ManageLocalAttemptUseCase {
     );
   }
 
-  Future<Map<String, dynamic>?> getGameSession() {
-    return _repository.getLocalGameSession();
+  Future<Map<String, dynamic>?> getGameSession(String quizId) {
+    return _repository.getLocalGameSession(quizId);
+  }
+
+  Future<Map<String, Map<String, dynamic>>> getAllGameSessions() {
+    return _repository.getAllLocalGameSessions();
   }
 
   // Helper legacy or convenience
-  Future<String?> getAttemptId() async {
-    final session = await _repository.getLocalGameSession();
+  Future<String?> getAttemptId(String quizId) async {
+    final session = await _repository.getLocalGameSession(quizId);
     return session?['attemptId'];
   }
 
-  Future<void> clearAttemptId() {
-    return _repository.clearLocalGameSession();
+  Future<void> clearAttemptId(String quizId) {
+    return _repository.clearLocalGameSession(quizId);
   }
 }

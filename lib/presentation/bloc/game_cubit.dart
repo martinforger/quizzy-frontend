@@ -15,6 +15,7 @@ class GameCubit extends Cubit<GameState> {
   final GetAttemptStateUseCase _getAttemptStateUseCase;
 
   String? _currentAttemptId;
+  String? _currentQuizId;
 
   GameCubit({
     required StartAttemptUseCase startAttemptUseCase,
@@ -29,16 +30,21 @@ class GameCubit extends Cubit<GameState> {
        _getAttemptStateUseCase = getAttemptStateUseCase,
        super(GameInitial());
 
-  Future<void> checkSavedGame() async {
+  Future<void> checkSavedGame(String? currentQuizId) async {
     try {
-      final attemptId = await _manageLocalAttemptUseCase.getAttemptId();
-      if (attemptId != null && attemptId.isNotEmpty) {
+      if (currentQuizId == null) {
+        emit(GameInitial(hasSavedAttempt: false));
+        return;
+      }
+      final session = await _manageLocalAttemptUseCase.getGameSession(
+        currentQuizId,
+      );
+      if (session != null && session['attemptId'] != null) {
         emit(GameInitial(hasSavedAttempt: true));
       } else {
         emit(GameInitial(hasSavedAttempt: false));
       }
     } catch (e) {
-      // Si falla, asumimos que no hay saved game
       emit(GameInitial(hasSavedAttempt: false));
     }
   }
@@ -47,6 +53,7 @@ class GameCubit extends Cubit<GameState> {
   Future<void> startGame(String kahootId) async {
     try {
       emit(GameLoading());
+      _currentQuizId = kahootId;
 
       final attempt = await _startAttemptUseCase(kahootId);
       _currentAttemptId = attempt.attemptId;
@@ -74,10 +81,11 @@ class GameCubit extends Cubit<GameState> {
     }
   }
 
-  Future<void> resumeGame() async {
+  Future<void> resumeGame(String quizId) async {
     try {
       emit(GameLoading());
-      final attemptId = await _manageLocalAttemptUseCase.getAttemptId();
+      _currentQuizId = quizId;
+      final attemptId = await _manageLocalAttemptUseCase.getAttemptId(quizId);
 
       if (attemptId == null) {
         emit(GameError("No saved game found"));
@@ -86,6 +94,12 @@ class GameCubit extends Cubit<GameState> {
 
       _currentAttemptId = attemptId;
       final attempt = await _getAttemptStateUseCase(attemptId);
+
+      // Check if game is already completed
+      if (attempt.state == "COMPLETED") {
+        await loadSummary();
+        return;
+      }
 
       final currentSlide = attempt.firstSlide ?? attempt.nextSlide;
 
@@ -99,6 +113,7 @@ class GameCubit extends Cubit<GameState> {
           ),
         );
       } else {
+        // Fallback: if no slide but not marked completed, try summary or error
         emit(GameError("No active question in saved game."));
       }
     } catch (e) {
@@ -108,7 +123,7 @@ class GameCubit extends Cubit<GameState> {
 
   void exitGame() {
     emit(GameInitial());
-    checkSavedGame();
+    checkSavedGame(_currentQuizId);
   }
 
   /// 2. Enviar Respuesta
@@ -136,11 +151,9 @@ class GameCubit extends Cubit<GameState> {
       );
 
       // Update progress locally
-      // We need quizId. Let's fetch the existing session to get it.
-      final existingSession = await _manageLocalAttemptUseCase.getGameSession();
-      if (existingSession != null && existingSession['quizId'] != null) {
+      if (_currentQuizId != null) {
         await _manageLocalAttemptUseCase.saveGameSession(
-          quizId: existingSession['quizId'], // Preserve quizId
+          quizId: _currentQuizId!,
           attemptId: _currentAttemptId!,
           currentQuestionIndex: result.currentQuestionIndex,
           totalQuestions: result.totalQuestions,
@@ -173,7 +186,9 @@ class GameCubit extends Cubit<GameState> {
       emit(GameLoading());
       final summary = await _getSummaryUseCase(_currentAttemptId!);
       // Limpiamos el save local al terminar
-      await _manageLocalAttemptUseCase.clearAttemptId();
+      if (_currentQuizId != null) {
+        await _manageLocalAttemptUseCase.clearAttemptId(_currentQuizId!);
+      }
       emit(GameFinished(summary));
     } catch (e) {
       emit(GameError(e.toString()));
