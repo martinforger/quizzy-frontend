@@ -70,14 +70,45 @@ class _ShellScreenState extends State<ShellScreen> {
                   color: const Color(0xFF1E1B21), // Dark card color
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withValues(alpha: 0.05),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.4),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      color: Color.fromRGBO(14, 63, 126, 0.04),
+                      blurRadius: 0,
+                      spreadRadius: 1,
+                      offset: Offset(0, 0),
+                    ),
+                    BoxShadow(
+                      color: Color.fromRGBO(42, 51, 69, 0.04),
+                      blurRadius: 1,
+                      spreadRadius: -0.5,
+                      offset: Offset(0, 1),
+                    ),
+                    BoxShadow(
+                      color: Color.fromRGBO(42, 51, 70, 0.04),
+                      blurRadius: 3,
+                      spreadRadius: -1.5,
+                      offset: Offset(0, 3),
+                    ),
+                    BoxShadow(
+                      color: Color.fromRGBO(42, 51, 70, 0.04),
+                      blurRadius: 6,
+                      spreadRadius: -3,
+                      offset: Offset(0, 6),
+                    ),
+                    BoxShadow(
+                      color: Color.fromRGBO(14, 63, 126, 0.04),
+                      blurRadius: 12,
+                      spreadRadius: -6,
+                      offset: Offset(0, 12),
+                    ),
+                    BoxShadow(
+                      color: Color.fromRGBO(14, 63, 126, 0.04),
+                      blurRadius: 24,
+                      spreadRadius: -12,
+                      offset: Offset(0, 24),
                     ),
                   ],
                 ),

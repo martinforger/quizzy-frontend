@@ -32,6 +32,18 @@ class LibraryScreen extends StatelessWidget {
                 "Prueba la funcionalidad del juego con este quiz de demostración.",
             imageUrl:
                 "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&q=80&w=1000",
+            quizId: "kahoot-demo-id",
+            startAttemptUseCase: startAttemptUseCase,
+            submitAnswerUseCase: submitAnswerUseCase,
+            getSummaryUseCase: getSummaryUseCase,
+          ),
+          _LibraryGameCard(
+            title: "Patrones de Diseño",
+            description:
+                "Pon a prueba tus conocimientos sobre patrones de diseño de software.",
+            imageUrl:
+                "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=1000",
+            quizId: "quiz-design-patterns",
             startAttemptUseCase: startAttemptUseCase,
             submitAnswerUseCase: submitAnswerUseCase,
             getSummaryUseCase: getSummaryUseCase,
@@ -47,6 +59,7 @@ class _LibraryGameCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.imageUrl,
+    required this.quizId,
     required this.startAttemptUseCase,
     required this.submitAnswerUseCase,
     required this.getSummaryUseCase,
@@ -55,6 +68,7 @@ class _LibraryGameCard extends StatelessWidget {
   final String title;
   final String description;
   final String imageUrl;
+  final String quizId;
   final StartAttemptUseCase startAttemptUseCase;
   final SubmitAnswerUseCase submitAnswerUseCase;
   final GetSummaryUseCase getSummaryUseCase;
@@ -75,7 +89,7 @@ class _LibraryGameCard extends StatelessWidget {
                   submitAnswerUseCase: submitAnswerUseCase,
                   getSummaryUseCase: getSummaryUseCase,
                 ),
-                child: const GameScreen(),
+                child: GameScreen(quizId: quizId),
               ),
             ),
           );
@@ -119,7 +133,7 @@ class _LibraryGameCard extends StatelessWidget {
                               submitAnswerUseCase: submitAnswerUseCase,
                               getSummaryUseCase: getSummaryUseCase,
                             ),
-                            child: const GameScreen(),
+                            child: GameScreen(quizId: quizId),
                           ),
                         ),
                       );

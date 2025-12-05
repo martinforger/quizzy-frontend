@@ -8,7 +8,9 @@ import 'widgets/summary_view.dart';
 import 'start_screen.dart';
 
 class GameScreen extends StatelessWidget {
-  const GameScreen({super.key});
+  final String quizId;
+
+  const GameScreen({super.key, this.quizId = "kahoot-demo-id"});
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +37,7 @@ class GameScreen extends StatelessWidget {
           } else if (state is GameFinished) {
             return SummaryView(summary: state.summary);
           } else if (state is GameInitial) {
-            return const StartScreen();
+            return StartScreen(quizId: quizId);
           }
 
           // Default fallback
