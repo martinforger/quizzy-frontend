@@ -126,7 +126,6 @@ class MockGameService implements GameRemoteDataSource {
 
     final String slideId = body["slideId"];
     final List<dynamic> answerIndexes = body["answerIndexes"];
-    final int timeElapsed = body["timeElapsedSeconds"];
 
     final currentSlideConfig = _mockSlides[_currentSlideIndex];
 
