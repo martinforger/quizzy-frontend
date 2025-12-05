@@ -9,7 +9,7 @@ import 'package:quizzy/infrastructure/discovery/repositories_impl/mock_discovery
 import 'package:quizzy/infrastructure/solo-game/data_sources/mock_game_service.dart';
 import 'package:quizzy/infrastructure/solo-game/repositories/game_repository_impl.dart';
 import 'package:quizzy/presentation/screens/shell/shell_screen.dart';
-import 'package:quizzy/presentation/screens/splash/splash_screen.dart';
+
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 
@@ -36,13 +36,11 @@ class QuizzyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Quizzy',
       theme: AppTheme.build(),
-      home: SplashScreen(
-        nextScreen: ShellScreen(
-          discoveryController: discoveryController,
-          startAttemptUseCase: startAttemptUseCase,
-          submitAnswerUseCase: submitAnswerUseCase,
-          getSummaryUseCase: getSummaryUseCase,
-        ),
+      home: ShellScreen(
+        discoveryController: discoveryController,
+        startAttemptUseCase: startAttemptUseCase,
+        submitAnswerUseCase: submitAnswerUseCase,
+        getSummaryUseCase: getSummaryUseCase,
       ),
     );
   }
