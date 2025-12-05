@@ -18,6 +18,9 @@ import 'package:quizzy/infrastructure/kahoots/repositories_impl/http_slides_repo
 import 'package:quizzy/application/discovery/usecases/get_themes.dart';
 import 'package:quizzy/application/discovery/usecases/search_quizzes.dart';
 import 'package:quizzy/presentation/screens/shell/shell_screen.dart';
+import 'package:quizzy/infrastructure/solo-game/data_sources/local_game_storage.dart';
+import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_case.dart';
+import 'package:quizzy/application/solo-game/useCases/get_attempt_state_use_case.dart';
 
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/state/slide_controller.dart';
@@ -49,13 +52,19 @@ class QuizzyApp extends StatelessWidget {
 
     // Game Dependencies
     final gameService = MockGameService();
-    final gameRepository = GameRepositoryImpl(gameService);
+    final localGameStorage = LocalGameStorage();
+    final gameRepository = GameRepositoryImpl(gameService, localGameStorage);
     final startAttemptUseCase = StartAttemptUseCase(gameRepository);
     final submitAnswerUseCase = SubmitAnswerUseCase(gameRepository);
     final getSummaryUseCase = GetSummaryUseCase(gameRepository);
+    final manageLocalAttemptUseCase = ManageLocalAttemptUseCase(gameRepository);
+    final getAttemptStateUseCase = GetAttemptStateUseCase(gameRepository);
 
     // Slides (épica 3)
-    final slidesRepository = HttpSlidesRepository(client: http.Client(), baseUrl: mockBaseUrl);
+    final slidesRepository = HttpSlidesRepository(
+      client: http.Client(),
+      baseUrl: mockBaseUrl,
+    );
     final slideController = SlideController(
       listSlidesUseCase: ListSlidesUseCase(slidesRepository),
       getSlideUseCase: GetSlideUseCase(slidesRepository),
@@ -75,6 +84,8 @@ class QuizzyApp extends StatelessWidget {
         submitAnswerUseCase: submitAnswerUseCase,
         getSummaryUseCase: getSummaryUseCase,
         slideController: slideController,
+        manageLocalAttemptUseCase: manageLocalAttemptUseCase,
+        getAttemptStateUseCase: getAttemptStateUseCase,
       ),
     );
   }

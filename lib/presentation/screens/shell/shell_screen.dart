@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:quizzy/application/solo-game/useCases/get_attempt_state_use_case.dart';
 import 'package:quizzy/presentation/screens/discover/discover_screen.dart';
 import 'package:quizzy/presentation/screens/join/join_screen.dart';
 import 'package:quizzy/presentation/screens/library/library_screen.dart';
@@ -11,6 +12,7 @@ import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/get_summary_use_case.dart';
+import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_case.dart';
 
 class ShellScreen extends StatefulWidget {
   const ShellScreen({
@@ -20,6 +22,8 @@ class ShellScreen extends StatefulWidget {
     required this.submitAnswerUseCase,
     required this.getSummaryUseCase,
     required this.slideController,
+    required this.manageLocalAttemptUseCase,
+    required this.getAttemptStateUseCase,
   });
 
   final DiscoveryController discoveryController;
@@ -27,6 +31,8 @@ class ShellScreen extends StatefulWidget {
   final SubmitAnswerUseCase submitAnswerUseCase;
   final GetSummaryUseCase getSummaryUseCase;
   final SlideController slideController;
+  final ManageLocalAttemptUseCase manageLocalAttemptUseCase;
+  final GetAttemptStateUseCase getAttemptStateUseCase;
 
   @override
   State<ShellScreen> createState() => _ShellScreenState();
@@ -49,6 +55,8 @@ class _ShellScreenState extends State<ShellScreen> {
         startAttemptUseCase: widget.startAttemptUseCase,
         submitAnswerUseCase: widget.submitAnswerUseCase,
         getSummaryUseCase: widget.getSummaryUseCase,
+        manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
+        getAttemptStateUseCase: widget.getAttemptStateUseCase,
       ),
       const JoinScreen(),
     ];

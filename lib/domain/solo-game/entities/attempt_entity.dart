@@ -13,10 +13,15 @@ class AttemptEntity {
 
   final int? pointsEarned;
 
+  final int currentQuestionIndex;
+  final int totalQuestions;
+
   AttemptEntity({
     required this.attemptId,
     required this.state,
     required this.currentScore,
+    this.currentQuestionIndex = 0,
+    this.totalQuestions = 0,
     this.firstSlide,
     this.nextSlide,
     this.wasCorrect,
