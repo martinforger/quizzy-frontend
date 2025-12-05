@@ -11,6 +11,9 @@ import 'package:quizzy/infrastructure/solo-game/repositories/game_repository_imp
 import 'package:quizzy/application/discovery/usecases/get_themes.dart';
 import 'package:quizzy/application/discovery/usecases/search_quizzes.dart';
 import 'package:quizzy/presentation/screens/shell/shell_screen.dart';
+import 'package:quizzy/infrastructure/solo-game/data_sources/local_game_storage.dart';
+import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_case.dart';
+import 'package:quizzy/application/solo-game/useCases/get_attempt_state_use_case.dart';
 
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
@@ -41,10 +44,13 @@ class QuizzyApp extends StatelessWidget {
 
     // Game Dependencies
     final gameService = MockGameService();
-    final gameRepository = GameRepositoryImpl(gameService);
+    final localGameStorage = LocalGameStorage();
+    final gameRepository = GameRepositoryImpl(gameService, localGameStorage);
     final startAttemptUseCase = StartAttemptUseCase(gameRepository);
     final submitAnswerUseCase = SubmitAnswerUseCase(gameRepository);
     final getSummaryUseCase = GetSummaryUseCase(gameRepository);
+    final manageLocalAttemptUseCase = ManageLocalAttemptUseCase(gameRepository);
+    final getAttemptStateUseCase = GetAttemptStateUseCase(gameRepository);
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -55,6 +61,8 @@ class QuizzyApp extends StatelessWidget {
         startAttemptUseCase: startAttemptUseCase,
         submitAnswerUseCase: submitAnswerUseCase,
         getSummaryUseCase: getSummaryUseCase,
+        manageLocalAttemptUseCase: manageLocalAttemptUseCase,
+        getAttemptStateUseCase: getAttemptStateUseCase,
       ),
     );
   }

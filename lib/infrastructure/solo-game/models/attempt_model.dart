@@ -10,10 +10,14 @@ class AttemptModel extends AttemptEntity {
     SlideModel? nextSlide,
     bool? wasCorrect,
     int? pointsEarned,
+    int currentQuestionIndex = 0,
+    int totalQuestions = 0,
   }) : super(
          attemptId: attemptId,
          state: state,
          currentScore: currentScore,
+         currentQuestionIndex: currentQuestionIndex,
+         totalQuestions: totalQuestions,
          firstSlide: firstSlide,
          nextSlide: nextSlide,
          wasCorrect: wasCorrect,
@@ -28,6 +32,9 @@ class AttemptModel extends AttemptEntity {
 
       // Aseguramos que sea int, manejando posibles nulos o tipos numéricos
       currentScore: (json['currentScore'] ?? json['updatedScore'] ?? 0) as int,
+
+      currentQuestionIndex: (json['currentQuestionIndex'] ?? 0) as int,
+      totalQuestions: (json['totalQuestions'] ?? 0) as int,
 
       // Parseo recursivo: Si existe 'firstSlide', lo convertimos usando SlideModel
       firstSlide: json['firstSlide'] != null

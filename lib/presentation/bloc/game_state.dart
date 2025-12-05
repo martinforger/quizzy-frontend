@@ -3,7 +3,10 @@ import '../../../domain/solo-game/entities/summary_entity.dart';
 
 abstract class GameState {}
 
-class GameInitial extends GameState {}
+class GameInitial extends GameState {
+  final bool hasSavedAttempt;
+  GameInitial({this.hasSavedAttempt = false});
+}
 
 class GameLoading extends GameState {}
 
@@ -22,12 +25,12 @@ class GameInProgress extends GameState {
   });
 }
 
-/// Estado inmediatamente después de responder (Feedback: Correcto/Incorrecto)
+/// Estado inmediatamente después de responder donde da Feedback (si es correcto o incorrecto)
 class GameAnswerFeedback extends GameState {
   final bool wasCorrect;
   final int pointsEarned;
   final int totalScore;
-  final SlideEntity? nextSlide; // Puede ser null si el juego terminó
+  final SlideEntity? nextSlide; // null si el juego terminó
 
   GameAnswerFeedback({
     required this.wasCorrect,
