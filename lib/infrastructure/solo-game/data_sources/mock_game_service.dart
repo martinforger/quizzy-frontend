@@ -81,7 +81,7 @@ class MockGameService implements GameRemoteDataSource {
         "questionType": "QUIZ",
         "questionText":
             "¿Qué patrón de diseño pertenece a la categoría Creacional?",
-        "timeLimitSeconds": 10,
+        "timeLimitSeconds": 7,
         "mediaID": null,
         "options": [
           {"index": "1", "text": "Observer", "mediaID": null},
@@ -96,7 +96,7 @@ class MockGameService implements GameRemoteDataSource {
         "questionType": "QUIZ",
         "questionText":
             "¿Cuál es el propósito principal del patrón Factory Method?",
-        "timeLimitSeconds": 10,
+        "timeLimitSeconds": 7,
         "mediaID": null,
         "options": [
           {
@@ -127,7 +127,7 @@ class MockGameService implements GameRemoteDataSource {
         "questionType": "QUIZ",
         "questionText":
             "¿Qué patrón se utiliza para notificar cambios a múltiples objetos?",
-        "timeLimitSeconds": 10,
+        "timeLimitSeconds": 7,
         "mediaID": null,
         "options": [
           {"index": "1", "text": "Command", "mediaID": null},
@@ -142,7 +142,7 @@ class MockGameService implements GameRemoteDataSource {
         "questionType": "QUIZ",
         "questionText":
             "El patrón Adapter permite que clases con interfaces incompatibles trabajen juntas.",
-        "timeLimitSeconds": 10,
+        "timeLimitSeconds": 7,
         "mediaID": null,
         "options": [
           {"index": "1", "text": "Verdadero", "mediaID": null},
@@ -155,7 +155,7 @@ class MockGameService implements GameRemoteDataSource {
         "questionType": "QUIZ",
         "questionText":
             "¿Qué patrón estructural se usa para añadir responsabilidades a objetos dinámicamente?",
-        "timeLimitSeconds": 10,
+        "timeLimitSeconds": 7,
         "mediaID": null,
         "options": [
           {"index": "1", "text": "Facade", "mediaID": null},
@@ -169,7 +169,7 @@ class MockGameService implements GameRemoteDataSource {
         "slideId": "dp-006",
         "questionType": "QUIZ",
         "questionText": "¿Cuál de estos NO es un patrón de comportamiento?",
-        "timeLimitSeconds": 10,
+        "timeLimitSeconds": 7,
         "mediaID": null,
         "options": [
           {"index": "1", "text": "Memento", "mediaID": null},
@@ -184,7 +184,7 @@ class MockGameService implements GameRemoteDataSource {
         "questionType": "QUIZ",
         "questionText":
             "El patrón Singleton es considerado un anti-patrón por algunos desarrolladores.",
-        "timeLimitSeconds": 10,
+        "timeLimitSeconds": 7,
         "mediaID": null,
         "options": [
           {"index": "1", "text": "Verdadero", "mediaID": null},
@@ -197,7 +197,7 @@ class MockGameService implements GameRemoteDataSource {
         "questionType": "QUIZ",
         "questionText":
             "¿Qué patrón se utiliza para encapsular una petición como un objeto?",
-        "timeLimitSeconds": 10,
+        "timeLimitSeconds": 7,
         "mediaID": null,
         "options": [
           {"index": "1", "text": "Command", "mediaID": null},
@@ -212,7 +212,7 @@ class MockGameService implements GameRemoteDataSource {
         "questionType": "QUIZ",
         "questionText":
             "¿Qué patrón provee una interfaz unificada para un conjunto de interfaces en un subsistema?",
-        "timeLimitSeconds": 10,
+        "timeLimitSeconds": 7,
         "mediaID": null,
         "options": [
           {"index": "1", "text": "Bridge", "mediaID": null},
@@ -227,7 +227,7 @@ class MockGameService implements GameRemoteDataSource {
         "questionType": "QUIZ",
         "questionText":
             "El patrón Strategy permite intercambiar algoritmos en tiempo de ejecución.",
-        "timeLimitSeconds": 10,
+        "timeLimitSeconds": 7,
         "mediaID": null,
         "options": [
           {"index": "1", "text": "Verdadero", "mediaID": null},
