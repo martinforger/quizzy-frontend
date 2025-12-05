@@ -1,0 +1,98 @@
+[
+  {
+    "id": "q1",
+    "title": "Artificial Intelligence in Space",
+    "description": "AI milestones and robotics beyond Earth.",
+    "themes": ["Science", "Technology"],
+    "author": { "id": "author-1", "name": "MuseumOfScience" },
+    "kahootImage": "https://picsum.photos/seed/quiz-sci/400/240",
+    "playCount": 1543,
+    "createdAt": "2025-01-02T10:00:00Z",
+    "visibility": "public",
+    "status": "published"
+  },
+  {
+    "id": "q2",
+    "title": "Ancient World Wonders",
+    "description": "Travel through the greatest ancient constructions.",
+    "themes": ["History"],
+    "author": { "id": "author-2", "name": "HistoryBuffs" },
+    "kahootImage": "https://picsum.photos/seed/quiz-hist/400/240",
+    "playCount": 2210,
+    "createdAt": "2024-12-15T08:30:00Z",
+    "visibility": "public",
+    "status": "published"
+  },
+  {
+    "id": "q3",
+    "title": "Blockbuster Hits of the 90s",
+    "description": "Relive iconic movies and directors from the 90s.",
+    "themes": ["Movies", "Entertainment"],
+    "author": { "id": "author-3", "name": "CinemaClub" },
+    "kahootImage": "https://picsum.photos/seed/quiz-mov/400/240",
+    "playCount": 980,
+    "createdAt": "2024-11-20T12:00:00Z",
+    "visibility": "public",
+    "status": "published"
+  },
+  {
+    "id": "q4",
+    "title": "World Capitals Challenge",
+    "description": "Can you name all the capitals? Timed challenge.",
+    "themes": ["Geography"],
+    "author": { "id": "author-4", "name": "GeoMaster" },
+    "kahootImage": "https://picsum.photos/seed/quiz-geo/400/240",
+    "playCount": 3044,
+    "createdAt": "2024-12-01T16:45:00Z",
+    "visibility": "public",
+    "status": "published"
+  },
+  {
+    "id": "q5",
+    "title": "Champions League Legends",
+    "description": "Teams, finals and scorers across decades.",
+    "themes": ["Sports"],
+    "author": { "id": "author-5", "name": "Sportify" },
+    "kahootImage": "https://picsum.photos/seed/quiz-sport/400/240",
+    "playCount": 1876,
+    "createdAt": "2024-10-10T09:15:00Z",
+    "visibility": "public",
+    "status": "published"
+  },
+  {
+    "id": "q6",
+    "title": "Biology Basics",
+    "description": "Cell structure, DNA and ecosystems.",
+    "themes": ["Science"],
+    "author": { "id": "author-6", "name": "Bio101" },
+    "kahootImage": "https://picsum.photos/seed/quiz-bio/400/240",
+    "playCount": 720,
+    "createdAt": "2025-01-05T18:20:00Z",
+    "visibility": "public",
+    "status": "published"
+  },
+  {
+    "id": "q7",
+    "title": "Geography Challenge",
+    "description": "Capitals, borders and curiosities.",
+    "themes": ["Geography"],
+    "author": { "id": "author-7", "name": "MapLovers" },
+    "kahootImage": "https://picsum.photos/seed/quiz-geo2/400/240",
+    "playCount": 870,
+    "createdAt": "2024-09-22T07:00:00Z",
+    "visibility": "public",
+    "status": "published"
+  },
+  {
+    "id": "q8",
+    "title": "Music Theory Essentials",
+    "description": "Scales, chords and rhythm fundamentals.",
+    "themes": ["Music", "Education"],
+    "author": { "id": "author-8", "name": "SoundLab" },
+    "kahootImage": "https://picsum.photos/seed/quiz-music/400/240",
+    "playCount": 640,
+    "createdAt": "2024-08-30T13:10:00Z",
+    "visibility": "public",
+    "status": "published"
+  }
+]
