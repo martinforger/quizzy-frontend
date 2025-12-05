@@ -5,10 +5,26 @@ import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'package:quizzy/presentation/widgets/quizzy_logo.dart';
 
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
+import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
+import 'package:quizzy/application/solo-game/useCases/get_summary_use_case.dart';
+import 'package:quizzy/presentation/bloc/game_cubit.dart';
+import 'package:quizzy/presentation/screens/game/game_screen.dart';
+
 class DiscoverScreen extends StatefulWidget {
-  const DiscoverScreen({super.key, required this.controller});
+  const DiscoverScreen({
+    super.key,
+    required this.controller,
+    required this.startAttemptUseCase,
+    required this.submitAnswerUseCase,
+    required this.getSummaryUseCase,
+  });
 
   final DiscoveryController controller;
+  final StartAttemptUseCase startAttemptUseCase;
+  final SubmitAnswerUseCase submitAnswerUseCase;
+  final GetSummaryUseCase getSummaryUseCase;
 
   @override
   State<DiscoverScreen> createState() => _DiscoverScreenState();
@@ -62,7 +78,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     final categories = snapshot.data ?? [];
                     return ListView.separated(
                       scrollDirection: Axis.horizontal,
-                      itemBuilder: (context, index) => _CategoryCard(category: categories[index]),
+                      itemBuilder: (context, index) =>
+                          _CategoryCard(category: categories[index]),
                       separatorBuilder: (_, __) => const SizedBox(width: 12),
                       itemCount: categories.length,
                     );
@@ -84,10 +101,17 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                   final quizzes = snapshot.data ?? [];
                   return Column(
                     children: quizzes
-                        .map((quiz) => Padding(
-                              padding: const EdgeInsets.only(bottom: 12),
-                              child: _FeaturedCard(quiz: quiz),
-                            ))
+                        .map(
+                          (quiz) => Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: _FeaturedCard(
+                              quiz: quiz,
+                              startAttemptUseCase: widget.startAttemptUseCase,
+                              submitAnswerUseCase: widget.submitAnswerUseCase,
+                              getSummaryUseCase: widget.getSummaryUseCase,
+                            ),
+                          ),
+                        )
                         .toList(),
                   );
                 },
@@ -107,9 +131,15 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         const Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Discover', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800)),
+            Text(
+              'Discover',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+            ),
             SizedBox(height: 4),
-            Text('Explora y encuentra nuevos quizzes', style: TextStyle(color: Colors.white70)),
+            Text(
+              'Explora y encuentra nuevos quizzes',
+              style: TextStyle(color: Colors.white70),
+            ),
           ],
         ),
         Container(
@@ -139,7 +169,10 @@ class _SectionHeader extends StatelessWidget {
         Text(title, style: Theme.of(context).textTheme.titleMedium),
         Text(
           actionText,
-          style: TextStyle(color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w600),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.primary,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ],
     );
@@ -165,7 +198,11 @@ class _CategoryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(_iconForCategory(category.icon), color: Colors.white.withValues(alpha: 0.9), size: 26),
+          Icon(
+            _iconForCategory(category.icon),
+            color: Colors.white.withValues(alpha: 0.9),
+            size: 26,
+          ),
           const Spacer(),
           Text(
             category.name,
@@ -178,54 +215,84 @@ class _CategoryCard extends StatelessWidget {
 }
 
 class _FeaturedCard extends StatelessWidget {
-  const _FeaturedCard({required this.quiz});
+  const _FeaturedCard({
+    required this.quiz,
+    required this.startAttemptUseCase,
+    required this.submitAnswerUseCase,
+    required this.getSummaryUseCase,
+  });
 
   final QuizSummary quiz;
+  final StartAttemptUseCase startAttemptUseCase;
+  final SubmitAnswerUseCase submitAnswerUseCase;
+  final GetSummaryUseCase getSummaryUseCase;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(AppRadii.card),
-        boxShadow: AppShadows.medium,
-      ),
-      child: Row(
-        children: [
-          _Thumb(tag: quiz.tag),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    quiz.tag.toUpperCase(),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.primary,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 11,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    quiz.title,
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 16),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    quiz.author,
-                    style: const TextStyle(color: Colors.white70),
-                  ),
-                ],
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => BlocProvider(
+              create: (context) => GameCubit(
+                startAttemptUseCase: startAttemptUseCase,
+                submitAnswerUseCase: submitAnswerUseCase,
+                getSummaryUseCase: getSummaryUseCase,
               ),
+              child: const GameScreen(),
             ),
           ),
-          const Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: Icon(Icons.chevron_right, color: Colors.white70),
-          ),
-        ],
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(AppRadii.card),
+          boxShadow: AppShadows.medium,
+        ),
+        child: Row(
+          children: [
+            _Thumb(tag: quiz.tag),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      quiz.tag.toUpperCase(),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      quiz.title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      quiz.author,
+                      style: const TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: Icon(Icons.chevron_right, color: Colors.white70),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -241,8 +308,8 @@ class _Thumb extends StatelessWidget {
     final color = tag.toLowerCase().contains('science')
         ? Colors.deepPurple
         : tag.toLowerCase().contains('history')
-            ? Colors.orangeAccent
-            : Colors.teal;
+        ? Colors.orangeAccent
+        : Colors.teal;
     return Container(
       width: 72,
       height: 72,
@@ -259,7 +326,10 @@ class _Thumb extends StatelessWidget {
         ),
       ),
       child: Center(
-        child: Icon(Icons.play_arrow_rounded, color: Colors.white.withValues(alpha: 0.9)),
+        child: Icon(
+          Icons.play_arrow_rounded,
+          color: Colors.white.withValues(alpha: 0.9),
+        ),
       ),
     );
   }
@@ -277,11 +347,20 @@ class _QuickActionsRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _QuickAction(icon: Icons.add_circle_outline, label: 'Create quiz')),
+        Expanded(
+          child: _QuickAction(
+            icon: Icons.add_circle_outline,
+            label: 'Create quiz',
+          ),
+        ),
         SizedBox(width: 12),
-        Expanded(child: _QuickAction(icon: Icons.school_outlined, label: 'Study')),
+        Expanded(
+          child: _QuickAction(icon: Icons.school_outlined, label: 'Study'),
+        ),
         SizedBox(width: 12),
-        Expanded(child: _QuickAction(icon: Icons.qr_code_scanner, label: 'Scan')),
+        Expanded(
+          child: _QuickAction(icon: Icons.qr_code_scanner, label: 'Scan'),
+        ),
       ],
     );
   }
@@ -333,11 +412,17 @@ class _RewardCard extends StatelessWidget {
             children: const [
               Icon(Icons.local_offer_outlined, color: Colors.white70),
               SizedBox(width: 8),
-              Text('Tropical Triumph', style: TextStyle(fontWeight: FontWeight.w700)),
+              Text(
+                'Tropical Triumph',
+                style: TextStyle(fontWeight: FontWeight.w700),
+              ),
             ],
           ),
           const SizedBox(height: 8),
-          const Text('You unlocked a new theme!', style: TextStyle(color: Colors.white70)),
+          const Text(
+            'You unlocked a new theme!',
+            style: TextStyle(color: Colors.white70),
+          ),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
@@ -345,7 +430,9 @@ class _RewardCard extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Theme.of(context).colorScheme.primary,
                 foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
               ),
               onPressed: () {},
               child: const Padding(
@@ -377,7 +464,10 @@ class _LearnCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Learn better this year', style: TextStyle(fontWeight: FontWeight.w700)),
+                const Text(
+                  'Learn better this year',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
                 const SizedBox(height: 6),
                 const Text(
                   'Power up your studying with our fun and engaging tools.',
@@ -396,7 +486,11 @@ class _LearnCard extends StatelessWidget {
               color: Theme.of(context).colorScheme.surface,
               borderRadius: BorderRadius.circular(AppRadii.card),
             ),
-            child: const Icon(Icons.person_outline, size: 34, color: Colors.white70),
+            child: const Icon(
+              Icons.person_outline,
+              size: 34,
+              color: Colors.white70,
+            ),
           ),
         ],
       ),

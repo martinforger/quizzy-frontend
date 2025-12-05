@@ -5,10 +5,23 @@ import 'package:quizzy/presentation/screens/library/library_screen.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 
+import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
+import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
+import 'package:quizzy/application/solo-game/useCases/get_summary_use_case.dart';
+
 class ShellScreen extends StatefulWidget {
-  const ShellScreen({super.key, required this.discoveryController});
+  const ShellScreen({
+    super.key,
+    required this.discoveryController,
+    required this.startAttemptUseCase,
+    required this.submitAnswerUseCase,
+    required this.getSummaryUseCase,
+  });
 
   final DiscoveryController discoveryController;
+  final StartAttemptUseCase startAttemptUseCase;
+  final SubmitAnswerUseCase submitAnswerUseCase;
+  final GetSummaryUseCase getSummaryUseCase;
 
   @override
   State<ShellScreen> createState() => _ShellScreenState();
@@ -21,7 +34,12 @@ class _ShellScreenState extends State<ShellScreen> {
   Widget build(BuildContext context) {
     final pages = <Widget>[
       const _PlaceholderScreen(title: 'Inicio (Proximamente)'),
-      DiscoverScreen(controller: widget.discoveryController),
+      DiscoverScreen(
+        controller: widget.discoveryController,
+        startAttemptUseCase: widget.startAttemptUseCase,
+        submitAnswerUseCase: widget.submitAnswerUseCase,
+        getSummaryUseCase: widget.getSummaryUseCase,
+      ),
       const LibraryScreen(),
       const JoinScreen(),
     ];
@@ -34,21 +52,26 @@ class _ShellScreenState extends State<ShellScreen> {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(AppRadii.card),
+            borderRadius: BorderRadius.circular(24),
             child: BottomAppBar(
               color: Colors.transparent,
               elevation: 0,
               shape: const CircularNotchedRectangle(),
-              notchMargin: 8,
+              notchMargin: 10,
               child: Container(
                 height: 70,
+                clipBehavior: Clip.hardEdge,
                 decoration: BoxDecoration(
-                  color: AppColors.card,
-                  borderRadius: BorderRadius.circular(AppRadii.card),
+                  color: const Color(0xFF1E1B21), // Dark card color
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.05),
+                    width: 1,
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 18,
+                      color: Colors.black.withOpacity(0.4),
+                      blurRadius: 20,
                       offset: const Offset(0, 10),
                     ),
                   ],
@@ -64,10 +87,22 @@ class _ShellScreenState extends State<ShellScreen> {
                   selectedFontSize: 12,
                   unselectedFontSize: 11,
                   items: const [
-                    BottomNavigationBarItem(icon: Icon(Icons.home_rounded), label: 'Home'),
-                    BottomNavigationBarItem(icon: Icon(Icons.explore_rounded), label: 'Discover'),
-                    BottomNavigationBarItem(icon: Icon(Icons.bookmarks_rounded), label: 'Library'),
-                    BottomNavigationBarItem(icon: Icon(Icons.qr_code_rounded), label: 'Join'),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.home_rounded),
+                      label: 'Home',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.explore_rounded),
+                      label: 'Discover',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.bookmarks_rounded),
+                      label: 'Library',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.qr_code_rounded),
+                      label: 'Join',
+                    ),
                   ],
                 ),
               ),
@@ -76,18 +111,21 @@ class _ShellScreenState extends State<ShellScreen> {
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      floatingActionButton: FloatingActionButton.small(
+      floatingActionButton: FloatingActionButton(
         onPressed: _onCreatePressed,
-        child: const Icon(Icons.add, size: 30),
+        elevation: 4,
+        backgroundColor: AppColors.primary,
+        shape: const CircleBorder(),
+        child: const Icon(Icons.add, size: 32, color: Colors.white),
       ),
     );
   }
 
   // Accion temporal para el boton central.
   void _onCreatePressed() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Crear Quiz - proximamente')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Crear Quiz - proximamente')));
   }
 }
 
@@ -101,10 +139,7 @@ class _PlaceholderScreen extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(title: Text(title)),
       body: Center(
-        child: Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        child: Text(title, style: Theme.of(context).textTheme.titleMedium),
       ),
     );
   }
