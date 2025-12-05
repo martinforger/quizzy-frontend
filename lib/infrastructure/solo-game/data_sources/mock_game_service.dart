@@ -248,7 +248,12 @@ class MockGameService implements GameRemoteDataSource {
     final firstSlide = Map<String, dynamic>.from(_currentSlides.first);
     firstSlide.remove("correctIndex");
 
-    return {"attemptId": _currentAttemptId, "firstSlide": firstSlide};
+    return {
+      "attemptId": _currentAttemptId,
+      "firstSlide": firstSlide,
+      "currentQuestionIndex": 0,
+      "totalQuestions": _currentSlides.length,
+    };
   }
 
   // H5.2 Obtener el estado del intento y proxima pregunta
@@ -274,6 +279,8 @@ class MockGameService implements GameRemoteDataSource {
       "state": _isCompleted ? "COMPLETED" : "IN_PROGRESS",
       "currentScore": _currentScore,
       "nextSlide": _isCompleted ? null : nextSlideData,
+      "currentQuestionIndex": _currentSlideIndex,
+      "totalQuestions": _currentSlides.length,
     };
   }
 
@@ -340,6 +347,8 @@ class MockGameService implements GameRemoteDataSource {
       "attemptState": _isCompleted ? "COMPLETED" : "IN_PROGRESS",
       "nextSlide":
           nextSlideData, // Si es null, el front sabe que debe pedir el summary
+      "currentQuestionIndex": _currentSlideIndex,
+      "totalQuestions": _currentSlides.length,
     };
   }
 

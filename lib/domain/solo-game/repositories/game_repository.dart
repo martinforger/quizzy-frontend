@@ -13,4 +13,16 @@ abstract class GameRepository {
   });
 
   Future<SummaryEntity> getSummary(String attemptId);
+
+  // Local Persistence
+  Future<void> saveLocalGameSession({
+    required String quizId,
+    required String attemptId,
+    required int currentQuestionIndex,
+    required int totalQuestions,
+  });
+
+  Future<Map<String, dynamic>?> getLocalGameSession();
+
+  Future<void> clearLocalGameSession();
 }

@@ -5,10 +5,13 @@ import '../data_sources/game_remote_data_source.dart';
 import '../models/attempt_model.dart';
 import '../models/summary_model.dart';
 
+import '../data_sources/local_game_storage.dart';
+
 class GameRepositoryImpl implements GameRepository {
   final GameRemoteDataSource _remoteDataSource;
+  final LocalGameStorage _localGameStorage;
 
-  GameRepositoryImpl(this._remoteDataSource);
+  GameRepositoryImpl(this._remoteDataSource, this._localGameStorage);
 
   @override
   Future<AttemptEntity> startNewAttempt(String kahootId) async {
@@ -59,5 +62,30 @@ class GameRepositoryImpl implements GameRepository {
     } catch (e) {
       throw Exception("Repository Error (Summary): $e");
     }
+  }
+
+  @override
+  Future<void> saveLocalGameSession({
+    required String quizId,
+    required String attemptId,
+    required int currentQuestionIndex,
+    required int totalQuestions,
+  }) async {
+    return _localGameStorage.saveSession(
+      quizId: quizId,
+      attemptId: attemptId,
+      currentQuestionIndex: currentQuestionIndex,
+      totalQuestions: totalQuestions,
+    );
+  }
+
+  @override
+  Future<Map<String, dynamic>?> getLocalGameSession() async {
+    return _localGameStorage.getSession();
+  }
+
+  @override
+  Future<void> clearLocalGameSession() async {
+    return _localGameStorage.clearSession();
   }
 }
