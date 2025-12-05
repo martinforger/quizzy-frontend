@@ -125,19 +125,19 @@ class _ShellScreenState extends State<ShellScreen> {
                   items: const [
                     BottomNavigationBarItem(
                       icon: Icon(Icons.home_rounded),
-                      label: 'Home',
+                      label: 'Inicio',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.explore_rounded),
-                      label: 'Discover',
+                      label: 'Descubrir',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.bookmarks_rounded),
-                      label: 'Library',
+                      label: 'Catálogo',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.qr_code_rounded),
-                      label: 'Join',
+                      label: 'Unirse',
                     ),
                   ],
                 ),
