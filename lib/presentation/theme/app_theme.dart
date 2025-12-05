@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// Tokens de UI reutilizables para colores, radios, sombras y tema.
 class AppColors {
@@ -47,7 +48,7 @@ class AppTheme {
   static ThemeData build() {
     final base = ThemeData(
       useMaterial3: true,
-      fontFamily: 'Roboto',
+      fontFamily: GoogleFonts.onest().fontFamily,
       brightness: Brightness.dark,
     );
 
@@ -60,8 +61,11 @@ class AppTheme {
         surface: AppColors.surface,
         brightness: Brightness.dark,
       ),
-      textTheme: base.textTheme.copyWith(
-        headlineMedium: const TextStyle(fontWeight: FontWeight.w700, fontSize: 24),
+      textTheme: GoogleFonts.onestTextTheme(base.textTheme).copyWith(
+        headlineMedium: const TextStyle(
+          fontWeight: FontWeight.w700,
+          fontSize: 24,
+        ),
         titleMedium: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
         bodyMedium: const TextStyle(fontSize: 14, color: AppColors.textMuted),
       ),
