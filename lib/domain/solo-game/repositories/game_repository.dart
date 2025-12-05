@@ -22,7 +22,9 @@ abstract class GameRepository {
     required int totalQuestions,
   });
 
-  Future<Map<String, dynamic>?> getLocalGameSession();
+  Future<Map<String, dynamic>?> getLocalGameSession(String quizId);
 
-  Future<void> clearLocalGameSession();
+  Future<Map<String, Map<String, dynamic>>> getAllLocalGameSessions();
+
+  Future<void> clearLocalGameSession(String quizId);
 }

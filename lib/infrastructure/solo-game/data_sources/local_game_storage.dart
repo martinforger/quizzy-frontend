@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalGameStorage {
-  static const _keySession = 'current_game_session';
+  static const _keySessions = 'saved_game_sessions';
 
   Future<void> saveSession({
     required String quizId,
@@ -11,32 +11,48 @@ class LocalGameStorage {
     required int totalQuestions,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    final jsonString = jsonEncode({
+    final allSessions = await getAllSessions();
+
+    allSessions[quizId] = {
       'quizId': quizId,
       'attemptId': attemptId,
       'currentQuestionIndex': currentQuestionIndex,
       'totalQuestions': totalQuestions,
-    });
-    await prefs.setString(_keySession, jsonString);
+    };
+
+    await prefs.setString(_keySessions, jsonEncode(allSessions));
   }
 
-  Future<Map<String, dynamic>?> getSession() async {
+  Future<Map<String, dynamic>?> getSession(String quizId) async {
+    final allSessions = await getAllSessions();
+    return allSessions[quizId];
+  }
+
+  Future<Map<String, Map<String, dynamic>>> getAllSessions() async {
     final prefs = await SharedPreferences.getInstance();
-    final jsonString = prefs.getString(_keySession);
+    final jsonString = prefs.getString(_keySessions);
     if (jsonString != null) {
-      return jsonDecode(jsonString);
+      final decoded = jsonDecode(jsonString) as Map<String, dynamic>;
+      // Ensure typing
+      return decoded.map(
+        (key, value) => MapEntry(key, value as Map<String, dynamic>),
+      );
     }
-    return null;
+    return {};
   }
 
-  // Deprecated shim if needed, or update consumers
-  Future<String?> getAttemptId() async {
-    final session = await getSession();
+  // Deprecated usage removed or adapted
+  Future<String?> getAttemptId(String quizId) async {
+    final session = await getSession(quizId);
     return session?['attemptId'];
   }
 
-  Future<void> clearSession() async {
+  Future<void> clearSession(String quizId) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keySession);
+    final allSessions = await getAllSessions();
+    if (allSessions.containsKey(quizId)) {
+      allSessions.remove(quizId);
+      await prefs.setString(_keySessions, jsonEncode(allSessions));
+    }
   }
 }

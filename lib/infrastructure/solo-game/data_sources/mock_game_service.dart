@@ -4,18 +4,29 @@ import 'package:quizzy/infrastructure/solo-game/data_sources/game_remote_data_so
 
 enum MockQustionType { QUIZZ, TRUE_FALSE }
 
+class _MockAttemptSession {
+  final String attemptId;
+  final String quizId;
+  final List<Map<String, dynamic>> slides;
+  int currentSlideIndex = 0;
+  int currentScore = 0;
+  int correctAnswersCount = 0;
+  bool isCompleted = false;
+
+  _MockAttemptSession({
+    required this.attemptId,
+    required this.quizId,
+    required this.slides,
+  });
+}
+
 class MockGameService implements GameRemoteDataSource {
-  // Estado interno
-  String? _currentAttemptId;
-  int _currentSlideIndex = 0;
-  int _currentScore = 0;
-  int _correctAnswersCount = 0;
-  bool _isCompleted = false;
+  // Estado interno: Mapa de attemptId -> Session
+  final Map<String, _MockAttemptSession> _sessions = {};
 
   // Simulacion de latencia
   final Duration _latency = const Duration(seconds: 1);
 
-  // Datos de prueba (kahoots)
   // Datos de prueba (kahoots)
   final Map<String, List<Map<String, dynamic>>> _quizzes = {
     "kahoot-demo-id": [
@@ -227,8 +238,6 @@ class MockGameService implements GameRemoteDataSource {
     ],
   };
 
-  List<Map<String, dynamic>> _currentSlides = [];
-
   // H5.1 Iniciar nuevo kahoot
   @override
   Future<Map<String, dynamic>> startNewAttempt(String kahootId) async {
@@ -238,21 +247,23 @@ class MockGameService implements GameRemoteDataSource {
       throw Exception("404 Not Found: Quiz no encontrado");
     }
 
-    _currentSlides = _quizzes[kahootId]!;
-    _currentAttemptId = "attemt-${DateTime.now().millisecondsSinceEpoch}";
-    _currentSlideIndex = 0;
-    _currentScore = 0;
-    _correctAnswersCount = 0;
-    _isCompleted = false;
+    final attemptId = "attemt-${DateTime.now().millisecondsSinceEpoch}";
+    final slides = _quizzes[kahootId]!;
 
-    final firstSlide = Map<String, dynamic>.from(_currentSlides.first);
+    _sessions[attemptId] = _MockAttemptSession(
+      attemptId: attemptId,
+      quizId: kahootId,
+      slides: slides,
+    );
+
+    final firstSlide = Map<String, dynamic>.from(slides.first);
     firstSlide.remove("correctIndex");
 
     return {
-      "attemptId": _currentAttemptId,
+      "attemptId": attemptId,
       "firstSlide": firstSlide,
       "currentQuestionIndex": 0,
-      "totalQuestions": _currentSlides.length,
+      "totalQuestions": slides.length,
     };
   }
 
@@ -261,26 +272,29 @@ class MockGameService implements GameRemoteDataSource {
   Future<Map<String, dynamic>> getAttemptState(String attemptId) async {
     await Future.delayed(_latency);
 
-    if (attemptId != _currentAttemptId) {
+    if (!_sessions.containsKey(attemptId)) {
       throw Exception("404 Not Found: Intento no encontrado");
     }
 
+    final session = _sessions[attemptId]!;
+
     Map<String, dynamic>? nextSlideData;
 
-    if (!_isCompleted && _currentSlideIndex < _currentSlides.length) {
+    if (!session.isCompleted &&
+        session.currentSlideIndex < session.slides.length) {
       nextSlideData = Map<String, dynamic>.from(
-        _currentSlides[_currentSlideIndex],
+        session.slides[session.currentSlideIndex],
       );
       nextSlideData.remove("correctIndex");
     }
 
     return {
-      "attemptId": _currentAttemptId,
-      "state": _isCompleted ? "COMPLETED" : "IN_PROGRESS",
-      "currentScore": _currentScore,
-      "nextSlide": _isCompleted ? null : nextSlideData,
-      "currentQuestionIndex": _currentSlideIndex,
-      "totalQuestions": _currentSlides.length,
+      "attemptId": session.attemptId,
+      "state": session.isCompleted ? "COMPLETED" : "IN_PROGRESS",
+      "currentScore": session.currentScore,
+      "nextSlide": session.isCompleted ? null : nextSlideData,
+      "currentQuestionIndex": session.currentSlideIndex,
+      "totalQuestions": session.slides.length,
     };
   }
 
@@ -292,18 +306,20 @@ class MockGameService implements GameRemoteDataSource {
   ) async {
     await Future.delayed(_latency);
 
-    if (attemptId != _currentAttemptId) {
+    if (!_sessions.containsKey(attemptId)) {
       throw Exception("404 Not Found: Intento no encontrado");
     }
 
-    if (_isCompleted) {
+    final session = _sessions[attemptId]!;
+
+    if (session.isCompleted) {
       throw Exception("400 Bad Request: El juego ya ha terminado");
     }
 
     final String slideId = body["slideId"];
     final List<dynamic> answerIndexes = body["answerIndexes"];
 
-    final currentSlideConfig = _currentSlides[_currentSlideIndex];
+    final currentSlideConfig = session.slides[session.currentSlideIndex];
 
     if (currentSlideConfig['slideId'] != slideId) {
       throw Exception("400 Bad Request: Slide id no coincide con el actual");
@@ -322,20 +338,20 @@ class MockGameService implements GameRemoteDataSource {
     int pointsEarned = 0;
     if (isCorrect) {
       pointsEarned = 1000 - (Random().nextInt(200));
-      _currentScore += pointsEarned;
-      _correctAnswersCount++;
+      session.currentScore += pointsEarned;
+      session.correctAnswersCount++;
     }
 
-    _currentSlideIndex++;
+    session.currentSlideIndex++;
 
-    if (_currentSlideIndex >= _currentSlides.length) {
-      _isCompleted = true;
+    if (session.currentSlideIndex >= session.slides.length) {
+      session.isCompleted = true;
     }
 
     Map<String, dynamic>? nextSlideData;
-    if (!_isCompleted) {
+    if (!session.isCompleted) {
       nextSlideData = Map<String, dynamic>.from(
-        _currentSlides[_currentSlideIndex],
+        session.slides[session.currentSlideIndex],
       );
       nextSlideData.remove("correctIndex");
     }
@@ -343,12 +359,12 @@ class MockGameService implements GameRemoteDataSource {
     return {
       "wasCorrect": isCorrect,
       "pointsEarned": pointsEarned,
-      "updatedScore": _currentScore,
-      "attemptState": _isCompleted ? "COMPLETED" : "IN_PROGRESS",
+      "updatedScore": session.currentScore,
+      "attemptState": session.isCompleted ? "COMPLETED" : "IN_PROGRESS",
       "nextSlide":
           nextSlideData, // Si es null, el front sabe que debe pedir el summary
-      "currentQuestionIndex": _currentSlideIndex,
-      "totalQuestions": _currentSlides.length,
+      "currentQuestionIndex": session.currentSlideIndex,
+      "totalQuestions": session.slides.length,
     };
   }
 
@@ -357,23 +373,25 @@ class MockGameService implements GameRemoteDataSource {
   Future<Map<String, dynamic>> getAttemptSummary(String attemptId) async {
     await Future.delayed(_latency);
 
-    if (attemptId != _currentAttemptId) {
+    if (!_sessions.containsKey(attemptId)) {
       throw Exception("404 Not Found: Intento no encontrado");
     }
 
-    if (!_isCompleted) {
+    final session = _sessions[attemptId]!;
+
+    if (!session.isCompleted) {
       throw Exception("400 Bad Request: El juego no ha terminado");
     }
 
-    int totalQuestions = _currentSlides.length;
+    int totalQuestions = session.slides.length;
     double accuracy = (totalQuestions > 0)
-        ? (_correctAnswersCount / totalQuestions) * 100
+        ? (session.correctAnswersCount / totalQuestions) * 100
         : 0.0;
 
     return {
-      "attemptId": _currentAttemptId,
-      "finalScore": _currentScore,
-      "totalCorrect": _correctAnswersCount,
+      "attemptId": session.attemptId,
+      "finalScore": session.currentScore,
+      "totalCorrect": session.correctAnswersCount,
       "totalQuestions": totalQuestions,
       "accuracyPercentage": accuracy.round(), // Devuelve entero ej: 80
     };

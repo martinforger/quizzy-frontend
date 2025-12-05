@@ -30,7 +30,7 @@ class LibraryScreen extends StatefulWidget {
 }
 
 class _LibraryScreenState extends State<LibraryScreen> {
-  Map<String, dynamic>? _savedSession;
+  Map<String, Map<String, dynamic>>? _savedSessions;
 
   @override
   void initState() {
@@ -41,10 +41,11 @@ class _LibraryScreenState extends State<LibraryScreen> {
   // Reload session when coming back to screen
   // Ideally this would be a Cubit/Bloc, but for simplicity setState is used given the clear scope.
   void _loadSession() async {
-    final session = await widget.manageLocalAttemptUseCase.getGameSession();
+    final sessions = await widget.manageLocalAttemptUseCase
+        .getAllGameSessions();
     if (mounted) {
       setState(() {
-        _savedSession = session;
+        _savedSessions = sessions;
       });
     }
   }
@@ -68,7 +69,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             getSummaryUseCase: widget.getSummaryUseCase,
             manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
             getAttemptStateUseCase: widget.getAttemptStateUseCase,
-            savedSession: _savedSession,
+            savedSession: _savedSessions?['kahoot-demo-id'],
             onGameStarted: _loadSession, // Check session when returning?
           ),
           _LibraryGameCard(
@@ -83,7 +84,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
             getSummaryUseCase: widget.getSummaryUseCase,
             manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
             getAttemptStateUseCase: widget.getAttemptStateUseCase,
-            savedSession: _savedSession,
+            savedSession: _savedSessions?['quiz-design-patterns'],
             onGameStarted: _loadSession,
           ),
         ],

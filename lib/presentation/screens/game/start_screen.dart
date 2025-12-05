@@ -16,7 +16,7 @@ class _StartScreenState extends State<StartScreen> {
   @override
   void initState() {
     super.initState();
-    context.read<GameCubit>().checkSavedGame();
+    context.read<GameCubit>().checkSavedGame(widget.quizId);
   }
 
   @override
@@ -71,7 +71,7 @@ class _StartScreenState extends State<StartScreen> {
                   _StartButton(
                     label: 'Continuar',
                     onPressed: () {
-                      context.read<GameCubit>().resumeGame();
+                      context.read<GameCubit>().resumeGame(widget.quizId);
                     },
                   ),
                   const SizedBox(height: 16),
