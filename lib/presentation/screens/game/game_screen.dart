@@ -15,6 +15,19 @@ class GameScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.grey),
+            onPressed: () {
+              Navigator.of(context).pop(); // Or show confirmation dialog
+            },
+          ),
+        ],
+      ),
+      extendBodyBehindAppBar: true,
       body: BlocConsumer<GameCubit, GameState>(
         listener: (context, state) {
           if (state is GameError) {
