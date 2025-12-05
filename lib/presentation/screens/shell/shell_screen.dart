@@ -40,7 +40,11 @@ class _ShellScreenState extends State<ShellScreen> {
         submitAnswerUseCase: widget.submitAnswerUseCase,
         getSummaryUseCase: widget.getSummaryUseCase,
       ),
-      const LibraryScreen(),
+      LibraryScreen(
+        startAttemptUseCase: widget.startAttemptUseCase,
+        submitAnswerUseCase: widget.submitAnswerUseCase,
+        getSummaryUseCase: widget.getSummaryUseCase,
+      ),
       const JoinScreen(),
     ];
 
