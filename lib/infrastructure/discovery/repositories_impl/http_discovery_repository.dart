@@ -20,35 +20,42 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
 
   @override
   Future<List<Category>> getCategories() async {
-    final uri = _baseUri.resolve('/discovery/categories');
+    final uri = _resolve('explore/categories');
     final response = await client.get(uri);
     if (response.statusCode != 200) {
       throw Exception('Error al obtener categorias: ${response.statusCode}');
     }
-    final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
+    final dynamic decoded = json.decode(response.body);
+    // El API nueva devuelve un array simple o envuelto; soportamos ambos.
+    final List<dynamic> jsonList = decoded is Map<String, dynamic>
+        ? (decoded['data'] as List<dynamic>? ?? <dynamic>[])
+        : (decoded as List<dynamic>);
     return jsonList.map((e) => _mapCategory(e as Map<String, dynamic>)).toList();
   }
 
   @override
   Future<List<QuizSummary>> getFeaturedQuizzes({int limit = 10}) async {
-    final uri = _baseUri.resolve('/kahoots/featured').replace(queryParameters: {
+    final uri = _resolve('explore/featured', queryParameters: {
       'limit': '$limit',
     });
     final response = await client.get(uri);
     if (response.statusCode != 200) {
       throw Exception('Error al obtener quizzes destacados: ${response.statusCode}');
     }
-    final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
+    final dynamic decoded = json.decode(response.body);
+    final List<dynamic> jsonList = decoded is Map<String, dynamic>
+        ? (decoded['data'] as List<dynamic>? ?? <dynamic>[])
+        : (decoded as List<dynamic>);
     return jsonList.map((e) => _mapQuizSummary(e as Map<String, dynamic>)).toList();
   }
 
   Category _mapCategory(Map<String, dynamic> json) {
     return Category(
-      id: json['id'] as String,
-      name: json['name'] as String,
-      icon: json['icon'] as String,
-      gradientStart: json['gradientStart'] as String,
-      gradientEnd: json['gradientEnd'] as String,
+      id: (json['id'] as String?) ?? (json['name'] as String? ?? ''),
+      name: json['name'] as String? ?? '',
+      icon: json['icon'] as String? ?? 'category',
+      gradientStart: json['gradientStart'] as String? ?? '#6C63FF',
+      gradientEnd: json['gradientEnd'] as String? ?? '#2B2E4A',
     );
   }
 
@@ -57,8 +64,10 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
       id: json['id'] as String,
       title: json['title'] as String? ?? 'Untitled quiz',
       author: _extractAuthor(json['author']),
-      tag: _extractFirstTheme(json['themes']) ?? (json['tag'] as String? ?? 'General'),
-      thumbnailUrl: (json['kahootImage'] as String?) ?? (json['thumbnailUrl'] as String? ?? ''),
+      tag: (json['category'] as String?) ?? _extractFirstTheme(json['themes']) ?? 'General',
+      thumbnailUrl: _resolveMedia(json['coverImageId'] as String?) ??
+          (json['kahootImage'] as String?) ??
+          (json['thumbnailUrl'] as String? ?? ''),
       description: json['description'] as String?,
       playCount: (json['playCount'] as num?)?.toInt(),
     );
@@ -77,12 +86,12 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
       'page': '$page',
       'limit': '$limit',
       if (query != null && query.isNotEmpty) 'q': query,
-      if (themes.isNotEmpty) 'themes': themes.join(','),
+      if (themes.isNotEmpty) 'categories': themes.join(','),
       if (orderBy != null && orderBy.isNotEmpty) 'orderBy': orderBy,
       if (order != null && order.isNotEmpty) 'order': order,
     };
 
-    final uri = _baseUri.resolve('/kahoots').replace(queryParameters: queryParameters);
+    final uri = _resolve('explore', queryParameters: queryParameters);
     final response = await client.get(uri);
     if (response.statusCode != 200) {
       throw Exception('Error al buscar quizzes: ${response.statusCode}');
@@ -97,12 +106,16 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
 
   @override
   Future<List<QuizTheme>> getThemes() async {
-    final uri = _baseUri.resolve('/themes');
+    // La API de explore expone categorías; las usamos como temas de filtro.
+    final uri = _resolve('explore/categories');
     final response = await client.get(uri);
     if (response.statusCode != 200) {
       throw Exception('Error al obtener temas: ${response.statusCode}');
     }
-    final List<dynamic> jsonList = json.decode(response.body) as List<dynamic>;
+    final dynamic decoded = json.decode(response.body);
+    final List<dynamic> jsonList = decoded is Map<String, dynamic>
+        ? (decoded['data'] as List<dynamic>? ?? <dynamic>[])
+        : (decoded as List<dynamic>);
     return jsonList.map((e) => _mapQuizTheme(e as Map<String, dynamic>)).toList();
   }
 
@@ -117,8 +130,8 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
 
   QuizTheme _mapQuizTheme(Map<String, dynamic> json) {
     return QuizTheme(
-      id: json['id'] as String,
-      name: json['name'] as String,
+      id: (json['id'] as String?) ?? (json['name'] as String? ?? ''),
+      name: json['name'] as String? ?? '',
       description: json['description'] as String? ?? '',
       kahootCount: (json['kahootCount'] as num?)?.toInt() ?? 0,
     );
@@ -141,5 +154,19 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
       if (first is Map<String, dynamic>) return first['name'] as String?;
     }
     return null;
+  }
+
+  String? _resolveMedia(String? mediaIdOrUrl) {
+    if (mediaIdOrUrl == null || mediaIdOrUrl.isEmpty) return null;
+    if (mediaIdOrUrl.startsWith('http')) return mediaIdOrUrl;
+    final base = _baseUri.toString();
+    final separator = base.endsWith('/') ? '' : '/';
+    return '$base${separator}media/$mediaIdOrUrl';
+  }
+
+  Uri _resolve(String path, {Map<String, String>? queryParameters}) {
+    final base = _baseUri.toString();
+    final separator = base.endsWith('/') ? '' : '/';
+    return Uri.parse('$base$separator$path').replace(queryParameters: queryParameters);
   }
 }

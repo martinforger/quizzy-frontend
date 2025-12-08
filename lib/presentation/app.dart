@@ -24,7 +24,7 @@ class QuizzyApp extends StatelessWidget {
     // Base URL del mock server. Ajusta con la IP de tu maquina para emuladores/dispositivos.
     const mockBaseUrl = String.fromEnvironment(
       'MOCK_BASE_URL',
-      defaultValue: 'http://10.0.2.2:8080',
+      defaultValue: 'https://quizzy-backend-0wh2.onrender.com/api/',
     );
 
     // Inyecta repositorio y casos de uso para mantener la arquitectura hexagonal.
@@ -45,6 +45,20 @@ class QuizzyApp extends StatelessWidget {
     final startAttemptUseCase = StartAttemptUseCase(gameRepository);
     final submitAnswerUseCase = SubmitAnswerUseCase(gameRepository);
     final getSummaryUseCase = GetSummaryUseCase(gameRepository);
+
+    // Slides (épica 3)
+    final slidesRepository = HttpSlidesRepository(
+      client: http.Client(),
+      baseUrl: mockBaseUrl,
+    );
+    final slideController = SlideController(
+      listSlidesUseCase: ListSlidesUseCase(slidesRepository),
+      getSlideUseCase: GetSlideUseCase(slidesRepository),
+      createSlideUseCase: CreateSlideUseCase(slidesRepository),
+      updateSlideUseCase: UpdateSlideUseCase(slidesRepository),
+      duplicateSlideUseCase: DuplicateSlideUseCase(slidesRepository),
+      deleteSlideUseCase: DeleteSlideUseCase(slidesRepository),
+    );
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
