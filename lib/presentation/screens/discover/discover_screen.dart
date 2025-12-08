@@ -91,10 +91,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       if (snapshot.hasError) {
                         return DiscoverInlineError(
                           message: 'No pudimos cargar los temas',
-                          onRetry: () => setState(
-                            () =>
-                                _themesFuture = widget.controller.fetchThemes(),
-                          ),
+                          onRetry: () {
+                            setState(() {
+                              _themesFuture = widget.controller.fetchThemes();
+                            });
+                          },
                         );
                       }
                       final themes = snapshot.data ?? [];
@@ -153,10 +154,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                           if (snapshot.hasError) {
                             return DiscoverInlineError(
                               message: 'No pudimos cargar las categorias',
-                              onRetry: () => setState(
-                                () => _categoriesFuture = widget.controller
-                                    .fetchCategories(),
-                              ),
+                              onRetry: () {
+                                setState(() {
+                                  _categoriesFuture =
+                                      widget.controller.fetchCategories();
+                                });
+                              },
                             );
                           }
                           final categories = snapshot.data ?? [];
