@@ -159,9 +159,8 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
   String? _resolveMedia(String? mediaIdOrUrl) {
     if (mediaIdOrUrl == null || mediaIdOrUrl.isEmpty) return null;
     if (mediaIdOrUrl.startsWith('http')) return mediaIdOrUrl;
-    final base = _baseUri.toString();
-    final separator = base.endsWith('/') ? '' : '/';
-    return '$base${separator}media/$mediaIdOrUrl';
+    // Endpoint de media no disponible aún para ids; evitar construir URLs inválidas.
+    return null;
   }
 
   Uri _resolve(String path, {Map<String, String>? queryParameters}) {
