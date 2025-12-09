@@ -4,7 +4,9 @@ import 'package:quizzy/presentation/screens/join/join_screen.dart';
 import 'package:quizzy/presentation/screens/library/library_screen.dart';
 import 'package:quizzy/presentation/screens/home/home_screen.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
+import 'package:quizzy/presentation/state/kahoot_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
+import 'package:quizzy/presentation/screens/kahoots/kahoot_editor_screen.dart';
 
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
@@ -17,12 +19,18 @@ class ShellScreen extends StatefulWidget {
     required this.startAttemptUseCase,
     required this.submitAnswerUseCase,
     required this.getSummaryUseCase,
+    required this.kahootController,
+    required this.defaultKahootAuthorId,
+    required this.defaultKahootThemeId,
   });
 
   final DiscoveryController discoveryController;
   final StartAttemptUseCase startAttemptUseCase;
   final SubmitAnswerUseCase submitAnswerUseCase;
   final GetSummaryUseCase getSummaryUseCase;
+  final KahootController kahootController;
+  final String defaultKahootAuthorId;
+  final String defaultKahootThemeId;
 
   @override
   State<ShellScreen> createState() => _ShellScreenState();
@@ -128,9 +136,16 @@ class _ShellScreenState extends State<ShellScreen> {
 
   // Accion temporal para el boton central.
   void _onCreatePressed() {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Crear Quiz - proximamente')));
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => KahootEditorScreen(
+          kahootController: widget.kahootController,
+          defaultAuthorId: widget.defaultKahootAuthorId,
+          defaultThemeId: widget.defaultKahootThemeId,
+        ),
+        fullscreenDialog: true,
+      ),
+    );
   }
 }
 
