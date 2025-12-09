@@ -101,8 +101,7 @@ class HttpKahootsRepository implements KahootsRepository {
   }
 
   Map<String, dynamic> _toJson(Kahoot kahoot) {
-    return {
-      'id': kahoot.id,
+    final map = <String, dynamic>{
       'title': kahoot.title,
       'description': kahoot.description,
       'coverImageId': kahoot.coverImageId,
@@ -112,8 +111,7 @@ class HttpKahootsRepository implements KahootsRepository {
       'category': kahoot.category,
       'status': kahoot.status,
       'questions': kahoot.questions.map((q) {
-        return {
-          'id': q.id,
+        final qMap = <String, dynamic>{
           'text': q.text,
           'mediaId': q.mediaId,
           'type': q.type,
@@ -121,15 +119,19 @@ class HttpKahootsRepository implements KahootsRepository {
           'points': q.points,
           'answers': q.answers
               .map((a) => {
-                    'id': a.id,
+                    if (a.id != null) 'id': a.id,
                     'text': a.text,
                     'mediaId': a.mediaId,
                     'isCorrect': a.isCorrect,
                   })
               .toList(),
         };
+        if (q.id != null) qMap['id'] = q.id;
+        return qMap;
       }).toList(),
     };
+    if (kahoot.id != null) map['id'] = kahoot.id;
+    return map;
   }
 
   Uri _resolve(String path) {
