@@ -14,7 +14,7 @@ class FeedbackOverlay extends StatelessWidget {
     final color = state.wasCorrect
         ? const Color(0xFF66BF39)
         : const Color(0xFFFF3355);
-    final text = state.wasCorrect ? "Correct" : "Incorrect";
+    final text = state.wasCorrect ? "Correcto!!" : "Fallaste 😔";
     final icon = state.wasCorrect ? Icons.check_circle : Icons.cancel;
 
     return Container(

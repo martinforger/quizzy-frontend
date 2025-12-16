@@ -21,11 +21,16 @@ class HomeScreen extends StatelessWidget {
                     color: Colors.grey,
                     shape: BoxShape.circle,
                   ),
-                  child: const Icon(Icons.person, color: Colors.white),
+                  child: ClipOval(
+                    child: Image.asset(
+                      'assets/images/carlos.png',
+                      fit: BoxFit.cover,
+                    ),
+                  ),
                 ),
                 const SizedBox(width: 12),
                 const Text(
-                  'Hola, Luis',
+                  'Hola, Carlos',
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],

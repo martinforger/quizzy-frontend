@@ -1,34 +1,69 @@
 import 'package:bloc/bloc.dart';
 import '../../../application/solo-game/useCases/submit_answer_use_case.dart';
 import '../../../application/solo-game/useCases/start_attempt_use_case.dart';
-import '../../../application/solo-game/useCases/get_summary_use_case.dart'; // Asumiendo que lo creaste
+import '../../../application/solo-game/useCases/get_summary_use_case.dart';
 import 'game_state.dart';
+import '../../../application/solo-game/useCases/manage_local_attempt_use_case.dart';
+import '../../../application/solo-game/useCases/get_attempt_state_use_case.dart';
 
 class GameCubit extends Cubit<GameState> {
-  // Inyectamos los Casos de Uso (NO el repositorio directamente)
   final StartAttemptUseCase _startAttemptUseCase;
   final SubmitAnswerUseCase _submitAnswerUseCase;
   final GetSummaryUseCase _getSummaryUseCase;
 
-  // Variables temporales para mantener estado entre emit
+  final ManageLocalAttemptUseCase _manageLocalAttemptUseCase;
+  final GetAttemptStateUseCase _getAttemptStateUseCase;
+
   String? _currentAttemptId;
+  String? _currentQuizId;
 
   GameCubit({
     required StartAttemptUseCase startAttemptUseCase,
     required SubmitAnswerUseCase submitAnswerUseCase,
     required GetSummaryUseCase getSummaryUseCase,
+    required ManageLocalAttemptUseCase manageLocalAttemptUseCase,
+    required GetAttemptStateUseCase getAttemptStateUseCase,
   }) : _startAttemptUseCase = startAttemptUseCase,
        _submitAnswerUseCase = submitAnswerUseCase,
        _getSummaryUseCase = getSummaryUseCase,
+       _manageLocalAttemptUseCase = manageLocalAttemptUseCase,
+       _getAttemptStateUseCase = getAttemptStateUseCase,
        super(GameInitial());
+
+  Future<void> checkSavedGame(String? currentQuizId) async {
+    try {
+      if (currentQuizId == null) {
+        emit(GameInitial(hasSavedAttempt: false));
+        return;
+      }
+      final session = await _manageLocalAttemptUseCase.getGameSession(
+        currentQuizId,
+      );
+      if (session != null && session['attemptId'] != null) {
+        emit(GameInitial(hasSavedAttempt: true));
+      } else {
+        emit(GameInitial(hasSavedAttempt: false));
+      }
+    } catch (e) {
+      emit(GameInitial(hasSavedAttempt: false));
+    }
+  }
 
   /// 1. Iniciar Juego
   Future<void> startGame(String kahootId) async {
     try {
       emit(GameLoading());
+      _currentQuizId = kahootId;
 
       final attempt = await _startAttemptUseCase(kahootId);
       _currentAttemptId = attempt.attemptId;
+
+      await _manageLocalAttemptUseCase.saveGameSession(
+        quizId: kahootId,
+        attemptId: _currentAttemptId!,
+        currentQuestionIndex: attempt.currentQuestionIndex,
+        totalQuestions: attempt.totalQuestions,
+      );
 
       if (attempt.firstSlide != null) {
         emit(
@@ -44,6 +79,51 @@ class GameCubit extends Cubit<GameState> {
     } catch (e) {
       emit(GameError(e.toString()));
     }
+  }
+
+  Future<void> resumeGame(String quizId) async {
+    try {
+      emit(GameLoading());
+      _currentQuizId = quizId;
+      final attemptId = await _manageLocalAttemptUseCase.getAttemptId(quizId);
+
+      if (attemptId == null) {
+        emit(GameError("No saved game found"));
+        return;
+      }
+
+      _currentAttemptId = attemptId;
+      final attempt = await _getAttemptStateUseCase(attemptId);
+
+      // Check if game is already completed
+      if (attempt.state == "COMPLETED") {
+        await loadSummary();
+        return;
+      }
+
+      final currentSlide = attempt.firstSlide ?? attempt.nextSlide;
+
+      if (currentSlide != null) {
+        emit(
+          GameInProgress(
+            attemptId: attempt.attemptId,
+            currentSlide: currentSlide,
+            currentScore: attempt.currentScore,
+            currentQuestionIndex: attempt.currentQuestionIndex,
+          ),
+        );
+      } else {
+        // Fallback: if no slide but not marked completed, try summary or error
+        emit(GameError("No active question in saved game."));
+      }
+    } catch (e) {
+      emit(GameError(e.toString()));
+    }
+  }
+
+  void exitGame() {
+    emit(GameInitial());
+    checkSavedGame(_currentQuizId);
   }
 
   /// 2. Enviar Respuesta
@@ -70,9 +150,15 @@ class GameCubit extends Cubit<GameState> {
         ),
       );
 
-      // Aquí la UI decide:
-      // Si nextSlide != null -> Espera 3 segs y llama a nextQuestion()
-      // Si nextSlide == null -> Llama a loadSummary()
+      // Update progress locally
+      if (_currentQuizId != null) {
+        await _manageLocalAttemptUseCase.saveGameSession(
+          quizId: _currentQuizId!,
+          attemptId: _currentAttemptId!,
+          currentQuestionIndex: result.currentQuestionIndex,
+          totalQuestions: result.totalQuestions,
+        );
+      }
     } catch (e) {
       emit(GameError(e.toString()));
     }
@@ -80,8 +166,6 @@ class GameCubit extends Cubit<GameState> {
 
   /// 3. Avanzar a la siguiente pregunta (Llamado por la UI tras ver el feedback)
   void nextQuestion(dynamic nextSlideData) {
-    // En Clean Architecture puro, 'nextSlideData' debería ser SlideEntity
-    // Reconstruimos el estado InProgress con la nueva data
     if (state is GameAnswerFeedback) {
       final feedbackState = state as GameAnswerFeedback;
       if (feedbackState.nextSlide != null) {
@@ -101,6 +185,10 @@ class GameCubit extends Cubit<GameState> {
     try {
       emit(GameLoading());
       final summary = await _getSummaryUseCase(_currentAttemptId!);
+      // Limpiamos el save local al terminar
+      if (_currentQuizId != null) {
+        await _manageLocalAttemptUseCase.clearAttemptId(_currentQuizId!);
+      }
       emit(GameFinished(summary));
     } catch (e) {
       emit(GameError(e.toString()));

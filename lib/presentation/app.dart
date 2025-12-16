@@ -42,10 +42,27 @@ class QuizzyApp extends StatelessWidget {
     );
 
     final gameService = MockGameService();
-    final gameRepository = GameRepositoryImpl(gameService);
+    final localGameStorage = LocalGameStorage();
+    final gameRepository = GameRepositoryImpl(gameService, localGameStorage);
     final startAttemptUseCase = StartAttemptUseCase(gameRepository);
     final submitAnswerUseCase = SubmitAnswerUseCase(gameRepository);
     final getSummaryUseCase = GetSummaryUseCase(gameRepository);
+    final manageLocalAttemptUseCase = ManageLocalAttemptUseCase(gameRepository);
+    final getAttemptStateUseCase = GetAttemptStateUseCase(gameRepository);
+
+    // Slides (épica 3)
+    final slidesRepository = HttpSlidesRepository(
+      client: http.Client(),
+      baseUrl: mockBaseUrl,
+    );
+    final slideController = SlideController(
+      listSlidesUseCase: ListSlidesUseCase(slidesRepository),
+      getSlideUseCase: GetSlideUseCase(slidesRepository),
+      createSlideUseCase: CreateSlideUseCase(slidesRepository),
+      updateSlideUseCase: UpdateSlideUseCase(slidesRepository),
+      duplicateSlideUseCase: DuplicateSlideUseCase(slidesRepository),
+      deleteSlideUseCase: DeleteSlideUseCase(slidesRepository),
+    );
 
     final kahootsRepository = HttpKahootsRepository(
       client: http.Client(),

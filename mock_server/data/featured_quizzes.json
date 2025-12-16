@@ -1,0 +1,37 @@
+[
+  {
+    "id": "q1",
+    "title": "Artificial Intelligence in Space",
+    "author": "by MuseumOfScience",
+    "tag": "Science",
+    "thumbnailUrl": "https://picsum.photos/seed/quiz-sci/200/200"
+  },
+  {
+    "id": "q2",
+    "title": "Ancient World Wonders",
+    "author": "by HistoryBuffs",
+    "tag": "History",
+    "thumbnailUrl": "https://picsum.photos/seed/quiz-hist/200/200"
+  },
+  {
+    "id": "q3",
+    "title": "Blockbuster Hits of the 90s",
+    "author": "by CinemaClub",
+    "tag": "Movies",
+    "thumbnailUrl": "https://picsum.photos/seed/quiz-mov/200/200"
+  },
+  {
+    "id": "q4",
+    "title": "World Capitals Challenge",
+    "author": "by GeoMaster",
+    "tag": "Geography",
+    "thumbnailUrl": "https://picsum.photos/seed/quiz-geo/200/200"
+  },
+  {
+    "id": "q5",
+    "title": "Champions League Legends",
+    "author": "by Sportify",
+    "tag": "Sports",
+    "thumbnailUrl": "https://picsum.photos/seed/quiz-sport/200/200"
+  }
+]

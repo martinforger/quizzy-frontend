@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:quizzy/application/solo-game/useCases/get_attempt_state_use_case.dart';
 import 'package:quizzy/presentation/screens/discover/discover_screen.dart';
 import 'package:quizzy/presentation/screens/join/join_screen.dart';
 import 'package:quizzy/presentation/screens/library/library_screen.dart';
 import 'package:quizzy/presentation/screens/home/home_screen.dart';
+import 'package:quizzy/presentation/screens/kahoots/slides_manager_screen.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
@@ -11,6 +13,7 @@ import 'package:quizzy/presentation/screens/kahoots/kahoot_editor_screen.dart';
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/get_summary_use_case.dart';
+import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_case.dart';
 
 class ShellScreen extends StatefulWidget {
   const ShellScreen({
@@ -53,6 +56,8 @@ class _ShellScreenState extends State<ShellScreen> {
         startAttemptUseCase: widget.startAttemptUseCase,
         submitAnswerUseCase: widget.submitAnswerUseCase,
         getSummaryUseCase: widget.getSummaryUseCase,
+        manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
+        getAttemptStateUseCase: widget.getAttemptStateUseCase,
       ),
       const JoinScreen(),
     ];
@@ -78,14 +83,45 @@ class _ShellScreenState extends State<ShellScreen> {
                   color: const Color(0xFF1E1B21), // Dark card color
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: Colors.white.withOpacity(0.05),
+                    color: Colors.white.withValues(alpha: 0.05),
                     width: 1,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.4),
-                      blurRadius: 20,
-                      offset: const Offset(0, 10),
+                      color: Color.fromRGBO(14, 63, 126, 0.04),
+                      blurRadius: 0,
+                      spreadRadius: 1,
+                      offset: Offset(0, 0),
+                    ),
+                    BoxShadow(
+                      color: Color.fromRGBO(42, 51, 69, 0.04),
+                      blurRadius: 1,
+                      spreadRadius: -0.5,
+                      offset: Offset(0, 1),
+                    ),
+                    BoxShadow(
+                      color: Color.fromRGBO(42, 51, 70, 0.04),
+                      blurRadius: 3,
+                      spreadRadius: -1.5,
+                      offset: Offset(0, 3),
+                    ),
+                    BoxShadow(
+                      color: Color.fromRGBO(42, 51, 70, 0.04),
+                      blurRadius: 6,
+                      spreadRadius: -3,
+                      offset: Offset(0, 6),
+                    ),
+                    BoxShadow(
+                      color: Color.fromRGBO(14, 63, 126, 0.04),
+                      blurRadius: 12,
+                      spreadRadius: -6,
+                      offset: Offset(0, 12),
+                    ),
+                    BoxShadow(
+                      color: Color.fromRGBO(14, 63, 126, 0.04),
+                      blurRadius: 24,
+                      spreadRadius: -12,
+                      offset: Offset(0, 24),
                     ),
                   ],
                 ),
@@ -102,19 +138,19 @@ class _ShellScreenState extends State<ShellScreen> {
                   items: const [
                     BottomNavigationBarItem(
                       icon: Icon(Icons.home_rounded),
-                      label: 'Home',
+                      label: 'Inicio',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.explore_rounded),
-                      label: 'Discover',
+                      label: 'Descubrir',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.bookmarks_rounded),
-                      label: 'Library',
+                      label: 'Catálogo',
                     ),
                     BottomNavigationBarItem(
                       icon: Icon(Icons.qr_code_rounded),
-                      label: 'Join',
+                      label: 'Unirse',
                     ),
                   ],
                 ),
