@@ -8,11 +8,26 @@ import 'widgets/summary_view.dart';
 import 'start_screen.dart';
 
 class GameScreen extends StatelessWidget {
-  const GameScreen({super.key});
+  final String quizId;
+
+  const GameScreen({super.key, this.quizId = "kahoot-demo-id"});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.close, color: Colors.grey),
+            onPressed: () {
+              Navigator.of(context).pop(); // Or show confirmation dialog
+            },
+          ),
+        ],
+      ),
+      extendBodyBehindAppBar: true,
       body: BlocConsumer<GameCubit, GameState>(
         listener: (context, state) {
           if (state is GameError) {
@@ -35,7 +50,7 @@ class GameScreen extends StatelessWidget {
           } else if (state is GameFinished) {
             return SummaryView(summary: state.summary);
           } else if (state is GameInitial) {
-            return const StartScreen();
+            return StartScreen(quizId: quizId);
           }
 
           // Default fallback

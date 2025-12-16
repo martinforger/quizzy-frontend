@@ -1,14 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../bloc/game_cubit.dart';
+import '../../bloc/game_state.dart';
 
-class StartScreen extends StatelessWidget {
-  const StartScreen({super.key});
+class StartScreen extends StatefulWidget {
+  final String quizId;
+
+  const StartScreen({super.key, required this.quizId});
+
+  @override
+  State<StartScreen> createState() => _StartScreenState();
+}
+
+class _StartScreenState extends State<StartScreen> {
+  @override
+  void initState() {
+    super.initState();
+    context.read<GameCubit>().checkSavedGame(widget.quizId);
+  }
 
   @override
   Widget build(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
     final tertiary = Theme.of(context).colorScheme.tertiary;
+
+    final state = context.watch<GameCubit>().state;
+    final savedAttempt = state is GameInitial && state.hasSavedAttempt;
+
     return Scaffold(
       body: Container(
         decoration: BoxDecoration(
@@ -23,7 +41,6 @@ class StartScreen extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo or Title Placeholder
                 const Text(
                   'Quizzy',
                   style: TextStyle(
@@ -50,14 +67,31 @@ class StartScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 60),
-
-                // Start Button
-                _StartButton(
-                  onPressed: () {
-                    // Hardcoded ID for now as per flow example
-                    context.read<GameCubit>().startGame("kahoot-demo-id");
-                  },
-                ),
+                if (savedAttempt) ...[
+                  _StartButton(
+                    label: 'Continuar',
+                    onPressed: () {
+                      context.read<GameCubit>().resumeGame(widget.quizId);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  TextButton(
+                    onPressed: () {
+                      context.read<GameCubit>().startGame(widget.quizId);
+                    },
+                    child: const Text(
+                      "Empezar de nuevo",
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                ] else ...[
+                  _StartButton(
+                    label: 'Empezar Juego',
+                    onPressed: () {
+                      context.read<GameCubit>().startGame(widget.quizId);
+                    },
+                  ),
+                ],
               ],
             ),
           ),
@@ -69,8 +103,9 @@ class StartScreen extends StatelessWidget {
 
 class _StartButton extends StatefulWidget {
   final VoidCallback onPressed;
+  final String label;
 
-  const _StartButton({required this.onPressed});
+  const _StartButton({required this.onPressed, required this.label});
 
   @override
   State<_StartButton> createState() => _StartButtonState();
@@ -128,7 +163,7 @@ class _StartButtonState extends State<_StartButton>
                 ],
               ),
               child: Text(
-                'Empezar Juego',
+                widget.label,
                 style: TextStyle(
                   color: Theme.of(context).colorScheme.primary,
                   fontSize: 24,

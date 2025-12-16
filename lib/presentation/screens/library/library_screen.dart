@@ -1,23 +1,54 @@
 import 'package:flutter/material.dart';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizzy/application/solo-game/useCases/get_attempt_state_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/get_summary_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
+import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_case.dart';
 import 'package:quizzy/presentation/bloc/game_cubit.dart';
 import 'package:quizzy/presentation/screens/game/game_screen.dart';
 
-class LibraryScreen extends StatelessWidget {
+class LibraryScreen extends StatefulWidget {
   const LibraryScreen({
     super.key,
     required this.startAttemptUseCase,
     required this.submitAnswerUseCase,
     required this.getSummaryUseCase,
+    required this.manageLocalAttemptUseCase,
+    required this.getAttemptStateUseCase,
   });
 
   final StartAttemptUseCase startAttemptUseCase;
   final SubmitAnswerUseCase submitAnswerUseCase;
   final GetSummaryUseCase getSummaryUseCase;
+  final ManageLocalAttemptUseCase manageLocalAttemptUseCase;
+  final GetAttemptStateUseCase getAttemptStateUseCase;
+
+  @override
+  State<LibraryScreen> createState() => _LibraryScreenState();
+}
+
+class _LibraryScreenState extends State<LibraryScreen> {
+  Map<String, Map<String, dynamic>>? _savedSessions;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSession();
+  }
+
+  // Reload session when coming back to screen
+  // Ideally this would be a Cubit/Bloc, but for simplicity setState is used given the clear scope.
+  void _loadSession() async {
+    final sessions = await widget.manageLocalAttemptUseCase
+        .getAllGameSessions();
+    if (mounted) {
+      setState(() {
+        _savedSessions = sessions;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,9 +63,29 @@ class LibraryScreen extends StatelessWidget {
                 "Prueba la funcionalidad del juego con este quiz de demostración.",
             imageUrl:
                 "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&q=80&w=1000",
-            startAttemptUseCase: startAttemptUseCase,
-            submitAnswerUseCase: submitAnswerUseCase,
-            getSummaryUseCase: getSummaryUseCase,
+            quizId: "kahoot-demo-id",
+            startAttemptUseCase: widget.startAttemptUseCase,
+            submitAnswerUseCase: widget.submitAnswerUseCase,
+            getSummaryUseCase: widget.getSummaryUseCase,
+            manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
+            getAttemptStateUseCase: widget.getAttemptStateUseCase,
+            savedSession: _savedSessions?['kahoot-demo-id'],
+            onGameStarted: _loadSession, // Check session when returning?
+          ),
+          _LibraryGameCard(
+            title: "Patrones de Diseño",
+            description:
+                "Pon a prueba tus conocimientos sobre patrones de diseño de software.",
+            imageUrl:
+                "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=1000",
+            quizId: "quiz-design-patterns",
+            startAttemptUseCase: widget.startAttemptUseCase,
+            submitAnswerUseCase: widget.submitAnswerUseCase,
+            getSummaryUseCase: widget.getSummaryUseCase,
+            manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
+            getAttemptStateUseCase: widget.getAttemptStateUseCase,
+            savedSession: _savedSessions?['quiz-design-patterns'],
+            onGameStarted: _loadSession,
           ),
         ],
       ),
@@ -47,38 +98,65 @@ class _LibraryGameCard extends StatelessWidget {
     required this.title,
     required this.description,
     required this.imageUrl,
+    required this.quizId,
     required this.startAttemptUseCase,
     required this.submitAnswerUseCase,
     required this.getSummaryUseCase,
+    required this.manageLocalAttemptUseCase,
+    required this.getAttemptStateUseCase,
+    this.savedSession,
+    this.onGameStarted,
   });
 
   final String title;
   final String description;
   final String imageUrl;
+  final String quizId;
   final StartAttemptUseCase startAttemptUseCase;
   final SubmitAnswerUseCase submitAnswerUseCase;
   final GetSummaryUseCase getSummaryUseCase;
+  final ManageLocalAttemptUseCase manageLocalAttemptUseCase;
+  final GetAttemptStateUseCase getAttemptStateUseCase;
+  final Map<String, dynamic>? savedSession;
+  final VoidCallback? onGameStarted;
 
   @override
   Widget build(BuildContext context) {
+    // Check if this card matches the saved session
+    bool hasProgress = false;
+    double progressValue = 0.0;
+
+    if (savedSession != null && savedSession!['quizId'] == quizId) {
+      final current = savedSession!['currentQuestionIndex'] as int? ?? 0;
+      final total = savedSession!['totalQuestions'] as int? ?? 1;
+      if (total > 0) {
+        hasProgress = true;
+        progressValue = (current / total).clamp(0.0, 1.0);
+      }
+    }
+
     return Card(
       clipBehavior: Clip.antiAlias,
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
-        onTap: () {
-          Navigator.of(context).push(
+        onTap: () async {
+          await Navigator.of(context).push(
             MaterialPageRoute(
               builder: (context) => BlocProvider(
                 create: (_) => GameCubit(
                   startAttemptUseCase: startAttemptUseCase,
                   submitAnswerUseCase: submitAnswerUseCase,
                   getSummaryUseCase: getSummaryUseCase,
+                  manageLocalAttemptUseCase: manageLocalAttemptUseCase,
+                  getAttemptStateUseCase: getAttemptStateUseCase,
                 ),
-                child: const GameScreen(),
+                child: GameScreen(quizId: quizId),
               ),
             ),
           );
+          // Refresh session info when returning
+          onGameStarted?.call();
         },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -92,6 +170,17 @@ class _LibraryGameCard extends StatelessWidget {
                 errorBuilder: (_, __, ___) => Container(color: Colors.grey),
               ),
             ),
+            // Progress Bar
+            if (hasProgress)
+              LinearProgressIndicator(
+                value: progressValue,
+                backgroundColor: Colors.grey[300],
+                color: progressValue >= 1.0
+                    ? Colors.green
+                    : Theme.of(context).primaryColor,
+                minHeight: 6,
+              ),
+
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
@@ -109,27 +198,53 @@ class _LibraryGameCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 16),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => BlocProvider(
-                            create: (_) => GameCubit(
-                              startAttemptUseCase: startAttemptUseCase,
-                              submitAnswerUseCase: submitAnswerUseCase,
-                              getSummaryUseCase: getSummaryUseCase,
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => BlocProvider(
+                                create: (_) => GameCubit(
+                                  startAttemptUseCase: startAttemptUseCase,
+                                  submitAnswerUseCase: submitAnswerUseCase,
+                                  getSummaryUseCase: getSummaryUseCase,
+                                  manageLocalAttemptUseCase:
+                                      manageLocalAttemptUseCase,
+                                  getAttemptStateUseCase:
+                                      getAttemptStateUseCase,
+                                ),
+                                child: GameScreen(quizId: quizId),
+                              ),
                             ),
-                            child: const GameScreen(),
+                          );
+                          onGameStarted?.call();
+                        },
+                        icon: Icon(
+                          hasProgress
+                              ? Icons.play_arrow
+                              : Icons.play_arrow_outlined,
+                        ),
+                        label: Text(hasProgress ? "Continuar" : "Jugar Ahora"),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primary,
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                      if (hasProgress && progressValue >= 1.0)
+                        const Padding(
+                          padding: EdgeInsets.only(left: 12.0),
+                          child: Text(
+                            "Completado",
+                            style: TextStyle(
+                              color: Colors.green,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.play_arrow),
-                    label: const Text("Jugar Ahora"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).colorScheme.primary,
-                      foregroundColor: Colors.white,
-                    ),
+                    ],
                   ),
                 ],
               ),
