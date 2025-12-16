@@ -6,8 +6,9 @@ import 'package:quizzy/presentation/screens/library/library_screen.dart';
 import 'package:quizzy/presentation/screens/home/home_screen.dart';
 import 'package:quizzy/presentation/screens/kahoots/slides_manager_screen.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
-import 'package:quizzy/presentation/state/slide_controller.dart';
+import 'package:quizzy/presentation/state/kahoot_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
+import 'package:quizzy/presentation/screens/kahoots/kahoot_editor_screen.dart';
 
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
@@ -21,18 +22,18 @@ class ShellScreen extends StatefulWidget {
     required this.startAttemptUseCase,
     required this.submitAnswerUseCase,
     required this.getSummaryUseCase,
-    required this.slideController,
-    required this.manageLocalAttemptUseCase,
-    required this.getAttemptStateUseCase,
+    required this.kahootController,
+    required this.defaultKahootAuthorId,
+    required this.defaultKahootThemeId,
   });
 
   final DiscoveryController discoveryController;
   final StartAttemptUseCase startAttemptUseCase;
   final SubmitAnswerUseCase submitAnswerUseCase;
   final GetSummaryUseCase getSummaryUseCase;
-  final SlideController slideController;
-  final ManageLocalAttemptUseCase manageLocalAttemptUseCase;
-  final GetAttemptStateUseCase getAttemptStateUseCase;
+  final KahootController kahootController;
+  final String defaultKahootAuthorId;
+  final String defaultKahootThemeId;
 
   @override
   State<ShellScreen> createState() => _ShellScreenState();
@@ -173,10 +174,28 @@ class _ShellScreenState extends State<ShellScreen> {
   void _onCreatePressed() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => SlidesManagerScreen(
-          slideController: widget.slideController,
-          initialKahootId: 'q4',
+        builder: (_) => KahootEditorScreen(
+          kahootController: widget.kahootController,
+          defaultAuthorId: widget.defaultKahootAuthorId,
+          defaultThemeId: widget.defaultKahootThemeId,
         ),
+        fullscreenDialog: true,
+      ),
+    );
+  }
+}
+
+class _PlaceholderScreen extends StatelessWidget {
+  const _PlaceholderScreen({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(
+        child: Text(title, style: Theme.of(context).textTheme.titleMedium),
       ),
     );
   }
