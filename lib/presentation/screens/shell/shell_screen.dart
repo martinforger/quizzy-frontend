@@ -4,7 +4,6 @@ import 'package:quizzy/presentation/screens/discover/discover_screen.dart';
 import 'package:quizzy/presentation/screens/join/join_screen.dart';
 import 'package:quizzy/presentation/screens/library/library_screen.dart';
 import 'package:quizzy/presentation/screens/home/home_screen.dart';
-import 'package:quizzy/presentation/screens/kahoots/slides_manager_screen.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
@@ -22,6 +21,8 @@ class ShellScreen extends StatefulWidget {
     required this.startAttemptUseCase,
     required this.submitAnswerUseCase,
     required this.getSummaryUseCase,
+    required this.manageLocalAttemptUseCase,
+    required this.getAttemptStateUseCase,
     required this.kahootController,
     required this.defaultKahootAuthorId,
     required this.defaultKahootThemeId,
@@ -31,6 +32,8 @@ class ShellScreen extends StatefulWidget {
   final StartAttemptUseCase startAttemptUseCase;
   final SubmitAnswerUseCase submitAnswerUseCase;
   final GetSummaryUseCase getSummaryUseCase;
+  final ManageLocalAttemptUseCase manageLocalAttemptUseCase;
+  final GetAttemptStateUseCase getAttemptStateUseCase;
   final KahootController kahootController;
   final String defaultKahootAuthorId;
   final String defaultKahootThemeId;

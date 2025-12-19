@@ -11,9 +11,12 @@ import 'package:quizzy/application/kahoots/usecases/update_kahoot.dart';
 import 'package:quizzy/application/solo-game/useCases/get_summary_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
+import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_case.dart';
+import 'package:quizzy/application/solo-game/useCases/get_attempt_state_use_case.dart';
 import 'package:quizzy/infrastructure/discovery/repositories_impl/http_discovery_repository.dart';
 import 'package:quizzy/infrastructure/kahoots/repositories_impl/http_kahoots_repository.dart';
 import 'package:quizzy/infrastructure/solo-game/data_sources/mock_game_service.dart';
+import 'package:quizzy/infrastructure/solo-game/data_sources/local_game_storage.dart';
 import 'package:quizzy/infrastructure/solo-game/repositories/game_repository_impl.dart';
 import 'package:quizzy/presentation/screens/shell/shell_screen.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
@@ -50,20 +53,6 @@ class QuizzyApp extends StatelessWidget {
     final manageLocalAttemptUseCase = ManageLocalAttemptUseCase(gameRepository);
     final getAttemptStateUseCase = GetAttemptStateUseCase(gameRepository);
 
-    // Slides (épica 3)
-    final slidesRepository = HttpSlidesRepository(
-      client: http.Client(),
-      baseUrl: mockBaseUrl,
-    );
-    final slideController = SlideController(
-      listSlidesUseCase: ListSlidesUseCase(slidesRepository),
-      getSlideUseCase: GetSlideUseCase(slidesRepository),
-      createSlideUseCase: CreateSlideUseCase(slidesRepository),
-      updateSlideUseCase: UpdateSlideUseCase(slidesRepository),
-      duplicateSlideUseCase: DuplicateSlideUseCase(slidesRepository),
-      deleteSlideUseCase: DeleteSlideUseCase(slidesRepository),
-    );
-
     final kahootsRepository = HttpKahootsRepository(
       client: http.Client(),
       baseUrl: mockBaseUrl,
@@ -93,6 +82,8 @@ class QuizzyApp extends StatelessWidget {
         startAttemptUseCase: startAttemptUseCase,
         submitAnswerUseCase: submitAnswerUseCase,
         getSummaryUseCase: getSummaryUseCase,
+        manageLocalAttemptUseCase: manageLocalAttemptUseCase,
+        getAttemptStateUseCase: getAttemptStateUseCase,
         kahootController: kahootController,
         defaultKahootAuthorId: defaultAuthorId,
         defaultKahootThemeId: defaultThemeId,
