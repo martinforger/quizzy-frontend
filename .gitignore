@@ -108,3 +108,5 @@ tmp/
 # Local environment configs
 .env
 .env.*
+
+/.vscode/
