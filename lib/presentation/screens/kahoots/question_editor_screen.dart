@@ -74,141 +74,114 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
 
   void _addAnswer() {
     setState(() {
-      _answers.add(KahootAnswer(text: '', isCorrect: false));
-    });
-  }
-
-  void _applyType(String type, {bool initial = false}) {
-    // Always rebuild the answers set when the question type changes so UI reflects it instantly.
-    List<KahootAnswer> updated = List.from(_answers);
-    if (type == 'trueFalse') {
-      updated = [
-        KahootAnswer(text: 'Verdadero', isCorrect: true),
-        KahootAnswer(text: 'Falso', isCorrect: false),
+      _answers = [
+        ..._answers,
+        KahootAnswer(text: 'Respuesta ${_answers.length + 1}', isCorrect: false),
       ];
-    } else if (type == 'shortAnswer') {
-      updated = [];
-    } else {
-      // quiz default: ensure at least 4 answers
-      while (updated.length < 4) {
-        updated.add(KahootAnswer(text: 'Respuesta ${updated.length + 1}', isCorrect: false));
-      }
-      updated = updated.take(4).toList();
-    }
-    if (initial) {
-      _type = type;
-      _answers = updated;
-      return;
-    }
-    if (!mounted) return;
-    setState(() {
-      _type = type;
-      _answers = updated;
     });
   }
 
-  void _openAnswerModal(int idx, Color color) {
+  void _applyType(String value, {bool initial = false}) {
+    setState(() {
+      _type = value;
+      if (value == 'trueFalse') {
+        _answers = [
+          KahootAnswer(text: 'Verdadero', isCorrect: true),
+          KahootAnswer(text: 'Falso', isCorrect: false),
+        ];
+      } else if (value == 'shortAnswer') {
+        _answers = [
+          KahootAnswer(text: 'Respuesta correcta', isCorrect: true),
+        ];
+      } else if (!initial && _answers.length < 4) {
+        _answers = [
+          KahootAnswer(text: 'Respuesta 1', isCorrect: true),
+          KahootAnswer(text: 'Respuesta 2', isCorrect: false),
+          KahootAnswer(text: 'Respuesta 3', isCorrect: false),
+          KahootAnswer(text: 'Respuesta 4', isCorrect: false),
+        ];
+      }
+    });
+  }
+
+  Future<void> _openAnswerModal(int idx, Color color) async {
     final answer = _answers[idx];
     final controller = TextEditingController(text: answer.text);
-    showModalBottomSheet(
+    await showModalBottomSheet(
       context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
+      backgroundColor: const Color(0xFF1E1A22),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (ctx) {
-        return GestureDetector(
-          onTap: () => FocusScope.of(ctx).unfocus(),
-          child: Container(
-            padding: EdgeInsets.only(
-              left: 16,
-              right: 16,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
-              top: 16,
-            ),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1E1A22),
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.white24,
-                    borderRadius: BorderRadius.circular(4),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Añadir respuesta',
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                  decoration: BoxDecoration(
-                    color: color,
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [BoxShadow(color: color.withOpacity(0.35), blurRadius: 12, offset: const Offset(0, 6))],
-                  ),
-                  child: TextField(
-                    controller: controller,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
-                    decoration: const InputDecoration(
-                      border: InputBorder.none,
-                      hintText: 'Añadir respuesta',
-                      hintStyle: TextStyle(color: Colors.white70),
+        return Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: color,
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    maxLines: 2,
                   ),
-                ),
-                const SizedBox(height: 12),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  title: const Text('Respuesta correcta', style: TextStyle(color: Colors.white)),
-                  trailing: Switch(
-                    value: answer.isCorrect,
-                    activeColor: color,
-                    onChanged: (_) {
-                      Navigator.of(ctx).pop();
+                  const SizedBox(width: 8),
+                  Text('Respuesta ${idx + 1}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(ctx).maybePop();
+                      if (_answers.length <= 1) return;
+                      setState(() => _answers.removeAt(idx));
+                    },
+                    icon: const Icon(Icons.delete_forever, color: Colors.redAccent),
+                    tooltip: 'Eliminar respuesta',
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      Navigator.of(ctx).maybePop();
                       _toggleCorrect(idx);
                     },
+                    icon: Icon(
+                      answer.isCorrect ? Icons.check_circle : Icons.radio_button_unchecked,
+                      color: Colors.white,
+                    ),
+                    tooltip: 'Marcar correcta',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                decoration: const InputDecoration(
+                  labelText: 'Texto de respuesta',
+                  filled: true,
+                  fillColor: Color(0xFF27222C),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide.none,
+                    borderRadius: BorderRadius.all(Radius.circular(12)),
                   ),
                 ),
-                ListTile(
-                  contentPadding: EdgeInsets.zero,
-                  leading: const Icon(Icons.delete_forever, color: Colors.redAccent),
-                  title: const Text('Eliminar respuesta', style: TextStyle(color: Colors.redAccent)),
-                  onTap: () {
-                    setState(() {
-                      _answers.removeAt(idx);
-                    });
-                    Navigator.of(ctx).pop();
-                  },
-                ),
-                const SizedBox(height: 8),
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      _answers[idx] = KahootAnswer(
-                        id: answer.id,
-                        text: controller.text,
-                        mediaId: answer.mediaId,
-                        isCorrect: answer.isCorrect,
-                      );
-                    });
-                    Navigator.of(ctx).pop();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: color,
-                    foregroundColor: Colors.white,
-                    minimumSize: const Size.fromHeight(44),
-                  ),
-                  child: const Text('Listo'),
-                ),
-              ],
-            ),
+                onChanged: (v) {
+                  setState(() {
+                    final updated = List<KahootAnswer>.from(_answers);
+                    updated[idx] = KahootAnswer(
+                      id: answer.id,
+                      text: v,
+                      mediaId: answer.mediaId,
+                      isCorrect: answer.isCorrect,
+                    );
+                    _answers = updated;
+                  });
+                },
+              ),
+            ],
           ),
         );
       },
@@ -217,7 +190,15 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final colors = [Colors.red, Colors.blue, Colors.orange, Colors.green, Colors.purple, Colors.teal];
+    final colors = [
+      Colors.red,
+      Colors.blue,
+      Colors.orange,
+      Colors.green,
+      Colors.purple,
+      Colors.teal,
+    ];
+
     return Scaffold(
       backgroundColor: const Color(0xFF0F0B12),
       appBar: AppBar(
