@@ -503,8 +503,10 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
     final question = _questions[index];
     final updated = await Navigator.of(context).push<KahootQuestion>(
       MaterialPageRoute(
-        builder: (_) =>
-            QuestionEditorScreen(question: question, index: index + 1),
+        builder: (_) => QuestionEditorScreen(
+          question: question,
+          index: index + 1,
+        ),
         fullscreenDialog: true,
       ),
     );
