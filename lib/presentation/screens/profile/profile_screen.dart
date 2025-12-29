@@ -487,7 +487,10 @@ class _LoginViewState extends State<_LoginView> {
             children: [
               Text(
                 _isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión',
-                style: Theme.of(context).textTheme.headlineMedium,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: Colors.orange,
+                      fontWeight: FontWeight.bold,
+                    ),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
@@ -529,6 +532,8 @@ class _LoginViewState extends State<_LoginView> {
                 onPressed: _isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.white,
                 ),
                 child: _isLoading
                     ? const SizedBox(
