@@ -4,10 +4,13 @@ import 'package:quizzy/presentation/screens/discover/discover_screen.dart';
 import 'package:quizzy/presentation/screens/join/join_screen.dart';
 import 'package:quizzy/presentation/screens/library/library_screen.dart';
 import 'package:quizzy/presentation/screens/home/home_screen.dart';
+import 'package:quizzy/presentation/state/auth_controller.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
+import 'package:quizzy/presentation/state/profile_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'package:quizzy/presentation/screens/kahoots/kahoot_editor_screen.dart';
+import 'package:quizzy/presentation/screens/profile/profile_screen.dart';
 
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
@@ -24,6 +27,8 @@ class ShellScreen extends StatefulWidget {
     required this.manageLocalAttemptUseCase,
     required this.getAttemptStateUseCase,
     required this.kahootController,
+    required this.profileController,
+    required this.authController,
     required this.defaultKahootAuthorId,
     required this.defaultKahootThemeId,
   });
@@ -35,6 +40,8 @@ class ShellScreen extends StatefulWidget {
   final ManageLocalAttemptUseCase manageLocalAttemptUseCase;
   final GetAttemptStateUseCase getAttemptStateUseCase;
   final KahootController kahootController;
+  final ProfileController profileController;
+  final AuthController authController;
   final String defaultKahootAuthorId;
   final String defaultKahootThemeId;
 
@@ -61,6 +68,10 @@ class _ShellScreenState extends State<ShellScreen> {
         getSummaryUseCase: widget.getSummaryUseCase,
         manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
         getAttemptStateUseCase: widget.getAttemptStateUseCase,
+      ),
+      ProfileScreen(
+        profileController: widget.profileController,
+        authController: widget.authController,
       ),
       const JoinScreen(),
     ];
@@ -152,6 +163,10 @@ class _ShellScreenState extends State<ShellScreen> {
                       label: 'Catálogo',
                     ),
                     BottomNavigationBarItem(
+                      icon: Icon(Icons.person_rounded),
+                      label: 'Perfil',
+                    ),
+                    BottomNavigationBarItem(
                       icon: Icon(Icons.qr_code_rounded),
                       label: 'Unirse',
                     ),
@@ -188,18 +203,4 @@ class _ShellScreenState extends State<ShellScreen> {
   }
 }
 
-class _PlaceholderScreen extends StatelessWidget {
-  const _PlaceholderScreen({required this.title});
 
-  final String title;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(title)),
-      body: Center(
-        child: Text(title, style: Theme.of(context).textTheme.titleMedium),
-      ),
-    );
-  }
-}
