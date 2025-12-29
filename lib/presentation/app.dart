@@ -124,6 +124,8 @@ class QuizzyApp extends StatelessWidget {
         manageLocalAttemptUseCase: manageLocalAttemptUseCase,
         getAttemptStateUseCase: getAttemptStateUseCase,
         kahootController: kahootController,
+        profileController: profileController,
+        authController: authController,
         defaultKahootAuthorId: defaultAuthorId,
         defaultKahootThemeId: defaultThemeId,
       ),
