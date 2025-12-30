@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:quizzy/domain/auth/entities/user_profile.dart';
 import 'package:quizzy/presentation/state/auth_controller.dart';
@@ -152,6 +153,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           content: Text('Contraseña actualizada correctamente')),
                     );
                   }
+                } on TimeoutException {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Tiempo de espera agotado. Verifica tu conexión.'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 } catch (e) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -179,6 +189,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
          // In a real app, this would trigger a state change in a top-level AuthBloc/Provider
          ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Sesión cerrada')),
+        );
+      }
+    } on TimeoutException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tiempo de espera agotado al cerrar sesión.'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {

@@ -50,7 +50,7 @@ class HttpAuthRepository implements AuthRepository {
       uri,
       headers: {'Content-Type': 'application/json'},
       body: body,
-    );
+    ).timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 201) {
       final data = json.decode(response.body);
@@ -78,7 +78,7 @@ class HttpAuthRepository implements AuthRepository {
       uri,
       headers: {'Content-Type': 'application/json'},
       body: body,
-    ).timeout(const Duration(seconds: 10));
+    ).timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -106,7 +106,7 @@ class HttpAuthRepository implements AuthRepository {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
       },
-    );
+    ).timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 204 || response.statusCode == 401) {
       await _deleteToken();
@@ -124,7 +124,7 @@ class HttpAuthRepository implements AuthRepository {
       uri,
       headers: {'Content-Type': 'application/json'},
       body: body,
-    );
+    ).timeout(const Duration(seconds: 30));
 
     if (response.statusCode != 204) {
       throw Exception('Failed to request password reset: ${response.body}');
@@ -146,7 +146,7 @@ class HttpAuthRepository implements AuthRepository {
       uri,
       headers: {'Content-Type': 'application/json'},
       body: body,
-    );
+    ).timeout(const Duration(seconds: 30));
 
     if (response.statusCode != 204) {
       throw Exception('Failed to confirm password reset: ${response.body}');

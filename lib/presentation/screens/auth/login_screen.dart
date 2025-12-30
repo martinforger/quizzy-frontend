@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:quizzy/presentation/state/auth_controller.dart';
@@ -59,6 +60,15 @@ class _LoginScreenState extends State<LoginScreen> {
           _passwordController.text,
         );
         widget.onLoginSuccess();
+      }
+    } on TimeoutException {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tiempo de espera agotado. Por favor verifica tu conexión.'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     } catch (e) {
       if (mounted) {

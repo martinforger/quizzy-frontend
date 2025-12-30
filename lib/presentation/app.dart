@@ -83,12 +83,10 @@ class _QuizzyAppState extends State<QuizzyApp> {
   Widget build(BuildContext context) {
     String mockBaseUrl = const String.fromEnvironment('MOCK_BASE_URL');
     if (mockBaseUrl.isEmpty) {
-      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
-        // Use local IP for physical device testing
-        mockBaseUrl = 'http://192.168.18.105:3000';
-      } else {
-        mockBaseUrl = 'http://localhost:3000';
-      }
+      // Use localhost for all platforms. 
+      // For Android, this requires running `adb reverse tcp:3000 tcp:3000`
+      // Or use your computer's local IP: 192.168.18.20
+      mockBaseUrl = 'http://192.168.18.20:3000';
     }
     
     debugPrint('Using Mock URL: $mockBaseUrl');
