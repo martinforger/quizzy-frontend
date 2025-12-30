@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:quizzy/application/discovery/usecases/get_categories.dart';
@@ -36,22 +37,66 @@ import 'package:quizzy/application/auth/usecases/get_profile_use_case.dart';
 import 'package:quizzy/application/auth/usecases/update_profile_use_case.dart';
 import 'package:quizzy/application/auth/usecases/update_password_use_case.dart';
 
-class QuizzyApp extends StatelessWidget {
+import 'package:quizzy/presentation/screens/auth/login_screen.dart';
+import 'package:quizzy/presentation/screens/splash/splash_screen.dart';
+
+class QuizzyApp extends StatefulWidget {
   const QuizzyApp({super.key, required this.sharedPreferences});
 
   final SharedPreferences sharedPreferences;
 
   @override
+  State<QuizzyApp> createState() => _QuizzyAppState();
+}
+
+class _QuizzyAppState extends State<QuizzyApp> {
+  bool _showSplash = true;
+  bool _isAuthenticated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  void _checkAuth() {
+    // Simple check if token exists (you might want to validate it properly)
+    final token = widget.sharedPreferences.getString('auth_token');
+    setState(() {
+      _isAuthenticated = token != null && token.isNotEmpty;
+    });
+  }
+
+  void _onSplashComplete() {
+    setState(() {
+      _showSplash = false;
+    });
+  }
+
+  void _onLoginSuccess() {
+    setState(() {
+      _isAuthenticated = true;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    const mockBaseUrl = String.fromEnvironment(
-      'MOCK_BASE_URL',
-      defaultValue: 'http://10.0.2.2:3000/',
-    );
+    String mockBaseUrl = const String.fromEnvironment('MOCK_BASE_URL');
+    if (mockBaseUrl.isEmpty) {
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
+        // Use local IP for physical device testing
+        mockBaseUrl = 'http://192.168.18.105:3000';
+      } else {
+        mockBaseUrl = 'http://localhost:3000';
+      }
+    }
+    
+    debugPrint('Using Mock URL: $mockBaseUrl');
 
     final authRepository = HttpAuthRepository(
       client: http.Client(),
       baseUrl: mockBaseUrl,
-      sharedPreferences: sharedPreferences,
+      sharedPreferences: widget.sharedPreferences,
     );
     final authController = AuthController(
       loginUseCase: LoginUseCase(authRepository),
@@ -64,7 +109,7 @@ class QuizzyApp extends StatelessWidget {
     final profileRepository = HttpProfileRepository(
       client: http.Client(),
       baseUrl: mockBaseUrl,
-      sharedPreferences: sharedPreferences,
+      sharedPreferences: widget.sharedPreferences,
     );
     final profileController = ProfileController(
       getProfileUseCase: GetProfileUseCase(profileRepository),
@@ -116,19 +161,26 @@ class QuizzyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'Quizzy',
       theme: AppTheme.build(),
-      home: ShellScreen(
-        discoveryController: discoveryController,
-        startAttemptUseCase: startAttemptUseCase,
-        submitAnswerUseCase: submitAnswerUseCase,
-        getSummaryUseCase: getSummaryUseCase,
-        manageLocalAttemptUseCase: manageLocalAttemptUseCase,
-        getAttemptStateUseCase: getAttemptStateUseCase,
-        kahootController: kahootController,
-        profileController: profileController,
-        authController: authController,
-        defaultKahootAuthorId: defaultAuthorId,
-        defaultKahootThemeId: defaultThemeId,
-      ),
+      home: _showSplash
+          ? SplashScreen(onAnimationComplete: _onSplashComplete)
+          : !_isAuthenticated
+              ? LoginScreen(
+                  authController: authController,
+                  onLoginSuccess: _onLoginSuccess,
+                )
+              : ShellScreen(
+                  discoveryController: discoveryController,
+                  startAttemptUseCase: startAttemptUseCase,
+                  submitAnswerUseCase: submitAnswerUseCase,
+                  getSummaryUseCase: getSummaryUseCase,
+                  manageLocalAttemptUseCase: manageLocalAttemptUseCase,
+                  getAttemptStateUseCase: getAttemptStateUseCase,
+                  kahootController: kahootController,
+                  profileController: profileController,
+                  authController: authController,
+                  defaultKahootAuthorId: defaultAuthorId,
+                  defaultKahootThemeId: defaultThemeId,
+                ),
     );
   }
 }
