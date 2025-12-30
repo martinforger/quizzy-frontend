@@ -106,7 +106,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 20),
                   Image.asset(
                     'assets/images/logo.png',
-                    height: 100,
+                    height: 150,
                   ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
                   const SizedBox(height: 30),
                   if (_isRegistering) ...[
