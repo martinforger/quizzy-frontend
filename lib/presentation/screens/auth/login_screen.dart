@@ -76,14 +76,13 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: SafeArea(
-        child: Align(
-          alignment: Alignment.topCenter,
+        child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
             child: Form(
               key: _formKey,
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
