@@ -37,6 +37,8 @@ import 'package:quizzy/application/auth/usecases/get_profile_use_case.dart';
 import 'package:quizzy/application/auth/usecases/update_profile_use_case.dart';
 import 'package:quizzy/application/auth/usecases/update_password_use_case.dart';
 
+import 'package:quizzy/infrastructure/core/authenticated_http_client.dart';
+
 import 'package:quizzy/presentation/screens/auth/login_screen.dart';
 import 'package:quizzy/presentation/screens/splash/splash_screen.dart';
 
@@ -61,7 +63,7 @@ class _QuizzyAppState extends State<QuizzyApp> {
 
   void _checkAuth() {
     // Simple check if token exists (you might want to validate it properly)
-    final token = widget.sharedPreferences.getString('auth_token');
+    final token = widget.sharedPreferences.getString('accessToken');
     setState(() {
       _isAuthenticated = token != null && token.isNotEmpty;
     });
@@ -91,8 +93,15 @@ class _QuizzyAppState extends State<QuizzyApp> {
     
     debugPrint('Using Mock URL: $mockBaseUrl');
 
+    final baseClient = http.Client();
+    final authenticatedClient = AuthenticatedHttpClient(baseClient, widget.sharedPreferences);
+
+    // AuthRepository needs both clients ideally? 
+    // Actually AuthRepo handles login (no token needed yet) and logout (needs token).
+    // If we pass authenticatedClient to AuthRepo, login calls might have a stale token header if one exists,
+    // which usually is ignored by backend. But for correctness we can pass authenticatedClient.
     final authRepository = HttpAuthRepository(
-      client: http.Client(),
+      client: authenticatedClient,
       baseUrl: mockBaseUrl,
       sharedPreferences: widget.sharedPreferences,
     );
@@ -104,10 +113,10 @@ class _QuizzyAppState extends State<QuizzyApp> {
       confirmPasswordResetUseCase: ConfirmPasswordResetUseCase(authRepository),
     );
 
+    // ProfileRepository is now vastly simplified and just needs the authenticated client
     final profileRepository = HttpProfileRepository(
-      client: http.Client(),
+      client: authenticatedClient,
       baseUrl: mockBaseUrl,
-      sharedPreferences: widget.sharedPreferences,
     );
     final profileController = ProfileController(
       getProfileUseCase: GetProfileUseCase(profileRepository),
