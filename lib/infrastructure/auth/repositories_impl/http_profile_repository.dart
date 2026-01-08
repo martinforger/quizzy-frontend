@@ -4,41 +4,27 @@ import 'package:http/http.dart' as http;
 import 'package:quizzy/domain/auth/entities/user_profile.dart';
 import 'package:quizzy/domain/auth/repositories/profile_repository.dart';
 import 'package:quizzy/infrastructure/auth/dtos/user_profile_dto.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class HttpProfileRepository implements ProfileRepository {
   final http.Client client;
   final String baseUrl;
-  final SharedPreferences sharedPreferences;
 
   HttpProfileRepository({
     required this.client,
     required this.baseUrl,
-    required this.sharedPreferences,
   });
 
   Uri _resolve(String path) => Uri.parse('$baseUrl/$path');
-
-  Future<String?> _getToken() async {
-    return sharedPreferences.getString('accessToken');
-  }
-
-  Map<String, String> _authHeaders(String token) {
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-  }
+  
+  Map<String, String> get _headers => {'Content-Type': 'application/json'};
 
   @override
   Future<UserProfile> getProfile() async {
     final uri = _resolve('profile');
-    final token = await _getToken();
-    if (token == null) throw Exception('Unauthorized');
-
+    
     final response = await client.get(
       uri,
-      headers: _authHeaders(token),
+      headers: _headers,
     );
 
     if (response.statusCode == 200) {
@@ -58,8 +44,6 @@ class HttpProfileRepository implements ProfileRepository {
     String? language,
   }) async {
     final uri = _resolve('profile');
-    final token = await _getToken();
-    if (token == null) throw Exception('Unauthorized');
 
     final bodyMap = <String, dynamic>{};
     if (name != null) bodyMap['name'] = name;
@@ -70,7 +54,7 @@ class HttpProfileRepository implements ProfileRepository {
 
     final response = await client.patch(
       uri,
-      headers: _authHeaders(token),
+      headers: _headers,
       body: json.encode(bodyMap),
     );
 
@@ -88,9 +72,7 @@ class HttpProfileRepository implements ProfileRepository {
     required String newPassword,
   }) async {
     final uri = _resolve('profile/password');
-    final token = await _getToken();
-    if (token == null) throw Exception('Unauthorized');
-
+    
     final body = json.encode({
       'currentPassword': currentPassword,
       'newPassword': newPassword,
@@ -98,7 +80,7 @@ class HttpProfileRepository implements ProfileRepository {
 
     final response = await client.patch(
       uri,
-      headers: _authHeaders(token),
+      headers: _headers,
       body: body,
     );
 

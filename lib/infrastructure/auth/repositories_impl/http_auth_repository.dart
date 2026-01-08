@@ -93,24 +93,23 @@ class HttpAuthRepository implements AuthRepository {
   @override
   Future<void> logout() async {
     final uri = _resolve('auth/logout');
-    final token = await _getToken();
+    // Using the injected client which should be an AuthenticatedHttpClient (or similar)
+    // that automatically adds the Authorization header if a token exists.
     
-    if (token == null) {
-       // Already logged out locally or never logged in
-       return;
-    }
-
+    // We try to call the logout endpoint
     final response = await client.post(
       uri,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer $token',
-      },
+      headers: {'Content-Type': 'application/json'},
     ).timeout(const Duration(seconds: 30));
 
+    // Regardless of server response (204 or 401), we clear local token
     if (response.statusCode == 204 || response.statusCode == 401) {
       await _deleteToken();
     } else {
+      // If server error, we might still want to delete token locally, 
+      // but let's stick to the spec which says throw exception? 
+      // Actually, usually logout should always clear local state.
+      // But adhering to previous logic:
       throw Exception('Failed to logout: ${response.body}');
     }
   }
