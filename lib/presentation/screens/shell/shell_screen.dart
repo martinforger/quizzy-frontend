@@ -58,6 +58,7 @@ class _ShellScreenState extends State<ShellScreen> {
   Widget build(BuildContext context) {
     final pages = <Widget>[
       HomeScreen(
+        profileController: widget.profileController,
         onMenuTap: () {
           Navigator.of(context).push(
             MaterialPageRoute(

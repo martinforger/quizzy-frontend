@@ -1,10 +1,30 @@
 import 'package:flutter/material.dart';
+import 'package:quizzy/domain/auth/entities/user_profile.dart';
+import 'package:quizzy/presentation/state/profile_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key, this.onMenuTap});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({
+    super.key,
+    this.onMenuTap,
+    required this.profileController,
+  });
 
   final VoidCallback? onMenuTap;
+  final ProfileController profileController;
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late Future<UserProfile> _profileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _profileFuture = widget.profileController.getProfile();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,27 +34,51 @@ class HomeScreen extends StatelessWidget {
           SliverAppBar(
             floating: true,
             backgroundColor: AppColors.surface,
-            title: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    color: Colors.transparent,
-                    shape: BoxShape.circle,
+            title: FutureBuilder<UserProfile>(
+              future: _profileFuture,
+              builder: (context, snapshot) {
+                final String name;
+                final String? avatarUrl;
+
+                if (snapshot.hasData) {
+                  name = snapshot.data!.name;
+                  avatarUrl = snapshot.data!.avatarUrl;
+                } else {
+                  name = '...';
+                  avatarUrl = null;
+                }
+
+                return GestureDetector(
+                  onTap: widget.onMenuTap,
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: const BoxDecoration(
+                          color: Colors.grey,
+                          shape: BoxShape.circle,
+                        ),
+                        child: ClipOval(
+                          child: avatarUrl != null && avatarUrl.isNotEmpty
+                              ? Image.network(
+                                  avatarUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      const Icon(Icons.person, color: Colors.white),
+                                )
+                              : const Icon(Icons.person, color: Colors.white),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Hola, $name',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
-                  child: IconButton(
-                    icon: const Icon(Icons.menu),
-                    padding: EdgeInsets.zero,
-                    onPressed: onMenuTap,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Hola, Carlos',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
+                );
+              },
             ),
             actions: [
               IconButton(
