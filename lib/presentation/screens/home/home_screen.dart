@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({super.key, this.onMenuTap});
+
+  final VoidCallback? onMenuTap;
 
   @override
   Widget build(BuildContext context) {
@@ -18,14 +20,13 @@ class HomeScreen extends StatelessWidget {
                   width: 32,
                   height: 32,
                   decoration: const BoxDecoration(
-                    color: Colors.grey,
+                    color: Colors.transparent,
                     shape: BoxShape.circle,
                   ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/images/carlos.png',
-                      fit: BoxFit.cover,
-                    ),
+                  child: IconButton(
+                    icon: const Icon(Icons.menu),
+                    padding: EdgeInsets.zero,
+                    onPressed: onMenuTap,
                   ),
                 ),
                 const SizedBox(width: 12),

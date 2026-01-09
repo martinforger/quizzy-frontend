@@ -83,6 +83,12 @@ class _QuizzyAppState extends State<QuizzyApp> {
     });
   }
 
+  void _onLogout() {
+    setState(() {
+      _isAuthenticated = false;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     String mockBaseUrl = const String.fromEnvironment('MOCK_BASE_URL');
@@ -196,6 +202,7 @@ class _QuizzyAppState extends State<QuizzyApp> {
                   authController: authController,
                   defaultKahootAuthorId: defaultAuthorId,
                   defaultKahootThemeId: defaultThemeId,
+                  onLogout: _onLogout,
                 ),
     );
   }
