@@ -3,9 +3,11 @@ import 'package:quizzy/application/solo-game/useCases/get_attempt_state_use_case
 import 'package:quizzy/presentation/screens/discover/discover_screen.dart';
 import 'package:quizzy/presentation/screens/join/join_screen.dart';
 import 'package:quizzy/presentation/screens/library/library_screen.dart';
+import 'package:quizzy/presentation/screens/my_library/my_library_screen.dart';
 import 'package:quizzy/presentation/screens/home/home_screen.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
+import 'package:quizzy/presentation/bloc/library/library_cubit.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'package:quizzy/presentation/screens/kahoots/kahoot_editor_screen.dart';
 
@@ -24,6 +26,7 @@ class ShellScreen extends StatefulWidget {
     required this.manageLocalAttemptUseCase,
     required this.getAttemptStateUseCase,
     required this.kahootController,
+    required this.libraryCubit,
     required this.defaultKahootAuthorId,
     required this.defaultKahootThemeId,
   });
@@ -35,6 +38,7 @@ class ShellScreen extends StatefulWidget {
   final ManageLocalAttemptUseCase manageLocalAttemptUseCase;
   final GetAttemptStateUseCase getAttemptStateUseCase;
   final KahootController kahootController;
+  final LibraryCubit libraryCubit;
   final String defaultKahootAuthorId;
   final String defaultKahootThemeId;
 
@@ -63,6 +67,7 @@ class _ShellScreenState extends State<ShellScreen> {
         getAttemptStateUseCase: widget.getAttemptStateUseCase,
       ),
       const JoinScreen(),
+      MyLibraryScreen(cubit: widget.libraryCubit),
     ];
 
     return Scaffold(
@@ -154,6 +159,10 @@ class _ShellScreenState extends State<ShellScreen> {
                     BottomNavigationBarItem(
                       icon: Icon(Icons.qr_code_rounded),
                       label: 'Unirse',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.person),
+                      label: 'Biblioteca',
                     ),
                   ],
                 ),
