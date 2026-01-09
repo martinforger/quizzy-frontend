@@ -13,15 +13,11 @@ class HttpLibraryRepository implements ILibraryRepository {
   final String _baseUrl;
 
   Uri _resolve(String path, [Map<String, dynamic>? queryParameters]) {
-    final uri = Uri.parse('$_baseUrl$path');
+    final effectiveBaseUrl = _baseUrl.endsWith('/') ? _baseUrl.substring(0, _baseUrl.length - 1) : _baseUrl;
+    final effectivePath = path.startsWith('/') ? path : '/$path';
+
+    final uri = Uri.parse('$effectiveBaseUrl$effectivePath');
     if (queryParameters != null && queryParameters.isNotEmpty) {
-       // Manual handling might be needed if baseUrl already has query params, 
-       // but typically baseUrl is just protocol://host/api
-       // using replace to add query params safely
-       
-       // Handle array params manually if needed, but Uri handles Map<String, dynamic> 
-       // where value is String or List<String>.
-       
        final newQueryParameters = Map<String, dynamic>.from(uri.queryParameters);
        newQueryParameters.addAll(queryParameters);
        

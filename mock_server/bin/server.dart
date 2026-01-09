@@ -209,7 +209,10 @@ Map<String, dynamic> _summaryFromKahoot(Map<String, dynamic> k) {
   return {
     'id': k['id'],
     'title': k['title'],
-    'author': 'Quizzy Mock',
+    'author': {
+      'id': k['authorId'] ?? 'unknown',
+      'name': 'Quizzy Mock',
+    },
     'category': k['category'],
     'coverImageId': k['coverImageId'],
     'description': k['description'],

@@ -17,8 +17,17 @@ import 'package:quizzy/infrastructure/discovery/repositories_impl/http_discovery
 import 'package:quizzy/infrastructure/kahoots/repositories_impl/http_kahoots_repository.dart';
 import 'package:quizzy/infrastructure/solo-game/data_sources/mock_game_service.dart';
 import 'package:quizzy/infrastructure/solo-game/data_sources/local_game_storage.dart';
+import 'package:quizzy/application/library/usecases/get_completed.dart';
+import 'package:quizzy/application/library/usecases/get_favorites.dart';
+import 'package:quizzy/application/library/usecases/get_in_progress.dart';
+import 'package:quizzy/application/library/usecases/get_my_creations.dart';
+import 'package:quizzy/application/library/usecases/mark_as_favorite.dart';
+import 'package:quizzy/application/library/usecases/unmark_as_favorite.dart';
+import 'package:quizzy/infrastructure/library/repositories/http_library_repository.dart';
+import 'package:quizzy/presentation/bloc/library/library_cubit.dart';
 import 'package:quizzy/infrastructure/solo-game/repositories/game_repository_impl.dart';
 import 'package:quizzy/presentation/screens/shell/shell_screen.dart';
+import 'package:flutter/foundation.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
@@ -26,12 +35,18 @@ import 'package:quizzy/presentation/theme/app_theme.dart';
 class QuizzyApp extends StatelessWidget {
   const QuizzyApp({super.key});
 
+  String _getBaseUrl() {
+    const envUrl = String.fromEnvironment('MOCK_BASE_URL');
+    if (envUrl.isNotEmpty) return envUrl;
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      return 'http://10.0.2.2:3000/';
+    }
+    return 'http://127.0.0.1:3000/';
+  }
+
   @override
   Widget build(BuildContext context) {
-    const mockBaseUrl = String.fromEnvironment(
-      'MOCK_BASE_URL',
-      defaultValue: 'http://10.0.2.2:3000/',
-    );
+    final mockBaseUrl = _getBaseUrl();
 
     final discoveryRepository = HttpDiscoveryRepository(
       client: http.Client(),
@@ -64,6 +79,19 @@ class QuizzyApp extends StatelessWidget {
       deleteKahootUseCase: DeleteKahootUseCase(kahootsRepository),
     );
 
+    final libraryRepository = HttpLibraryRepository(
+      client: http.Client(),
+      baseUrl: mockBaseUrl,
+    );
+    final libraryCubit = LibraryCubit(
+      getMyCreationsUseCase: GetMyCreationsUseCase(libraryRepository),
+      getFavoritesUseCase: GetFavoritesUseCase(libraryRepository),
+      getInProgressUseCase: GetInProgressUseCase(libraryRepository),
+      getCompletedUseCase: GetCompletedUseCase(libraryRepository),
+      markAsFavoriteUseCase: MarkAsFavoriteUseCase(libraryRepository),
+      unmarkAsFavoriteUseCase: UnmarkAsFavoriteUseCase(libraryRepository),
+    );
+
     const defaultAuthorId = String.fromEnvironment(
       'DEFAULT_AUTHOR_ID',
       defaultValue: 'bd64df91-e362-4f32-96c2-5ed08c0ce843',
@@ -85,6 +113,7 @@ class QuizzyApp extends StatelessWidget {
         manageLocalAttemptUseCase: manageLocalAttemptUseCase,
         getAttemptStateUseCase: getAttemptStateUseCase,
         kahootController: kahootController,
+        libraryCubit: libraryCubit,
         defaultKahootAuthorId: defaultAuthorId,
         defaultKahootThemeId: defaultThemeId,
       ),
