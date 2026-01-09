@@ -16,6 +16,8 @@ import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_c
 import 'package:quizzy/application/solo-game/useCases/get_attempt_state_use_case.dart';
 import 'package:quizzy/infrastructure/auth/repositories_impl/http_auth_repository.dart';
 import 'package:quizzy/infrastructure/auth/repositories_impl/http_profile_repository.dart';
+import 'package:quizzy/infrastructure/auth/repositories_impl/mock_auth_repository.dart';
+import 'package:quizzy/infrastructure/auth/repositories_impl/mock_profile_repository.dart';
 import 'package:quizzy/infrastructure/discovery/repositories_impl/http_discovery_repository.dart';
 import 'package:quizzy/infrastructure/kahoots/repositories_impl/http_kahoots_repository.dart';
 import 'package:quizzy/infrastructure/solo-game/data_sources/mock_game_service.dart';
@@ -93,6 +95,9 @@ class _QuizzyAppState extends State<QuizzyApp> {
     
     debugPrint('Using Mock URL: $mockBaseUrl');
 
+    // Use this flag to switch between real backend and mock repositories
+    const bool useMockRepositories = true;
+
     final baseClient = http.Client();
     final authenticatedClient = AuthenticatedHttpClient(baseClient, widget.sharedPreferences);
 
@@ -100,11 +105,13 @@ class _QuizzyAppState extends State<QuizzyApp> {
     // Actually AuthRepo handles login (no token needed yet) and logout (needs token).
     // If we pass authenticatedClient to AuthRepo, login calls might have a stale token header if one exists,
     // which usually is ignored by backend. But for correctness we can pass authenticatedClient.
-    final authRepository = HttpAuthRepository(
-      client: authenticatedClient,
-      baseUrl: mockBaseUrl,
-      sharedPreferences: widget.sharedPreferences,
-    );
+    final authRepository = useMockRepositories 
+        ? MockAuthRepository()
+        : HttpAuthRepository(
+            client: authenticatedClient,
+            baseUrl: mockBaseUrl,
+            sharedPreferences: widget.sharedPreferences,
+          );
     final authController = AuthController(
       loginUseCase: LoginUseCase(authRepository),
       registerUseCase: RegisterUseCase(authRepository),
@@ -114,10 +121,12 @@ class _QuizzyAppState extends State<QuizzyApp> {
     );
 
     // ProfileRepository is now vastly simplified and just needs the authenticated client
-    final profileRepository = HttpProfileRepository(
-      client: authenticatedClient,
-      baseUrl: mockBaseUrl,
-    );
+    final profileRepository = useMockRepositories 
+        ? MockProfileRepository()
+        : HttpProfileRepository(
+            client: authenticatedClient,
+            baseUrl: mockBaseUrl,
+          );
     final profileController = ProfileController(
       getProfileUseCase: GetProfileUseCase(profileRepository),
       updateProfileUseCase: UpdateProfileUseCase(profileRepository),
