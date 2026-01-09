@@ -84,6 +84,118 @@ void main(List<String> args) async {
     return Response(204);
   });
 
+  // --- Library Endpoints (H7.1 - H7.6) ---
+
+  final Set<String> _userFavorites = {'kh-planet-earth'}; // Mock initial favorite
+  
+  // Create copies of kahoots for progress/completed to act as separate entities with extra fields
+  final List<Map<String, dynamic>> _userInProgress = _kahoots.isNotEmpty 
+      ? [{
+         ..._kahoots.firstWhere((k) => k['id'] == 'kh-planet-earth', orElse: () => _kahoots.first),
+         'gameId': 'game-progress-1',
+         'gameType': 'singleplayer',
+        }]
+      : [];
+
+  final List<Map<String, dynamic>> _userCompleted = _kahoots.length > 1
+      ? [{
+         ..._kahoots.firstWhere((k) => k['id'] == 'kh-world-history', orElse: () => _kahoots.last),
+         'gameId': 'game-completed-1',
+         'gameType': 'multiplayer',
+        }]
+      : [];
+
+  Map<String, dynamic> _paginateAndFilter(
+      List<Map<String, dynamic>> source, Request req) {
+    final params = req.url.queryParameters;
+    final page = int.tryParse(params['page'] ?? '1') ?? 1;
+    final limit = int.tryParse(params['limit'] ?? '20') ?? 20;
+    final q = (params['q'] ?? '').toLowerCase();
+    final status = params['status'] ?? 'all';
+    final visibility = params['visibility'] ?? 'all';
+    
+    // Handling categories as list 
+    final categories = req.url.queryParametersAll['categories[]'] ?? 
+                       req.url.queryParametersAll['categories'];
+    
+    var filtered = source.where((item) {
+      if (q.isNotEmpty) {
+        final title = (item['title'] as String? ?? '').toLowerCase();
+        final desc = (item['description'] as String? ?? '').toLowerCase();
+        if (!title.contains(q) && !desc.contains(q)) return false;
+      }
+      if (status != 'all' && item['status'] != status) return false;
+      if (visibility != 'all' && item['visibility'] != visibility) return false;
+      if (categories != null && categories.isNotEmpty) {
+        if (!categories.contains(item['category'])) return false;
+      }
+      return true;
+    }).toList();
+
+    final totalCount = filtered.length;
+    final totalPages = (totalCount / limit).ceil();
+    final startIndex = (page - 1) * limit;
+    final data = filtered.skip(startIndex).take(limit).map((k) {
+       return {
+         ..._summaryFromKahoot(k),
+         'status': k['status'],
+         'visibility': k['visibility'],
+         'createdAt': k['createdAt'],
+         'gameId': k['gameId'],
+         'gameType': k['gameType'],
+       };
+    }).toList();
+
+    return {
+      'data': data,
+      'pagination': {
+        'page': page,
+        'limit': limit,
+        'totalCount': totalCount,
+        'totalPages': totalPages,
+      }
+    };
+  }
+
+  // H7.1 My Creations
+  router.get('/library/my-creations', (Request req) {
+    final myKahoots = _kahoots.where((k) => k['authorId'] == 'author-demo-001').toList();
+    return _json(_paginateAndFilter(myKahoots, req));
+  });
+
+  // H7.2 Favorites
+  router.get('/library/favorites', (Request req) {
+    final favs = _kahoots.where((k) => _userFavorites.contains(k['id'])).toList();
+    return _json(_paginateAndFilter(favs, req));
+  });
+
+  // H7.3 Mark as Favorite
+  router.post('/library/favorites/<id>', (Request req, String id) {
+    if (!_kahoots.any((k) => k['id'] == id)) return _notFound();
+    if (_userFavorites.contains(id)) {
+      return Response(409, body: 'Already a favorite');
+    }
+    _userFavorites.add(id);
+    return Response(201);
+  });
+
+  // H7.4 Unmark as Favorite
+  router.delete('/library/favorites/<id>', (Request req, String id) {
+     if (!_kahoots.any((k) => k['id'] == id)) return _notFound();
+     _userFavorites.remove(id);
+     return Response(204);
+  });
+
+  // H7.5 In Progress
+  router.get('/library/in-progress', (Request req) {
+    return _json(_paginateAndFilter(_userInProgress, req));
+  });
+
+  // H7.6 Completed
+  router.get('/library/completed', (Request req) {
+    return _json(_paginateAndFilter(_userCompleted, req));
+  });
+
   final handler = Pipeline()
       .addMiddleware(logRequests())
       .addMiddleware(corsHeaders())
