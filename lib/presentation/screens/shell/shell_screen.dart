@@ -31,6 +31,7 @@ class ShellScreen extends StatefulWidget {
     required this.authController,
     required this.defaultKahootAuthorId,
     required this.defaultKahootThemeId,
+    required this.onLogout,
   });
 
   final DiscoveryController discoveryController;
@@ -44,6 +45,7 @@ class ShellScreen extends StatefulWidget {
   final AuthController authController;
   final String defaultKahootAuthorId;
   final String defaultKahootThemeId;
+  final VoidCallback onLogout;
 
   @override
   State<ShellScreen> createState() => _ShellScreenState();
@@ -55,7 +57,19 @@ class _ShellScreenState extends State<ShellScreen> {
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
-      const HomeScreen(),
+      HomeScreen(
+        onMenuTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ProfileScreen(
+                profileController: widget.profileController,
+                authController: widget.authController,
+                onLogout: widget.onLogout,
+              ),
+            ),
+          );
+        },
+      ),
       DiscoverScreen(
         controller: widget.discoveryController,
         startAttemptUseCase: widget.startAttemptUseCase,
@@ -69,10 +83,7 @@ class _ShellScreenState extends State<ShellScreen> {
         manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
         getAttemptStateUseCase: widget.getAttemptStateUseCase,
       ),
-      ProfileScreen(
-        profileController: widget.profileController,
-        authController: widget.authController,
-      ),
+
       const JoinScreen(),
     ];
 
@@ -162,10 +173,7 @@ class _ShellScreenState extends State<ShellScreen> {
                       icon: Icon(Icons.bookmarks_rounded),
                       label: 'Catálogo',
                     ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.person_rounded),
-                      label: 'Perfil',
-                    ),
+
                     BottomNavigationBarItem(
                       icon: Icon(Icons.qr_code_rounded),
                       label: 'Unirse',

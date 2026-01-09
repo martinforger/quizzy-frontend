@@ -10,10 +10,12 @@ class ProfileScreen extends StatefulWidget {
     super.key,
     required this.profileController,
     required this.authController,
+    required this.onLogout,
   });
 
   final ProfileController profileController;
   final AuthController authController;
+  final VoidCallback onLogout;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -181,15 +183,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Future<void> _logout() async {
     try {
       await widget.authController.logout();
-      // Navigate to login or initial screen
-      // For now, we might just pop or show a message as navigation logic depends on the app structure
       if (mounted) {
-         // Assuming there is a way to restart or go to login, 
-         // but since I don't see the full routing, I'll just show a message
-         // In a real app, this would trigger a state change in a top-level AuthBloc/Provider
-         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Sesión cerrada')),
-        );
+         Navigator.of(context).pop(); // Close profile screen
+         widget.onLogout(); // Notify app to change state
       }
     } on TimeoutException {
       if (mounted) {
