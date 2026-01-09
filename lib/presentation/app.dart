@@ -23,7 +23,7 @@ import 'package:quizzy/application/library/usecases/get_in_progress.dart';
 import 'package:quizzy/application/library/usecases/get_my_creations.dart';
 import 'package:quizzy/application/library/usecases/mark_as_favorite.dart';
 import 'package:quizzy/application/library/usecases/unmark_as_favorite.dart';
-import 'package:quizzy/infrastructure/library/repositories/http_library_repository.dart';
+import 'package:quizzy/infrastructure/library/repositories/mock_library_repository.dart';
 import 'package:quizzy/presentation/bloc/library/library_cubit.dart';
 import 'package:quizzy/infrastructure/solo-game/repositories/game_repository_impl.dart';
 import 'package:quizzy/presentation/screens/shell/shell_screen.dart';
@@ -79,10 +79,11 @@ class QuizzyApp extends StatelessWidget {
       deleteKahootUseCase: DeleteKahootUseCase(kahootsRepository),
     );
 
-    final libraryRepository = HttpLibraryRepository(
+    final libraryRepository = MockLibraryRepository();
+    /*final libraryRepository = HttpLibraryRepository(
       client: http.Client(),
       baseUrl: mockBaseUrl,
-    );
+    );*/
     final libraryCubit = LibraryCubit(
       getMyCreationsUseCase: GetMyCreationsUseCase(libraryRepository),
       getFavoritesUseCase: GetFavoritesUseCase(libraryRepository),
