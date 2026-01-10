@@ -11,21 +11,23 @@ class KahootEditorScreen extends StatefulWidget {
     required this.kahootController,
     required this.defaultAuthorId,
     required this.defaultThemeId,
+    this.existingKahoot,
   });
 
   final KahootController kahootController;
   final String defaultAuthorId;
   final String defaultThemeId;
+  final Kahoot? existingKahoot;
 
   @override
   State<KahootEditorScreen> createState() => _KahootEditorScreenState();
 }
 
 class _KahootEditorScreenState extends State<KahootEditorScreen> {
-  final _titleController = TextEditingController();
-  final _descriptionController = TextEditingController();
-  final _coverController = TextEditingController();
-  String _visibility = 'public';
+  late TextEditingController _titleController;
+  late TextEditingController _descriptionController;
+  late TextEditingController _coverController;
+  String _visibility = 'private';
   String _status = 'draft';
   String _category = '';
   bool _saving = false;
@@ -35,6 +37,21 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
   bool get _needsQuestions =>
       _questions.isEmpty ||
       _questions.any((q) => q.text == null || q.text!.trim().isEmpty);
+
+  @override
+  void initState() {
+    super.initState();
+    final k = widget.existingKahoot;
+    _titleController = TextEditingController(text: k?.title ?? '');
+    _descriptionController = TextEditingController(text: k?.description ?? '');
+    _coverController = TextEditingController(text: k?.coverImageId ?? '');
+    if (k != null) {
+      _visibility = k.visibility ?? 'private';
+      _status = k.status ?? 'draft';
+      _category = k.category ?? '';
+      _questions.addAll(k.questions);
+    }
+  }
 
   @override
   void dispose() {
@@ -95,6 +112,7 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
         return;
       }
       final kahoot = Kahoot(
+        id: widget.existingKahoot?.id,
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim().isEmpty
             ? null
@@ -103,13 +121,20 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
             ? null
             : _coverController.text.trim(),
         visibility: _visibility,
-        category: _category.isEmpty ? null : _category,
+        category:
+            _category, // Ensure category is sent even if empty string? Mapping handles it?
         status: _status,
         themeId: themeId,
         authorId: authorId,
         questions: _questions,
       );
-      final saved = await widget.kahootController.create(kahoot);
+
+      final Kahoot saved;
+      if (widget.existingKahoot != null) {
+        saved = await widget.kahootController.update(kahoot);
+      } else {
+        saved = await widget.kahootController.create(kahoot);
+      }
       if (!mounted) return;
       Navigator.of(context).pop(saved);
     } catch (e) {
@@ -274,7 +299,9 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
                         height: 16,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Guardar'),
+                    : Text(
+                        widget.existingKahoot != null ? 'Modificar' : 'Guardar',
+                      ),
               ),
             ),
           ],
@@ -374,6 +401,30 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
                     ],
                     onChanged: (v) =>
                         setState(() => _visibility = v ?? 'public'),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _LabeledField(
+                  label: 'Estado',
+                  child: DropdownButtonFormField<String>(
+                    value: _status,
+                    dropdownColor: const Color(0xFF1E1A22),
+                    decoration: _inputDecoration(),
+                    items: const [
+                      DropdownMenuItem(value: 'draft', child: Text('Borrador')),
+                      DropdownMenuItem(
+                        value: 'published',
+                        child: Text('Publicado'),
+                      ),
+                    ],
+                    onChanged: (v) {
+                      setState(() {
+                        _status = v ?? 'draft';
+                        if (_status == 'draft') {
+                          _visibility = 'private'; // Enforce private draft
+                        }
+                      });
+                    },
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -503,10 +554,8 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
     final question = _questions[index];
     final updated = await Navigator.of(context).push<KahootQuestion>(
       MaterialPageRoute(
-        builder: (_) => QuestionEditorScreen(
-          question: question,
-          index: index + 1,
-        ),
+        builder: (_) =>
+            QuestionEditorScreen(question: question, index: index + 1),
         fullscreenDialog: true,
       ),
     );

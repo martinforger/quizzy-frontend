@@ -11,6 +11,7 @@ import 'package:quizzy/application/kahoots/usecases/create_kahoot.dart';
 import 'package:quizzy/application/kahoots/usecases/delete_kahoot.dart';
 import 'package:quizzy/application/kahoots/usecases/get_kahoot.dart';
 import 'package:quizzy/application/kahoots/usecases/update_kahoot.dart';
+import 'package:quizzy/application/kahoots/usecases/inspect_kahoot.dart';
 import 'package:quizzy/application/solo-game/useCases/get_summary_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
@@ -204,6 +205,7 @@ class _QuizzyAppState extends State<QuizzyApp> {
       updateKahootUseCase: UpdateKahootUseCase(kahootsRepository),
       getKahootUseCase: GetKahootUseCase(kahootsRepository),
       deleteKahootUseCase: DeleteKahootUseCase(kahootsRepository),
+      inspectKahootUseCase: InspectKahootUseCase(kahootsRepository),
     );
 
     const defaultAuthorId = String.fromEnvironment(

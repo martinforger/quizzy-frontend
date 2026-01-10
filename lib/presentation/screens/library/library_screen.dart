@@ -6,6 +6,8 @@ import 'package:quizzy/application/solo-game/useCases/get_summary_use_case.dart'
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_case.dart';
+import 'package:quizzy/presentation/state/kahoot_controller.dart';
+import 'package:quizzy/presentation/screens/kahoots/kahoot_editor_screen.dart';
 import 'package:quizzy/presentation/bloc/game_cubit.dart';
 import 'package:quizzy/presentation/bloc/library/library_cubit.dart';
 import 'package:quizzy/presentation/screens/game/game_screen.dart';
@@ -26,6 +28,7 @@ class LibraryScreen extends StatefulWidget {
     required this.manageLocalAttemptUseCase,
     required this.getAttemptStateUseCase,
     required this.libraryCubit,
+    required this.kahootController,
   });
 
   final StartAttemptUseCase startAttemptUseCase;
@@ -34,6 +37,7 @@ class LibraryScreen extends StatefulWidget {
   final ManageLocalAttemptUseCase manageLocalAttemptUseCase;
   final GetAttemptStateUseCase getAttemptStateUseCase;
   final LibraryCubit libraryCubit;
+  final KahootController kahootController;
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
@@ -144,6 +148,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                   state,
                   (s) => s.creations,
                   allowFavToggle: false,
+                  canEdit: true,
                 ),
                 _buildLibraryList(
                   state,
@@ -166,6 +171,7 @@ class _LibraryScreenState extends State<LibraryScreen>
     List Function(LibraryState) selector, {
     bool allowFavToggle = false,
     bool isFavList = false,
+    bool canEdit = false,
   }) {
     if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -177,6 +183,7 @@ class _LibraryScreenState extends State<LibraryScreen>
       selector(state),
       allowFavToggle: allowFavToggle,
       isFavList: isFavList,
+      canEdit: canEdit,
     );
   }
 
@@ -184,6 +191,7 @@ class _LibraryScreenState extends State<LibraryScreen>
     List items, {
     bool allowFavToggle = false,
     bool isFavList = false,
+    bool canEdit = false,
   }) {
     if (items.isEmpty) {
       return const Center(child: Text('No hay elementos'));
@@ -202,11 +210,114 @@ class _LibraryScreenState extends State<LibraryScreen>
                 }
               : null,
           onTap: () {
-            _showGameOptions(context, item.id);
+            if (canEdit) {
+              _showGameOptions(
+                context,
+                item.id,
+                canEdit: true,
+                isDraft: item.status?.toLowerCase() == 'draft',
+              );
+            } else {
+              // Non-owned drafts shouldn't happen here usually, or can't be played
+              if (item.status?.toLowerCase() == 'draft') return;
+              _showGameOptions(context, item.id);
+            }
           },
         );
       },
     );
+  }
+
+  Future<void> _editKahoot(BuildContext context, String kahootId) async {
+    // Show loading?
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(child: CircularProgressIndicator()),
+    );
+    try {
+      final kahoot = await widget.kahootController.fetch(kahootId);
+      if (!context.mounted) return;
+      Navigator.of(context).pop(); // Dismiss loading
+
+      // Navigate to editor
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => KahootEditorScreen(
+            kahootController: widget.kahootController,
+            defaultAuthorId:
+                'bd64df91-e362-4f32-96c2-5ed08c0ce843', // Should get from controller or args?
+            defaultThemeId: '8911c649-5db0-453d-8e1a-23331ffa40b9', // Same here
+            existingKahoot: kahoot,
+          ),
+          fullscreenDialog: true,
+        ),
+      );
+      // Reload creations?
+      widget.libraryCubit.loadMyCreations();
+    } catch (e) {
+      if (context.mounted) {
+        Navigator.of(context).pop(); // Dismiss loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al cargar kahoot: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _deleteKahoot(BuildContext context, String kahootId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Eliminar Kahoot"),
+        content: const Text(
+          "¿Estás seguro de que quieres eliminar este kahoot? Esta acción no se puede deshacer.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text("Cancelar"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Eliminar"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      if (!context.mounted) return;
+      // Show loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (_) => const Center(child: CircularProgressIndicator()),
+      );
+
+      try {
+        await widget.kahootController.delete(kahootId);
+        if (!context.mounted) return;
+        Navigator.of(context).pop(); // Dismiss loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Kahoot eliminado correctamente")),
+        );
+        widget.libraryCubit.loadMyCreations();
+      } catch (e) {
+        if (!context.mounted) return;
+        Navigator.of(context).pop(); // Dismiss loading
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error al eliminar: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildExploreTab() {
@@ -296,17 +407,22 @@ class _LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  void _showGameOptions(BuildContext context, String quizId) {
+  void _showGameOptions(
+    BuildContext context,
+    String quizId, {
+    bool canEdit = false,
+    bool isDraft = false,
+  }) {
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (context) {
+      builder: (sheetContext) {
         return BlocListener<MultiplayerGameCubit, MultiplayerGameState>(
           listener: (context, state) {
             if (state is HostLobbyState) {
-              Navigator.of(context).push(
+              Navigator.of(sheetContext).push(
                 MaterialPageRoute(builder: (_) => const HostLobbyScreen()),
               );
             } else if (state is MultiplayerError) {
@@ -324,56 +440,91 @@ class _LibraryScreenState extends State<LibraryScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 const Text(
-                  'Choose Game Mode',
+                  'Opciones',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 16),
-                ListTile(
-                  leading: const Icon(
-                    Icons.person,
-                    size: 32,
-                    color: Colors.blue,
+                if (!isDraft) ...[
+                  ListTile(
+                    leading: const Icon(
+                      Icons.person,
+                      size: 32,
+                      color: Colors.blue,
+                    ),
+                    title: const Text('Play Solo'),
+                    subtitle: const Text('Practice on your own'),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
+                      _startSoloGame(quizId);
+                    },
                   ),
-                  title: const Text('Play Solo'),
-                  subtitle: const Text('Practice on your own'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    _startSoloGame(quizId);
-                  },
-                ),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(
-                    Icons.people,
-                    size: 32,
-                    color: Colors.purple,
-                  ),
-                  title: const Text('Host Party'),
-                  subtitle: const Text('Play with friends live'),
-                  onTap: () {
-                    Navigator.pop(context);
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.people,
+                      size: 32,
+                      color: Colors.purple,
+                    ),
+                    title: const Text('Host Party'),
+                    subtitle: const Text('Play with friends live'),
+                    onTap: () {
+                      Navigator.pop(sheetContext);
 
-                    final prefs = getIt<SharedPreferences>();
-                    final token = prefs.getString('accessToken');
+                      final prefs = getIt<SharedPreferences>();
+                      final token = prefs.getString('accessToken');
 
-                    if (token == null || token.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text(
-                            "Debes iniciar sesión para ser Anfitrión",
+                      if (token == null || token.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text(
+                              "Debes iniciar sesión para ser Anfitrión",
+                            ),
+                            backgroundColor: Colors.red,
                           ),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
-                      return;
-                    }
+                        );
+                        return;
+                      }
 
-                    context.read<MultiplayerGameCubit>().createSessionAsHost(
-                      quizId,
-                      token,
-                    );
-                  },
-                ),
+                      context.read<MultiplayerGameCubit>().createSessionAsHost(
+                        quizId,
+                        token,
+                      );
+                    },
+                  ),
+                ],
+                if (canEdit) ...[
+                  if (!isDraft) const Divider(),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.edit,
+                      size: 32,
+                      color: Colors.orange,
+                    ),
+                    title: const Text('Editar Kahoot'),
+                    subtitle: const Text('Modificar contenido del kahoot'),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop(); // Close sheet
+                      _editKahoot(context, quizId);
+                    },
+                  ),
+                  const Divider(),
+                  ListTile(
+                    leading: const Icon(
+                      Icons.delete_forever,
+                      size: 32,
+                      color: Colors.red,
+                    ),
+                    title: const Text(
+                      'Eliminar Kahoot',
+                      style: TextStyle(color: Colors.red),
+                    ),
+                    subtitle: const Text('Borrar permanentemente'),
+                    onTap: () {
+                      Navigator.of(sheetContext).pop(); // Close sheet
+                      _deleteKahoot(context, quizId);
+                    },
+                  ),
+                ],
               ],
             ),
           ),
