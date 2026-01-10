@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quizzy/domain/discovery/entities/category.dart';
 import 'package:quizzy/domain/discovery/entities/quiz_summary.dart';
 import 'package:quizzy/domain/discovery/entities/quiz_theme.dart';
@@ -15,6 +16,10 @@ import 'package:quizzy/presentation/widgets/quizzy_logo.dart';
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/get_summary_use_case.dart';
+import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_case.dart';
+import 'package:quizzy/application/solo-game/useCases/get_attempt_state_use_case.dart';
+import 'package:quizzy/presentation/bloc/game_cubit.dart';
+import 'package:quizzy/presentation/screens/game/game_screen.dart';
 
 class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({
@@ -23,12 +28,16 @@ class DiscoverScreen extends StatefulWidget {
     required this.startAttemptUseCase,
     required this.submitAnswerUseCase,
     required this.getSummaryUseCase,
+    required this.manageLocalAttemptUseCase,
+    required this.getAttemptStateUseCase,
   });
 
   final DiscoveryController controller;
   final StartAttemptUseCase startAttemptUseCase;
   final SubmitAnswerUseCase submitAnswerUseCase;
   final GetSummaryUseCase getSummaryUseCase;
+  final ManageLocalAttemptUseCase manageLocalAttemptUseCase;
+  final GetAttemptStateUseCase getAttemptStateUseCase;
 
   @override
   State<DiscoverScreen> createState() => _DiscoverScreenState();
@@ -156,8 +165,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                               message: 'No pudimos cargar las categorias',
                               onRetry: () {
                                 setState(() {
-                                  _categoriesFuture =
-                                      widget.controller.fetchCategories();
+                                  _categoriesFuture = widget.controller
+                                      .fetchCategories();
                                 });
                               },
                             );
@@ -237,10 +246,14 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                                     .entries
                                     .map(
                                       (entry) => Padding(
-                                        padding: const EdgeInsets.only(bottom: 12),
+                                        padding: const EdgeInsets.only(
+                                          bottom: 12,
+                                        ),
                                         child: DiscoverFeaturedCard(
                                           quiz: entry.value,
                                           index: entry.key + 1,
+                                          onTap: () =>
+                                              _navigateToGame(entry.value.id),
                                         ),
                                       ),
                                     )
@@ -387,6 +400,23 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           child: const QuizzyLogo(size: 38),
         ),
       ],
+    );
+  }
+
+  void _navigateToGame(String quizId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BlocProvider(
+          create: (_) => GameCubit(
+            startAttemptUseCase: widget.startAttemptUseCase,
+            submitAnswerUseCase: widget.submitAnswerUseCase,
+            getSummaryUseCase: widget.getSummaryUseCase,
+            manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
+            getAttemptStateUseCase: widget.getAttemptStateUseCase,
+          ),
+          child: GameScreen(quizId: quizId),
+        ),
+      ),
     );
   }
 }
