@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quizzy/application/solo-game/useCases/get_attempt_state_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/get_summary_use_case.dart';
@@ -8,6 +7,9 @@ import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dar
 import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_case.dart';
 import 'package:quizzy/presentation/bloc/game_cubit.dart';
 import 'package:quizzy/presentation/screens/game/game_screen.dart';
+import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
+import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_state.dart';
+import 'package:quizzy/presentation/screens/multiplayer/host/host_lobby_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({
@@ -39,7 +41,6 @@ class _LibraryScreenState extends State<LibraryScreen> {
   }
 
   // Reload session when coming back to screen
-  // Ideally this would be a Cubit/Bloc, but for simplicity setState is used given the clear scope.
   void _loadSession() async {
     final sessions = await widget.manageLocalAttemptUseCase
         .getAllGameSessions();
@@ -52,42 +53,55 @@ class _LibraryScreenState extends State<LibraryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Library')),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          _LibraryGameCard(
-            title: "Mock Kahoot Demo",
-            description:
-                "Prueba la funcionalidad del juego con este quiz de demostración.",
-            imageUrl:
-                "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&q=80&w=1000",
-            quizId: "kahoot-demo-id",
-            startAttemptUseCase: widget.startAttemptUseCase,
-            submitAnswerUseCase: widget.submitAnswerUseCase,
-            getSummaryUseCase: widget.getSummaryUseCase,
-            manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
-            getAttemptStateUseCase: widget.getAttemptStateUseCase,
-            savedSession: _savedSessions?['kahoot-demo-id'],
-            onGameStarted: _loadSession, // Check session when returning?
-          ),
-          _LibraryGameCard(
-            title: "Patrones de Diseño",
-            description:
-                "Pon a prueba tus conocimientos sobre patrones de diseño de software.",
-            imageUrl:
-                "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=1000",
-            quizId: "quiz-design-patterns",
-            startAttemptUseCase: widget.startAttemptUseCase,
-            submitAnswerUseCase: widget.submitAnswerUseCase,
-            getSummaryUseCase: widget.getSummaryUseCase,
-            manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
-            getAttemptStateUseCase: widget.getAttemptStateUseCase,
-            savedSession: _savedSessions?['quiz-design-patterns'],
-            onGameStarted: _loadSession,
-          ),
-        ],
+    return BlocListener<MultiplayerGameCubit, MultiplayerGameState>(
+      listener: (context, state) {
+        if (state is HostLobbyState) {
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const HostLobbyScreen()));
+        } else if (state is MultiplayerError) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
+        }
+      },
+      child: Scaffold(
+        appBar: AppBar(title: const Text('Library')),
+        body: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            _LibraryGameCard(
+              title: "Mock Kahoot Demo",
+              description:
+                  "Prueba la funcionalidad del juego con este quiz de demostración.",
+              imageUrl:
+                  "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&q=80&w=1000",
+              quizId: "kahoot-demo-id",
+              startAttemptUseCase: widget.startAttemptUseCase,
+              submitAnswerUseCase: widget.submitAnswerUseCase,
+              getSummaryUseCase: widget.getSummaryUseCase,
+              manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
+              getAttemptStateUseCase: widget.getAttemptStateUseCase,
+              savedSession: _savedSessions?['kahoot-demo-id'],
+              onGameStarted: _loadSession,
+            ),
+            _LibraryGameCard(
+              title: "Patrones de Diseño",
+              description:
+                  "Pon a prueba tus conocimientos sobre patrones de diseño de software.",
+              imageUrl:
+                  "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=1000",
+              quizId: "quiz-design-patterns",
+              startAttemptUseCase: widget.startAttemptUseCase,
+              submitAnswerUseCase: widget.submitAnswerUseCase,
+              getSummaryUseCase: widget.getSummaryUseCase,
+              manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
+              getAttemptStateUseCase: widget.getAttemptStateUseCase,
+              savedSession: _savedSessions?['quiz-design-patterns'],
+              onGameStarted: _loadSession,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -122,7 +136,6 @@ class _LibraryGameCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Check if this card matches the saved session
     bool hasProgress = false;
     double progressValue = 0.0;
 
@@ -155,7 +168,6 @@ class _LibraryGameCard extends StatelessWidget {
               ),
             ),
           );
-          // Refresh session info when returning
           onGameStarted?.call();
         },
         child: Column(
@@ -170,7 +182,6 @@ class _LibraryGameCard extends StatelessWidget {
                 errorBuilder: (_, __, ___) => Container(color: Colors.grey),
               ),
             ),
-            // Progress Bar
             if (hasProgress)
               LinearProgressIndicator(
                 value: progressValue,
@@ -198,7 +209,9 @@ class _LibraryGameCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodyMedium,
                   ),
                   const SizedBox(height: 16),
-                  Row(
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
                     children: [
                       ElevatedButton.icon(
                         onPressed: () async {
@@ -225,7 +238,7 @@ class _LibraryGameCard extends StatelessWidget {
                               ? Icons.play_arrow
                               : Icons.play_arrow_outlined,
                         ),
-                        label: Text(hasProgress ? "Continuar" : "Jugar Ahora"),
+                        label: Text(hasProgress ? "Continuar" : "Jugar Solo"),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Theme.of(
                             context,
@@ -233,19 +246,35 @@ class _LibraryGameCard extends StatelessWidget {
                           foregroundColor: Colors.white,
                         ),
                       ),
-                      if (hasProgress && progressValue >= 1.0)
-                        const Padding(
-                          padding: EdgeInsets.only(left: 12.0),
-                          child: Text(
-                            "Completado",
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                      // Host Button
+                      FilledButton.icon(
+                        onPressed: () {
+                          // TODO: Get real JWT
+                          const dummyJwt = "host-jwt-123";
+                          context
+                              .read<MultiplayerGameCubit>()
+                              .createSessionAsHost(quizId, dummyJwt);
+                        },
+                        icon: const Icon(Icons.cast_connected),
+                        label: const Text("Host Live"),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.purple,
+                          foregroundColor: Colors.white,
                         ),
+                      ),
                     ],
                   ),
+                  if (hasProgress && progressValue >= 1.0)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12.0),
+                      child: Text(
+                        "Completado",
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

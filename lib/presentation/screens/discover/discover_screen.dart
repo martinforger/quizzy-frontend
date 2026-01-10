@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:quizzy/injection_container.dart';
 import 'package:quizzy/domain/discovery/entities/category.dart';
 import 'package:quizzy/domain/discovery/entities/quiz_summary.dart';
 import 'package:quizzy/domain/discovery/entities/quiz_theme.dart';
@@ -20,6 +22,9 @@ import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_c
 import 'package:quizzy/application/solo-game/useCases/get_attempt_state_use_case.dart';
 import 'package:quizzy/presentation/bloc/game_cubit.dart';
 import 'package:quizzy/presentation/screens/game/game_screen.dart';
+import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
+import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_state.dart';
+import 'package:quizzy/presentation/screens/multiplayer/host/host_lobby_screen.dart';
 
 class DiscoverScreen extends StatefulWidget {
   const DiscoverScreen({
@@ -72,203 +77,219 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  DiscoverSearchBar(
-                    controller: _searchController,
-                    onChanged: _onQueryChanged,
-                  ),
-                  const SizedBox(height: 12),
-                  FutureBuilder<List<QuizTheme>>(
-                    future: _themesFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const SizedBox(
-                          height: 36,
-                          child: Center(
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        );
-                      }
-                      if (snapshot.hasError) {
-                        return DiscoverInlineError(
-                          message: 'No pudimos cargar los temas',
-                          onRetry: () {
-                            setState(() {
-                              _themesFuture = widget.controller.fetchThemes();
-                            });
-                          },
-                        );
-                      }
-                      final themes = snapshot.data ?? [];
-                      return ThemeFilterChips(
-                        themes: themes,
-                        selectedThemes: _selectedThemes,
-                        onToggled: _onThemeToggled,
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                color: Theme.of(context).colorScheme.primary,
-                onRefresh: () async {
-                  setState(() {
-                    _categoriesFuture = widget.controller.fetchCategories();
-                    _themesFuture = widget.controller.fetchThemes();
-                    _errorMessage = null;
-                  });
-                  await Future.wait([
-                    _categoriesFuture,
-                    _themesFuture,
-                    _loadFeaturedQuizzes(),
-                  ]);
-                  await _refreshSearchIfNeeded();
-                },
-                child: ListView(
-                  padding: EdgeInsets.fromLTRB(
-                    18,
-                    0,
-                    18,
-                    100 + MediaQuery.of(context).padding.bottom,
-                  ),
+    return BlocListener<MultiplayerGameCubit, MultiplayerGameState>(
+      listener: (context, state) {
+        if (state is HostLobbyState) {
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const HostLobbyScreen()));
+        } else if (state is MultiplayerError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
+          );
+        }
+      },
+      child: Scaffold(
+        body: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _buildHeader(context),
-                    const SizedBox(height: 24),
-                    const DiscoverSectionHeader(
-                      title: 'Categories',
-                      actionText: 'See all',
+                    DiscoverSearchBar(
+                      controller: _searchController,
+                      onChanged: _onQueryChanged,
                     ),
                     const SizedBox(height: 12),
-                    SizedBox(
-                      height: 140,
-                      child: FutureBuilder<List<Category>>(
-                        future: _categoriesFuture,
-                        builder: (context, snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          }
-                          if (snapshot.hasError) {
-                            return DiscoverInlineError(
-                              message: 'No pudimos cargar las categorias',
-                              onRetry: () {
-                                setState(() {
-                                  _categoriesFuture = widget.controller
-                                      .fetchCategories();
-                                });
-                              },
-                            );
-                          }
-                          final categories = snapshot.data ?? [];
-                          return ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemBuilder: (context, index) =>
-                                DiscoverCategoryCard(
-                                  category: categories[index],
-                                ),
-                            separatorBuilder: (_, __) =>
-                                const SizedBox(width: 12),
-                            itemCount: categories.length,
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Builder(
-                      builder: (context) {
-                        final hasQuery = _searchController.text
-                            .trim()
-                            .isNotEmpty;
-                        final isDefaultView =
-                            !hasQuery && _selectedThemes.isEmpty;
-                        final quizzesToShow = isDefaultView
-                            ? _quizzes
-                            : _filteredQuizzes;
-                        final isLoading = isDefaultView
-                            ? _isLoadingQuizzes
-                            : _isSearching;
-                        final title = isDefaultView
-                            ? 'Featured Quizzes'
-                            : 'Results';
-
-                        return Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            DiscoverSectionHeader(
-                              title: title,
-                              actionText: isDefaultView ? 'See all' : '',
+                    FutureBuilder<List<QuizTheme>>(
+                      future: _themesFuture,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const SizedBox(
+                            height: 36,
+                            child: Center(
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                            const SizedBox(height: 12),
-                            if (isLoading)
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 24),
-                                child: Center(
-                                  child: CircularProgressIndicator(),
-                                ),
-                              )
-                            else if (_errorMessage != null)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                child: DiscoverInlineError(
-                                  message: _errorMessage!,
-                                  onRetry: () {
-                                    if (isDefaultView) {
-                                      _loadFeaturedQuizzes();
-                                    } else {
-                                      _runSearch();
-                                    }
-                                  },
-                                ),
-                              )
-                            else if (quizzesToShow.isEmpty)
-                              const Padding(
-                                padding: EdgeInsets.symmetric(vertical: 32),
-                                child: Center(child: Text('No quizzes found')),
-                              )
-                            else
-                              Column(
-                                children: quizzesToShow
-                                    .asMap()
-                                    .entries
-                                    .map(
-                                      (entry) => Padding(
-                                        padding: const EdgeInsets.only(
-                                          bottom: 12,
-                                        ),
-                                        child: DiscoverFeaturedCard(
-                                          quiz: entry.value,
-                                          index: entry.key + 1,
-                                          onTap: () =>
-                                              _navigateToGame(entry.value.id),
-                                        ),
-                                      ),
-                                    )
-                                    .toList(),
-                              ),
-                          ],
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return DiscoverInlineError(
+                            message: 'No pudimos cargar los temas',
+                            onRetry: () {
+                              setState(() {
+                                _themesFuture = widget.controller.fetchThemes();
+                              });
+                            },
+                          );
+                        }
+                        final themes = snapshot.data ?? [];
+                        return ThemeFilterChips(
+                          themes: themes,
+                          selectedThemes: _selectedThemes,
+                          onToggled: _onThemeToggled,
                         );
                       },
                     ),
-                    const SizedBox(height: 16),
                   ],
                 ),
               ),
-            ),
-          ],
+              Expanded(
+                child: RefreshIndicator(
+                  color: Theme.of(context).colorScheme.primary,
+                  onRefresh: () async {
+                    setState(() {
+                      _categoriesFuture = widget.controller.fetchCategories();
+                      _themesFuture = widget.controller.fetchThemes();
+                      _errorMessage = null;
+                    });
+                    await Future.wait([
+                      _categoriesFuture,
+                      _themesFuture,
+                      _loadFeaturedQuizzes(),
+                    ]);
+                    await _refreshSearchIfNeeded();
+                  },
+                  child: ListView(
+                    padding: EdgeInsets.fromLTRB(
+                      18,
+                      0,
+                      18,
+                      100 + MediaQuery.of(context).padding.bottom,
+                    ),
+                    children: [
+                      _buildHeader(context),
+                      const SizedBox(height: 24),
+                      const DiscoverSectionHeader(
+                        title: 'Categories',
+                        actionText: 'See all',
+                      ),
+                      const SizedBox(height: 12),
+                      SizedBox(
+                        height: 140,
+                        child: FutureBuilder<List<Category>>(
+                          future: _categoriesFuture,
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState ==
+                                ConnectionState.waiting) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            }
+                            if (snapshot.hasError) {
+                              return DiscoverInlineError(
+                                message: 'No pudimos cargar las categorias',
+                                onRetry: () {
+                                  setState(() {
+                                    _categoriesFuture = widget.controller
+                                        .fetchCategories();
+                                  });
+                                },
+                              );
+                            }
+                            final categories = snapshot.data ?? [];
+                            return ListView.separated(
+                              scrollDirection: Axis.horizontal,
+                              itemBuilder: (context, index) =>
+                                  DiscoverCategoryCard(
+                                    category: categories[index],
+                                  ),
+                              separatorBuilder: (_, __) =>
+                                  const SizedBox(width: 12),
+                              itemCount: categories.length,
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                      Builder(
+                        builder: (context) {
+                          final hasQuery = _searchController.text
+                              .trim()
+                              .isNotEmpty;
+                          final isDefaultView =
+                              !hasQuery && _selectedThemes.isEmpty;
+                          final quizzesToShow = isDefaultView
+                              ? _quizzes
+                              : _filteredQuizzes;
+                          final isLoading = isDefaultView
+                              ? _isLoadingQuizzes
+                              : _isSearching;
+                          final title = isDefaultView
+                              ? 'Featured Quizzes'
+                              : 'Results';
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              DiscoverSectionHeader(
+                                title: title,
+                                actionText: isDefaultView ? 'See all' : '',
+                              ),
+                              const SizedBox(height: 12),
+                              if (isLoading)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 24),
+                                  child: Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                                )
+                              else if (_errorMessage != null)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
+                                  ),
+                                  child: DiscoverInlineError(
+                                    message: _errorMessage!,
+                                    onRetry: () {
+                                      if (isDefaultView) {
+                                        _loadFeaturedQuizzes();
+                                      } else {
+                                        _runSearch();
+                                      }
+                                    },
+                                  ),
+                                )
+                              else if (quizzesToShow.isEmpty)
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(vertical: 32),
+                                  child: Center(
+                                    child: Text('No quizzes found'),
+                                  ),
+                                )
+                              else
+                                Column(
+                                  children: quizzesToShow
+                                      .asMap()
+                                      .entries
+                                      .map(
+                                        (entry) => Padding(
+                                          padding: const EdgeInsets.only(
+                                            bottom: 12,
+                                          ),
+                                          child: DiscoverFeaturedCard(
+                                            quiz: entry.value,
+                                            index: entry.key + 1,
+                                            onTap: () =>
+                                                _navigateToGame(entry.value.id),
+                                          ),
+                                        ),
+                                      )
+                                      .toList(),
+                                ),
+                            ],
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -404,6 +425,80 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   }
 
   void _navigateToGame(String quizId) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Choose Game Mode',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+                ListTile(
+                  leading: const Icon(
+                    Icons.person,
+                    size: 32,
+                    color: Colors.blue,
+                  ),
+                  title: const Text('Play Solo'),
+                  subtitle: const Text('Practice on your own'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _startSoloGame(quizId);
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(
+                    Icons.people,
+                    size: 32,
+                    color: Colors.purple,
+                  ),
+                  title: const Text('Host Party'),
+                  subtitle: const Text('Play with friends live'),
+                  onTap: () {
+                    Navigator.pop(context);
+
+                    final prefs = getIt<SharedPreferences>();
+                    final token = prefs.getString('accessToken');
+
+                    if (token == null || token.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Debes iniciar sesión para ser Anfitrión",
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    context.read<MultiplayerGameCubit>().createSessionAsHost(
+                      quizId,
+                      token,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _startSoloGame(String quizId) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => BlocProvider(

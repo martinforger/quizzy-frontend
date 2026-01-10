@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizzy/injection_container.dart';
 import 'package:http/http.dart' as http;
 import 'package:quizzy/application/discovery/usecases/get_categories.dart';
 import 'package:quizzy/application/discovery/usecases/get_featured_quizzes.dart';
@@ -21,8 +23,9 @@ import 'package:quizzy/infrastructure/auth/repositories_impl/mock_profile_reposi
 import 'package:quizzy/infrastructure/discovery/repositories_impl/http_discovery_repository.dart';
 import 'package:quizzy/infrastructure/kahoots/repositories_impl/http_kahoots_repository.dart';
 import 'package:quizzy/infrastructure/solo-game/data_sources/http_game_service.dart';
-import 'package:quizzy/infrastructure/solo-game/data_sources/local_game_storage.dart';
+import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
 import 'package:quizzy/infrastructure/solo-game/repositories/game_repository_impl.dart';
+import 'package:quizzy/infrastructure/solo-game/data_sources/local_game_storage.dart';
 import 'package:quizzy/presentation/screens/shell/shell_screen.dart';
 import 'package:quizzy/presentation/state/auth_controller.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
@@ -97,6 +100,7 @@ class _QuizzyAppState extends State<QuizzyApp> {
     );
 
     // Use this flag to switch between real backend and mock repositories for development
+
     const bool useMockRepositories = false;
 
     final baseClient = http.Client();
@@ -170,31 +174,34 @@ class _QuizzyAppState extends State<QuizzyApp> {
       defaultValue: '8911c649-5db0-453d-8e1a-23331ffa40b9',
     );
 
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Quizzy',
-      theme: AppTheme.build(),
-      home: _showSplash
-          ? SplashScreen(onAnimationComplete: _onSplashComplete)
-          : !_isAuthenticated
-          ? LoginScreen(
-              authController: authController,
-              onLoginSuccess: _onLoginSuccess,
-            )
-          : ShellScreen(
-              discoveryController: discoveryController,
-              startAttemptUseCase: startAttemptUseCase,
-              submitAnswerUseCase: submitAnswerUseCase,
-              getSummaryUseCase: getSummaryUseCase,
-              manageLocalAttemptUseCase: manageLocalAttemptUseCase,
-              getAttemptStateUseCase: getAttemptStateUseCase,
-              kahootController: kahootController,
-              profileController: profileController,
-              authController: authController,
-              defaultKahootAuthorId: defaultAuthorId,
-              defaultKahootThemeId: defaultThemeId,
-              onLogout: _onLogout,
-            ),
+    return BlocProvider(
+      create: (_) => getIt<MultiplayerGameCubit>(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Quizzy',
+        theme: AppTheme.build(),
+        home: _showSplash
+            ? SplashScreen(onAnimationComplete: _onSplashComplete)
+            : !_isAuthenticated
+            ? LoginScreen(
+                authController: authController,
+                onLoginSuccess: _onLoginSuccess,
+              )
+            : ShellScreen(
+                discoveryController: discoveryController,
+                startAttemptUseCase: startAttemptUseCase,
+                submitAnswerUseCase: submitAnswerUseCase,
+                getSummaryUseCase: getSummaryUseCase,
+                manageLocalAttemptUseCase: manageLocalAttemptUseCase,
+                getAttemptStateUseCase: getAttemptStateUseCase,
+                kahootController: kahootController,
+                profileController: profileController,
+                authController: authController,
+                defaultKahootAuthorId: defaultAuthorId,
+                defaultKahootThemeId: defaultThemeId,
+                onLogout: _onLogout,
+              ),
+      ),
     );
   }
 }
