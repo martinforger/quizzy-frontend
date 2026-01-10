@@ -21,7 +21,7 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
   @override
   Future<List<Category>> getCategories() async {
     final uri = _resolve('explore/categories');
-    final response = await client.get(uri);
+    final response = await client.get(uri).timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
       throw Exception('Error al obtener categorias: ${response.statusCode}');
     }
@@ -38,7 +38,7 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
     final uri = _resolve('explore/featured', queryParameters: {
       'limit': '$limit',
     });
-    final response = await client.get(uri);
+    final response = await client.get(uri).timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
       throw Exception('Error al obtener quizzes destacados: ${response.statusCode}');
     }
@@ -92,7 +92,7 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
     };
 
     final uri = _resolve('explore', queryParameters: queryParameters);
-    final response = await client.get(uri);
+    final response = await client.get(uri).timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
       throw Exception('Error al buscar quizzes: ${response.statusCode}');
     }
