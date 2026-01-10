@@ -20,7 +20,7 @@ import 'package:quizzy/infrastructure/auth/repositories_impl/mock_auth_repositor
 import 'package:quizzy/infrastructure/auth/repositories_impl/mock_profile_repository.dart';
 import 'package:quizzy/infrastructure/discovery/repositories_impl/http_discovery_repository.dart';
 import 'package:quizzy/infrastructure/kahoots/repositories_impl/http_kahoots_repository.dart';
-import 'package:quizzy/infrastructure/solo-game/data_sources/mock_game_service.dart';
+import 'package:quizzy/infrastructure/solo-game/data_sources/http_game_service.dart';
 import 'package:quizzy/infrastructure/solo-game/data_sources/local_game_storage.dart';
 import 'package:quizzy/infrastructure/solo-game/repositories/game_repository_impl.dart';
 import 'package:quizzy/presentation/screens/shell/shell_screen.dart';
@@ -150,7 +150,7 @@ class _QuizzyAppState extends State<QuizzyApp> {
       getThemesUseCase: GetThemesUseCase(discoveryRepository),
     );
 
-    final gameService = MockGameService();
+    final gameService = HttpGameService(httpClient: http.Client());
     final localGameStorage = LocalGameStorage();
     final gameRepository = GameRepositoryImpl(gameService, localGameStorage);
     final startAttemptUseCase = StartAttemptUseCase(gameRepository);
