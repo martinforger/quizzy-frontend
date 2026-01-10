@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:quizzy/infrastructure/core/backend_config.dart';
@@ -77,9 +78,36 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        final errorMessage = _getErrorMessage(e);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error_outline, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    errorMessage,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+            backgroundColor: Colors.red.shade900,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            margin: const EdgeInsets.all(16),
+            action: SnackBarAction(
+              label: 'Aceptar',
+              textColor: Colors.white,
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              },
+            ),
+          ),
+        );
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -319,5 +347,67 @@ class _LoginScreenState extends State<LoginScreen> {
         ],
       ),
     );
+  }
+
+  String _getErrorMessage(dynamic error) {
+    var errorStr = error.toString();
+
+    // Limpiar prefijos comunes de excepciones
+    if (errorStr.startsWith('Exception: ')) {
+      errorStr = errorStr.replaceFirst('Exception: ', '');
+    }
+    if (errorStr.contains('Failed to login: ')) {
+      errorStr = errorStr.replaceAll('Failed to login: ', '');
+    }
+
+    // Intentar extraer JSON
+    final jsonStartIndex = errorStr.indexOf('{');
+    final jsonEndIndex = errorStr.lastIndexOf('}');
+
+    if (jsonStartIndex != -1 &&
+        jsonEndIndex != -1 &&
+        jsonEndIndex > jsonStartIndex) {
+      try {
+        final jsonStr = errorStr.substring(jsonStartIndex, jsonEndIndex + 1);
+        final jsonMap = jsonDecode(jsonStr);
+
+        // 1. Prioridad: Buscar en 'details' -> 'message'
+        if (jsonMap.containsKey('details') && jsonMap['details'] is Map) {
+          final details = jsonMap['details'];
+          if (details.containsKey('message')) {
+            final dynamic message = details['message'];
+            return _formatMessage(message);
+          }
+        }
+
+        // 2. Fallback: Buscar en top-level 'message'
+        if (jsonMap.containsKey('message')) {
+          final dynamic message = jsonMap['message'];
+          // Ignorar mensajes genéricos de orquestación si es posible
+          if (message != 'Application orchestration error.') {
+            return _formatMessage(message);
+          }
+          // Si el mensaje es el genérico y no hay detalles, mostramos un fallback
+          if (message == 'Application orchestration error.') {
+            return 'Credenciales inválidas o error de conexión.';
+          }
+        }
+      } catch (_) {
+        // Fallo en parsing, devolver string limpio
+      }
+    }
+
+    return errorStr.trim();
+  }
+
+  String _formatMessage(dynamic message) {
+    if (message is List) {
+      // Unir lista de errores con saltos de línea
+      return message.map((e) => e.toString()).join('\n');
+    } else if (message is String) {
+      // Limpiar comas extra si vienen concatenados estilo "Error 1.,Error 2."
+      return message.replaceAll('.,', '.\n');
+    }
+    return message.toString();
   }
 }
