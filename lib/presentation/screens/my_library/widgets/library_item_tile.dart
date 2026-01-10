@@ -123,13 +123,13 @@ class LibraryItemTile extends StatelessWidget {
                                 children: [
                                   CircleAvatar(
                                     radius: 12,
-                                    backgroundColor: theme.primaryColor.withValues(alpha: 0.1),
+                                    backgroundColor: Colors.white.withValues(alpha: 0.1),
                                     child: Text(
                                       (item.author?.name ?? 'U')[0].toUpperCase(),
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
-                                        color: theme.primaryColor,
+                                        color: Colors.white,
                                       ),
                                     ),
                                   ),
@@ -189,7 +189,7 @@ class LibraryItemTile extends StatelessWidget {
                             context, 
                             Icons.play_circle_fill_rounded, 
                             '${item.playCount ?? 0} plays',
-                            theme.primaryColor
+                            Colors.white
                           ),
                         ),
                         const Spacer(),
