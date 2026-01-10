@@ -96,53 +96,84 @@ class MultiplayerGameRepositoryImpl implements MultiplayerGameRepository {
 
   // ============ Server Events (Streams) ============
 
-  @override
-  Stream<HostLobbyStateEntity> get hostLobbyUpdates => _socketService
-      .hostLobbyUpdates
-      .map((data) => HostLobbyStateModel.fromJson(data));
+  // ============ Server Events (Streams) ============
+
+  Stream<T> _safeMap<S, T>(Stream<S> stream, T Function(S) mapper) {
+    return stream
+        .asyncMap((event) async {
+          try {
+            return mapper(event);
+          } catch (e, stack) {
+            print('🚨 [Repository] Error parsing event: $e\n$stack');
+            return null; // Return null to indicate failure
+          }
+        })
+        .where((event) => event != null)
+        .cast<T>();
+  }
 
   @override
-  Stream<PlayerLobbyStateEntity> get playerConnectedToSession => _socketService
-      .playerConnected
-      .map((data) => PlayerLobbyStateModel.fromJson(data));
+  Stream<HostLobbyStateEntity> get hostLobbyUpdates => _safeMap(
+    _socketService.hostLobbyUpdates,
+    (data) => HostLobbyStateModel.fromJson(data),
+  );
 
   @override
-  Stream<MultiplayerQuestionEntity> get questionStarted => _socketService
-      .questionStarted
-      .map((data) => MultiplayerQuestionModel.fromJson(data));
+  Stream<PlayerLobbyStateEntity> get playerConnectedToSession => _safeMap(
+    _socketService.playerConnected,
+    (data) => PlayerLobbyStateModel.fromJson(data),
+  );
 
   @override
-  Stream<AnswerConfirmationEntity> get playerAnswerConfirmation =>
-      _socketService.playerAnswerConfirmation.map(
-        (data) => AnswerConfirmationModel.fromJson(data),
-      );
+  Stream<MultiplayerQuestionEntity> get questionStarted => _safeMap(
+    _socketService.questionStarted,
+    (data) => MultiplayerQuestionModel.fromJson(data),
+  );
+
+  @override
+  Stream<AnswerConfirmationEntity> get playerAnswerConfirmation => _safeMap(
+    _socketService.playerAnswerConfirmation,
+    (data) => AnswerConfirmationModel.fromJson(data),
+  );
 
   @override
   Stream<int> get hostAnswerUpdate => _socketService.hostAnswerUpdate;
 
   @override
-  Stream<PlayerResultsEntity> get playerResults => _socketService.playerResults
-      .map((data) => PlayerResultsModel.fromJson(data));
+  Stream<PlayerResultsEntity> get playerResults => _safeMap(
+    _socketService.playerResults,
+    (data) => PlayerResultsModel.fromJson(data),
+  );
 
   @override
-  Stream<HostResultsEntity> get hostResults =>
-      _socketService.hostResults.map((data) => HostResultsModel.fromJson(data));
+  Stream<HostResultsEntity> get hostResults => _safeMap(
+    _socketService.hostResults,
+    (data) => HostResultsModel.fromJson(data),
+  );
 
   @override
-  Stream<PlayerGameEndEntity> get playerGameEnd => _socketService.playerGameEnd
-      .map((data) => PlayerGameEndModel.fromJson(data));
+  Stream<PlayerGameEndEntity> get playerGameEnd => _safeMap(
+    _socketService.playerGameEnd,
+    (data) => PlayerGameEndModel.fromJson(data),
+  );
 
   @override
-  Stream<HostGameEndEntity> get hostGameEnd =>
-      _socketService.hostGameEnd.map((data) => HostGameEndModel.fromJson(data));
+  Stream<HostGameEndEntity> get hostGameEnd => _safeMap(
+    _socketService.hostGameEnd,
+    (data) => HostGameEndModel.fromJson(data),
+  );
 
   @override
-  Stream<SessionClosedEntity> get sessionClosed => _socketService.sessionClosed
-      .map((data) => SessionClosedModel.fromJson(data));
+  Stream<SessionClosedEntity> get sessionClosed => _safeMap(
+    _socketService.sessionClosed,
+    (data) => SessionClosedModel.fromJson(data),
+  );
 
   @override
-  Stream<PlayerLeftEntity> get playerLeftSession =>
-      _socketService.playerLeft.map((data) => PlayerLeftModel.fromJson(data));
+  Stream<PlayerLeftEntity> get playerLeftSession => _safeMap(
+    _socketService.playerLeft,
+    (data) => PlayerLeftModel.fromJson(data),
+  );
 
   @override
   Stream<String> get hostLeftSession => _socketService.hostLeft;
@@ -151,17 +182,22 @@ class MultiplayerGameRepositoryImpl implements MultiplayerGameRepository {
   Stream<String> get hostReturnedToSession => _socketService.hostReturned;
 
   @override
-  Stream<GameErrorEntity> get gameErrors =>
-      _socketService.gameErrors.map((data) => GameErrorModel.fromJson(data));
+  Stream<GameErrorEntity> get gameErrors => _safeMap(
+    _socketService.gameErrors,
+    (data) => GameErrorModel.fromJson(data),
+  );
 
   @override
-  Stream<GameErrorEntity> get syncErrors =>
-      _socketService.syncErrors.map((data) => GameErrorModel.fromJson(data));
+  Stream<GameErrorEntity> get syncErrors => _safeMap(
+    _socketService.syncErrors,
+    (data) => GameErrorModel.fromJson(data),
+  );
 
   @override
-  Stream<GameErrorEntity> get connectionErrors => _socketService
-      .connectionErrors
-      .map((data) => GameErrorModel.fromJson(data));
+  Stream<GameErrorEntity> get connectionErrors => _safeMap(
+    _socketService.connectionErrors,
+    (data) => GameErrorModel.fromJson(data),
+  );
 
   /// Liberar recursos.
   void dispose() {
