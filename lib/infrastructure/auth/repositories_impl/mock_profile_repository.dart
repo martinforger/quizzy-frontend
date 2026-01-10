@@ -21,17 +21,12 @@ class MockProfileRepository implements ProfileRepository {
     await Future.delayed(const Duration(milliseconds: 500));
     
     final current = MockDataStore().currentUser;
-    final updated = UserProfile(
-      id: current.id,
-      name: name ?? current.name,
-      email: current.email,
-      description: description ?? current.description,
-      userType: userType ?? current.userType,
-      avatarUrl: avatarUrl ?? current.avatarUrl,
-      theme: current.theme,
-      language: language ?? current.language,
-      gameStreak: current.gameStreak,
-      createdAt: current.createdAt,
+    final updated = current.copyWith(
+      name: name,
+      description: description,
+      userType: userType,
+      avatarUrl: avatarUrl,
+      language: language,
       updatedAt: DateTime.now(),
     );
 
