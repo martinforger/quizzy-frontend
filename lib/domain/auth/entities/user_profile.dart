@@ -24,4 +24,32 @@ class UserProfile {
     required this.createdAt,
     this.updatedAt,
   });
+
+  UserProfile copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? description,
+    String? userType,
+    String? avatarUrl,
+    String? theme,
+    String? language,
+    int? gameStreak,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return UserProfile(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      description: description ?? this.description,
+      userType: userType ?? this.userType,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      theme: theme ?? this.theme,
+      language: language ?? this.language,
+      gameStreak: gameStreak ?? this.gameStreak,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }
