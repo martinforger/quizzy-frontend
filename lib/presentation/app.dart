@@ -15,7 +15,7 @@ import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_c
 import 'package:quizzy/application/solo-game/useCases/get_attempt_state_use_case.dart';
 import 'package:quizzy/infrastructure/discovery/repositories_impl/http_discovery_repository.dart';
 import 'package:quizzy/infrastructure/kahoots/repositories_impl/http_kahoots_repository.dart';
-import 'package:quizzy/infrastructure/solo-game/data_sources/mock_game_service.dart';
+import 'package:quizzy/infrastructure/solo-game/data_sources/http_game_service.dart';
 import 'package:quizzy/infrastructure/solo-game/data_sources/local_game_storage.dart';
 import 'package:quizzy/infrastructure/solo-game/repositories/game_repository_impl.dart';
 import 'package:quizzy/presentation/screens/shell/shell_screen.dart';
@@ -44,7 +44,7 @@ class QuizzyApp extends StatelessWidget {
       getThemesUseCase: GetThemesUseCase(discoveryRepository),
     );
 
-    final gameService = MockGameService();
+    final gameService = HttpGameService(httpClient: http.Client());
     final localGameStorage = LocalGameStorage();
     final gameRepository = GameRepositoryImpl(gameService, localGameStorage);
     final startAttemptUseCase = StartAttemptUseCase(gameRepository);
