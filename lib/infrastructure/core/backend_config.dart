@@ -9,44 +9,22 @@ enum BackendEnvironment {
   equipoB,
 
   /// Modo mock para desarrollo/testing local
-  mock,
+  privado,
 }
 
-/// Gestor de configuración dinámico para el backend de solo-game.
-///
-/// Esta clase centraliza la lógica de conexión a los diferentes backends,
-/// siguiendo el principio de Inversión de Dependencias de la arquitectura
-/// hexagonal.
-///
-/// Uso:
-/// ```dart
-/// // Cambiar de backend
-/// BackendSettings.currentEnv = BackendEnvironment.equipoB;
-///
-/// // O usar el toggle
-/// BackendSettings.toggleBackend();
-///
-/// // Obtener la URL actual
-/// final url = BackendSettings.baseUrl;
-/// ```
 class BackendSettings {
-  /// El entorno actual activo.
-  /// Por defecto inicia con el Equipo A.
   static BackendEnvironment currentEnv = BackendEnvironment.equipoA;
 
   /// URLs base de cada equipo.
-  ///
-  /// IMPORTANTE: Actualizar estas URLs con las URLs reales de producción
-  /// de cada equipo de backend.
   static const Map<BackendEnvironment, String> _urls = {
-    BackendEnvironment.equipoA: 'https://quizzy-backend-0wh2.onrender.com',
-    BackendEnvironment.equipoB: 'Massi: https://backcomun-gc5j.onrender.com',
-    BackendEnvironment.mock: 'http://localhost:8080',
+    BackendEnvironment.equipoA: 'https://quizzy-backend-0wh2.onrender.com/api',
+    BackendEnvironment.equipoB: 'https://backcomun-gc5j.onrender.com',
+    BackendEnvironment.privado: 'https://quizzybackend.app/api',
   };
 
   /// Obtiene la URL base del entorno actual.
   static String get baseUrl =>
-      _urls[currentEnv] ?? _urls[BackendEnvironment.mock]!;
+      _urls[currentEnv] ?? _urls[BackendEnvironment.privado]!;
 
   /// Obtiene el nombre legible del entorno actual para mostrar en UI.
   static String get currentEnvName {
@@ -55,8 +33,8 @@ class BackendSettings {
         return 'Equipo A';
       case BackendEnvironment.equipoB:
         return 'Equipo B';
-      case BackendEnvironment.mock:
-        return 'Mock (Local)';
+      case BackendEnvironment.privado:
+        return 'Privado';
     }
   }
 

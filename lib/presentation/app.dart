@@ -40,6 +40,7 @@ import 'package:quizzy/application/auth/usecases/update_profile_use_case.dart';
 import 'package:quizzy/application/auth/usecases/update_password_use_case.dart';
 
 import 'package:quizzy/infrastructure/core/authenticated_http_client.dart';
+import 'package:quizzy/infrastructure/core/backend_config.dart';
 
 import 'package:quizzy/presentation/screens/auth/login_screen.dart';
 import 'package:quizzy/presentation/screens/splash/splash_screen.dart';
@@ -91,31 +92,24 @@ class _QuizzyAppState extends State<QuizzyApp> {
 
   @override
   Widget build(BuildContext context) {
-    String mockBaseUrl = const String.fromEnvironment('MOCK_BASE_URL');
-    if (mockBaseUrl.isEmpty) {
-      // Use localhost for all platforms. 
-      // For Android, this requires running `adb reverse tcp:3000 tcp:3000`
-      // Or use your computer's local IP: 192.168.18.20
-      mockBaseUrl = 'http://192.168.18.20:3000';
-    }
-    
-    debugPrint('Using Mock URL: $mockBaseUrl');
+    debugPrint(
+      'Using Backend: ${BackendSettings.currentEnvName} -> ${BackendSettings.baseUrl}',
+    );
 
-    // Use this flag to switch between real backend and mock repositories
-    const bool useMockRepositories = true;
+    // Use this flag to switch between real backend and mock repositories for development
+    const bool useMockRepositories = false;
 
     final baseClient = http.Client();
-    final authenticatedClient = AuthenticatedHttpClient(baseClient, widget.sharedPreferences);
+    final authenticatedClient = AuthenticatedHttpClient(
+      baseClient,
+      widget.sharedPreferences,
+    );
 
-    // AuthRepository needs both clients ideally? 
-    // Actually AuthRepo handles login (no token needed yet) and logout (needs token).
-    // If we pass authenticatedClient to AuthRepo, login calls might have a stale token header if one exists,
-    // which usually is ignored by backend. But for correctness we can pass authenticatedClient.
-    final authRepository = useMockRepositories 
+    // AuthRepository: Uses BackendSettings.baseUrl dynamically
+    final authRepository = useMockRepositories
         ? MockAuthRepository()
         : HttpAuthRepository(
             client: authenticatedClient,
-            baseUrl: mockBaseUrl,
             sharedPreferences: widget.sharedPreferences,
           );
     final authController = AuthController(
@@ -126,23 +120,17 @@ class _QuizzyAppState extends State<QuizzyApp> {
       confirmPasswordResetUseCase: ConfirmPasswordResetUseCase(authRepository),
     );
 
-    // ProfileRepository is now vastly simplified and just needs the authenticated client
-    final profileRepository = useMockRepositories 
+    // ProfileRepository: Uses BackendSettings.baseUrl dynamically
+    final profileRepository = useMockRepositories
         ? MockProfileRepository()
-        : HttpProfileRepository(
-            client: authenticatedClient,
-            baseUrl: mockBaseUrl,
-          );
+        : HttpProfileRepository(client: authenticatedClient);
     final profileController = ProfileController(
       getProfileUseCase: GetProfileUseCase(profileRepository),
       updateProfileUseCase: UpdateProfileUseCase(profileRepository),
       updatePasswordUseCase: UpdatePasswordUseCase(profileRepository),
     );
 
-    final discoveryRepository = HttpDiscoveryRepository(
-      client: http.Client(),
-      baseUrl: mockBaseUrl,
-    );
+    final discoveryRepository = HttpDiscoveryRepository(client: http.Client());
     final discoveryController = DiscoveryController(
       getCategoriesUseCase: GetCategoriesUseCase(discoveryRepository),
       getFeaturedQuizzesUseCase: GetFeaturedQuizzesUseCase(discoveryRepository),
@@ -159,10 +147,7 @@ class _QuizzyAppState extends State<QuizzyApp> {
     final manageLocalAttemptUseCase = ManageLocalAttemptUseCase(gameRepository);
     final getAttemptStateUseCase = GetAttemptStateUseCase(gameRepository);
 
-    final kahootsRepository = HttpKahootsRepository(
-      client: http.Client(),
-      baseUrl: mockBaseUrl,
-    );
+    final kahootsRepository = HttpKahootsRepository(client: http.Client());
     final kahootController = KahootController(
       createKahootUseCase: CreateKahootUseCase(kahootsRepository),
       updateKahootUseCase: UpdateKahootUseCase(kahootsRepository),
@@ -186,24 +171,24 @@ class _QuizzyAppState extends State<QuizzyApp> {
       home: _showSplash
           ? SplashScreen(onAnimationComplete: _onSplashComplete)
           : !_isAuthenticated
-              ? LoginScreen(
-                  authController: authController,
-                  onLoginSuccess: _onLoginSuccess,
-                )
-              : ShellScreen(
-                  discoveryController: discoveryController,
-                  startAttemptUseCase: startAttemptUseCase,
-                  submitAnswerUseCase: submitAnswerUseCase,
-                  getSummaryUseCase: getSummaryUseCase,
-                  manageLocalAttemptUseCase: manageLocalAttemptUseCase,
-                  getAttemptStateUseCase: getAttemptStateUseCase,
-                  kahootController: kahootController,
-                  profileController: profileController,
-                  authController: authController,
-                  defaultKahootAuthorId: defaultAuthorId,
-                  defaultKahootThemeId: defaultThemeId,
-                  onLogout: _onLogout,
-                ),
+          ? LoginScreen(
+              authController: authController,
+              onLoginSuccess: _onLoginSuccess,
+            )
+          : ShellScreen(
+              discoveryController: discoveryController,
+              startAttemptUseCase: startAttemptUseCase,
+              submitAnswerUseCase: submitAnswerUseCase,
+              getSummaryUseCase: getSummaryUseCase,
+              manageLocalAttemptUseCase: manageLocalAttemptUseCase,
+              getAttemptStateUseCase: getAttemptStateUseCase,
+              kahootController: kahootController,
+              profileController: profileController,
+              authController: authController,
+              defaultKahootAuthorId: defaultAuthorId,
+              defaultKahootThemeId: defaultThemeId,
+              onLogout: _onLogout,
+            ),
     );
   }
 }

@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../backend_config.dart';
+import '../../core/backend_config.dart';
 import 'game_remote_data_source.dart';
 
 /// Implementación HTTP real de [GameRemoteDataSource].

@@ -7,16 +7,13 @@ import 'package:quizzy/domain/discovery/entities/pagination.dart';
 import 'package:quizzy/domain/discovery/entities/quiz_summary.dart';
 import 'package:quizzy/domain/discovery/entities/quiz_theme.dart';
 import 'package:quizzy/domain/discovery/repositories/discovery_repository.dart';
+import 'package:quizzy/infrastructure/core/backend_config.dart';
 
-/// Implementacion HTTP del repositorio de descubrimiento usando el mock server.
+/// Implementacion HTTP del repositorio de descubrimiento usando BackendSettings.
 class HttpDiscoveryRepository implements DiscoveryRepository {
-  HttpDiscoveryRepository({
-    required this.client,
-    required String baseUrl,
-  }) : _baseUri = Uri.parse(baseUrl);
+  HttpDiscoveryRepository({required this.client});
 
   final http.Client client;
-  final Uri _baseUri;
 
   @override
   Future<List<Category>> getCategories() async {
@@ -30,23 +27,30 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
     final List<dynamic> jsonList = decoded is Map<String, dynamic>
         ? (decoded['data'] as List<dynamic>? ?? <dynamic>[])
         : (decoded as List<dynamic>);
-    return jsonList.map((e) => _mapCategory(e as Map<String, dynamic>)).toList();
+    return jsonList
+        .map((e) => _mapCategory(e as Map<String, dynamic>))
+        .toList();
   }
 
   @override
   Future<List<QuizSummary>> getFeaturedQuizzes({int limit = 10}) async {
-    final uri = _resolve('explore/featured', queryParameters: {
-      'limit': '$limit',
-    });
+    final uri = _resolve(
+      'explore/featured',
+      queryParameters: {'limit': '$limit'},
+    );
     final response = await client.get(uri).timeout(const Duration(seconds: 30));
     if (response.statusCode != 200) {
-      throw Exception('Error al obtener quizzes destacados: ${response.statusCode}');
+      throw Exception(
+        'Error al obtener quizzes destacados: ${response.statusCode}',
+      );
     }
     final dynamic decoded = json.decode(response.body);
     final List<dynamic> jsonList = decoded is Map<String, dynamic>
         ? (decoded['data'] as List<dynamic>? ?? <dynamic>[])
         : (decoded as List<dynamic>);
-    return jsonList.map((e) => _mapQuizSummary(e as Map<String, dynamic>)).toList();
+    return jsonList
+        .map((e) => _mapQuizSummary(e as Map<String, dynamic>))
+        .toList();
   }
 
   Category _mapCategory(Map<String, dynamic> json) {
@@ -64,8 +68,12 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
       id: json['id'] as String,
       title: json['title'] as String? ?? 'Untitled quiz',
       author: _extractAuthor(json['author']),
-      tag: (json['category'] as String?) ?? _extractFirstTheme(json['themes']) ?? 'General',
-      thumbnailUrl: _resolveMedia(json['coverImageId'] as String?) ??
+      tag:
+          (json['category'] as String?) ??
+          _extractFirstTheme(json['themes']) ??
+          'General',
+      thumbnailUrl:
+          _resolveMedia(json['coverImageId'] as String?) ??
           (json['kahootImage'] as String?) ??
           (json['thumbnailUrl'] as String? ?? ''),
       description: json['description'] as String?,
@@ -96,11 +104,19 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
     if (response.statusCode != 200) {
       throw Exception('Error al buscar quizzes: ${response.statusCode}');
     }
-    final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
-    final List<dynamic> itemsJson = (data['data'] as List<dynamic>? ?? <dynamic>[]);
-    final paginationJson = data['pagination'] as Map<String, dynamic>? ?? <String, dynamic>{};
-    final quizzes = itemsJson.map((e) => _mapQuizSummary(e as Map<String, dynamic>)).toList();
-    final pagination = _mapPagination(paginationJson, fallbackCount: quizzes.length);
+    final Map<String, dynamic> data =
+        json.decode(response.body) as Map<String, dynamic>;
+    final List<dynamic> itemsJson =
+        (data['data'] as List<dynamic>? ?? <dynamic>[]);
+    final paginationJson =
+        data['pagination'] as Map<String, dynamic>? ?? <String, dynamic>{};
+    final quizzes = itemsJson
+        .map((e) => _mapQuizSummary(e as Map<String, dynamic>))
+        .toList();
+    final pagination = _mapPagination(
+      paginationJson,
+      fallbackCount: quizzes.length,
+    );
     return PaginatedQuizzes(items: quizzes, pagination: pagination);
   }
 
@@ -116,10 +132,15 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
     final List<dynamic> jsonList = decoded is Map<String, dynamic>
         ? (decoded['data'] as List<dynamic>? ?? <dynamic>[])
         : (decoded as List<dynamic>);
-    return jsonList.map((e) => _mapQuizTheme(e as Map<String, dynamic>)).toList();
+    return jsonList
+        .map((e) => _mapQuizTheme(e as Map<String, dynamic>))
+        .toList();
   }
 
-  Pagination _mapPagination(Map<String, dynamic> json, {required int fallbackCount}) {
+  Pagination _mapPagination(
+    Map<String, dynamic> json, {
+    required int fallbackCount,
+  }) {
     return Pagination(
       page: (json['page'] as num?)?.toInt() ?? 1,
       limit: (json['limit'] as num?)?.toInt() ?? fallbackCount,
@@ -164,8 +185,10 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
   }
 
   Uri _resolve(String path, {Map<String, String>? queryParameters}) {
-    final base = _baseUri.toString();
+    final base = BackendSettings.baseUrl;
     final separator = base.endsWith('/') ? '' : '/';
-    return Uri.parse('$base$separator$path').replace(queryParameters: queryParameters);
+    return Uri.parse(
+      '$base$separator$path',
+    ).replace(queryParameters: queryParameters);
   }
 }
