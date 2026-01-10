@@ -367,6 +367,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                       onChanged: (v) => setState(() => _selectedLanguage = v),
                     ),
+                    const SizedBox(height: 16),
+
+                    DropdownButtonFormField<String>(
+                      value: _selectedUserType,
+                      decoration: const InputDecoration(
+                        labelText: 'Tipo de Usuario',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.badge),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'Estudiante', child: Text('Estudiante')),
+                        DropdownMenuItem(value: 'Profesor', child: Text('Profesor')),
+                        DropdownMenuItem(value: 'Profesional', child: Text('Profesional')),
+                        DropdownMenuItem(value: 'Otro', child: Text('Otro')),
+                      ],
+                      onChanged: (v) => setState(() => _selectedUserType = v),
+                    ),
                     const SizedBox(height: 24),
 
                     SizedBox(
