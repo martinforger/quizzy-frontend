@@ -17,6 +17,8 @@ import 'infrastructure/solo-game/repositories/game_repository_impl.dart';
 import 'domain/multiplayer-game/repositories/multiplayer_game_repository.dart';
 import 'infrastructure/multiplayer-game/repositories/multiplayer_game_repository_impl.dart';
 import 'domain/auth/repositories/auth_repository.dart';
+import 'domain/library/repositories/i_library_repository.dart';
+import 'infrastructure/library/repositories/http_library_repository.dart';
 
 // Import Use Cases - Multiplayer
 import 'application/multiplayer-game/usecases/create_session_use_case.dart';
@@ -42,9 +44,18 @@ import 'application/auth/usecases/logout_use_case.dart';
 import 'application/auth/usecases/request_password_reset_use_case.dart';
 import 'application/auth/usecases/confirm_password_reset_use_case.dart';
 
+// Import Use Cases - Library
+import 'application/library/usecases/get_my_creations.dart';
+import 'application/library/usecases/get_favorites.dart';
+import 'application/library/usecases/mark_as_favorite.dart';
+import 'application/library/usecases/unmark_as_favorite.dart';
+import 'application/library/usecases/get_in_progress.dart';
+import 'application/library/usecases/get_completed.dart';
+
 // Import Cubits/Controllers
 import 'presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
 import 'presentation/bloc/game_cubit.dart';
+import 'presentation/bloc/library/library_cubit.dart';
 import 'presentation/state/auth_controller.dart';
 
 final getIt = GetIt.instance;
@@ -100,6 +111,10 @@ Future<void> init() async {
     ),
   );
 
+  getIt.registerLazySingleton<ILibraryRepository>(
+    () => HttpLibraryRepository(client: getIt<AuthenticatedHttpClient>()),
+  );
+
   // Use Cases - Multiplayer
   getIt.registerLazySingleton(() => CreateMultiplayerSessionUseCase(getIt()));
   getIt.registerLazySingleton(() => GetSessionPinByQrTokenUseCase(getIt()));
@@ -124,6 +139,14 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => RequestPasswordResetUseCase(getIt()));
   getIt.registerLazySingleton(() => ConfirmPasswordResetUseCase(getIt()));
 
+  // Use Cases - Library
+  getIt.registerLazySingleton(() => GetMyCreationsUseCase(getIt()));
+  getIt.registerLazySingleton(() => GetFavoritesUseCase(getIt()));
+  getIt.registerLazySingleton(() => MarkAsFavoriteUseCase(getIt()));
+  getIt.registerLazySingleton(() => UnmarkAsFavoriteUseCase(getIt()));
+  getIt.registerLazySingleton(() => GetInProgressUseCase(getIt()));
+  getIt.registerLazySingleton(() => GetCompletedUseCase(getIt()));
+
   // Cubits / Controllers
   getIt.registerFactory(
     () => AuthController(
@@ -142,6 +165,17 @@ Future<void> init() async {
       getSummaryUseCase: getIt(),
       manageLocalAttemptUseCase: getIt(),
       getAttemptStateUseCase: getIt(),
+    ),
+  );
+
+  getIt.registerFactory(
+    () => LibraryCubit(
+      getMyCreationsUseCase: getIt(),
+      getFavoritesUseCase: getIt(),
+      getInProgressUseCase: getIt(),
+      getCompletedUseCase: getIt(),
+      markAsFavoriteUseCase: getIt(),
+      unmarkAsFavoriteUseCase: getIt(),
     ),
   );
 

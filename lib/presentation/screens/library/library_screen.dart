@@ -14,6 +14,8 @@ import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
 import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_state.dart';
 import 'package:quizzy/presentation/screens/multiplayer/host/host_lobby_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:quizzy/injection_container.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({
@@ -200,7 +202,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                 }
               : null,
           onTap: () {
-            // TODO: Implement navigation
+            _showGameOptions(context, item.id);
           },
         );
       },
@@ -292,6 +294,111 @@ class _LibraryScreenState extends State<LibraryScreen>
         ),
       ),
     );
+  }
+
+  void _showGameOptions(BuildContext context, String quizId) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return BlocListener<MultiplayerGameCubit, MultiplayerGameState>(
+          listener: (context, state) {
+            if (state is HostLobbyState) {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const HostLobbyScreen()),
+              );
+            } else if (state is MultiplayerError) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            }
+          },
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 24.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text(
+                  'Choose Game Mode',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 16),
+                ListTile(
+                  leading: const Icon(
+                    Icons.person,
+                    size: 32,
+                    color: Colors.blue,
+                  ),
+                  title: const Text('Play Solo'),
+                  subtitle: const Text('Practice on your own'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _startSoloGame(quizId);
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(
+                    Icons.people,
+                    size: 32,
+                    color: Colors.purple,
+                  ),
+                  title: const Text('Host Party'),
+                  subtitle: const Text('Play with friends live'),
+                  onTap: () {
+                    Navigator.pop(context);
+
+                    final prefs = getIt<SharedPreferences>();
+                    final token = prefs.getString('accessToken');
+
+                    if (token == null || token.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Debes iniciar sesión para ser Anfitrión",
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    context.read<MultiplayerGameCubit>().createSessionAsHost(
+                      quizId,
+                      token,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _startSoloGame(String quizId) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => BlocProvider(
+          create: (_) => GameCubit(
+            startAttemptUseCase: widget.startAttemptUseCase,
+            submitAnswerUseCase: widget.submitAnswerUseCase,
+            getSummaryUseCase: widget.getSummaryUseCase,
+            manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
+            getAttemptStateUseCase: widget.getAttemptStateUseCase,
+          ),
+          child: GameScreen(quizId: quizId),
+        ),
+      ),
+    );
+    // Refresh session info when returning
+    _loadSession();
   }
 }
 

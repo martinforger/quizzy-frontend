@@ -2,26 +2,26 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:quizzy/domain/library/entities/library_item.dart';
 import 'package:quizzy/domain/library/repositories/i_library_repository.dart';
+import 'package:quizzy/infrastructure/core/backend_config.dart';
 
 class HttpLibraryRepository implements ILibraryRepository {
-  HttpLibraryRepository({
-    required this.client,
-    required String baseUrl,
-  }) : _baseUrl = baseUrl;
+  HttpLibraryRepository({required this.client});
 
   final http.Client client;
-  final String _baseUrl;
 
   Uri _resolve(String path, [Map<String, dynamic>? queryParameters]) {
-    final effectiveBaseUrl = _baseUrl.endsWith('/') ? _baseUrl.substring(0, _baseUrl.length - 1) : _baseUrl;
+    final baseUrl = BackendSettings.baseUrl;
+    final effectiveBaseUrl = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
     final effectivePath = path.startsWith('/') ? path : '/$path';
 
     final uri = Uri.parse('$effectiveBaseUrl$effectivePath');
     if (queryParameters != null && queryParameters.isNotEmpty) {
-       final newQueryParameters = Map<String, dynamic>.from(uri.queryParameters);
-       newQueryParameters.addAll(queryParameters);
-       
-       return uri.replace(queryParameters: newQueryParameters);
+      final newQueryParameters = Map<String, dynamic>.from(uri.queryParameters);
+      newQueryParameters.addAll(queryParameters);
+
+      return uri.replace(queryParameters: newQueryParameters);
     }
     return uri;
   }
@@ -43,8 +43,12 @@ class HttpLibraryRepository implements ILibraryRepository {
     }
     return map;
   }
-  
-  void _ensureSuccess(http.Response response, String message, {List<int> expected = const [200]}) {
+
+  void _ensureSuccess(
+    http.Response response,
+    String message, {
+    List<int> expected = const [200],
+  }) {
     if (!expected.contains(response.statusCode)) {
       throw Exception('$message: ${response.statusCode} - ${response.body}');
     }
@@ -112,22 +116,23 @@ class HttpLibraryRepository implements ILibraryRepository {
       visibility: json['visibility'],
       themeId: json['themeId'],
       author: json['author'] != null ? _mapAuthor(json['author']) : null,
-      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt']) : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'])
+          : null,
       playCount: json['playCount'],
       category: json['category'],
-      status: json['Status'] ?? json['status'], // Note: prompt says "Status" capitalized in some examples! handling both
+      status:
+          json['Status'] ??
+          json['status'], // Note: prompt says "Status" capitalized in some examples! handling both
       gameId: json['gameId'],
       gameType: json['gameType'],
     );
   }
 
   LibraryAuthor _mapAuthor(Map<String, dynamic> json) {
-    return LibraryAuthor(
-      id: json['id'],
-      name: json['name'],
-    );
+    return LibraryAuthor(id: json['id'], name: json['name']);
   }
-  
+
   LibraryPagination _mapPagination(Map<String, dynamic> json) {
     return LibraryPagination(
       page: json['page'],
