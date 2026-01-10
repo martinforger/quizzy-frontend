@@ -23,16 +23,16 @@ class LibraryItemTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16, left: 4, right: 4),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             offset: const Offset(0, 4),
             blurRadius: 12,
           ),
           BoxShadow(
-            color: theme.primaryColor.withOpacity(0.05),
+            color: theme.primaryColor.withValues(alpha: 0.02),
             offset: const Offset(0, 2),
             blurRadius: 0,
           ),
@@ -53,7 +53,7 @@ class LibraryItemTile extends StatelessWidget {
                   Container(
                     height: 140, // Taller image for better impact
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.surfaceContainerHighest,
+                      color: Colors.white10,
                       borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                       image: item.coverImageId != null
                           ? DecorationImage(
@@ -67,7 +67,7 @@ class LibraryItemTile extends StatelessWidget {
                             child: Icon(
                               Icons.image,
                               size: 48,
-                              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                              color: Colors.white24,
                             ),
                           )
                         : null,
@@ -79,7 +79,7 @@ class LibraryItemTile extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.7),
+                          color: Colors.black.withValues(alpha: 0.7),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -113,6 +113,7 @@ class LibraryItemTile extends StatelessWidget {
                                   fontWeight: FontWeight.w800,
                                   fontSize: 18,
                                   height: 1.2,
+                                  color: Colors.white,
                                 ),
                                 maxLines: 2,
                                 overflow: TextOverflow.ellipsis,
@@ -122,7 +123,7 @@ class LibraryItemTile extends StatelessWidget {
                                 children: [
                                   CircleAvatar(
                                     radius: 12,
-                                    backgroundColor: theme.primaryColor.withOpacity(0.1),
+                                    backgroundColor: theme.primaryColor.withValues(alpha: 0.1),
                                     child: Text(
                                       (item.author?.name ?? 'U')[0].toUpperCase(),
                                       style: TextStyle(
@@ -138,7 +139,7 @@ class LibraryItemTile extends StatelessWidget {
                                       item.author?.name ?? 'Autor desconocido',
                                       style: theme.textTheme.bodySmall?.copyWith(
                                         fontWeight: FontWeight.w600,
-                                        color: Colors.grey[700],
+                                        color: Colors.white70,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -174,14 +175,14 @@ class LibraryItemTile extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    Divider(color: Colors.grey[200], height: 1),
+                    Divider(color: Colors.white10, height: 1),
                     const SizedBox(height: 12),
                     Row(
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
-                             color: Colors.grey[100],
+                             color: Colors.white.withValues(alpha: 0.05),
                              borderRadius: BorderRadius.circular(8),
                           ),
                           child: _buildStat(
@@ -196,7 +197,7 @@ class LibraryItemTile extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.primary.withOpacity(0.1),
+                              color: theme.colorScheme.primary.withValues(alpha: 0.1),
                               borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
@@ -226,14 +227,14 @@ class LibraryItemTile extends StatelessWidget {
   Widget _buildStat(BuildContext context, IconData icon, String label, Color color) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: color.withOpacity(0.8)),
+        Icon(icon, size: 16, color: color.withValues(alpha: 0.8)),
         const SizedBox(width: 6),
         Text(
           label,
-          style: TextStyle(
+          style: const TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.w700,
-            color: Colors.grey[700],
+            color: Colors.white70,
           ),
         ),
       ],

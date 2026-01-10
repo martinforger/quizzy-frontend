@@ -10,6 +10,7 @@ import 'package:quizzy/presentation/bloc/game_cubit.dart';
 import 'package:quizzy/presentation/bloc/library/library_cubit.dart';
 import 'package:quizzy/presentation/screens/game/game_screen.dart';
 import 'package:quizzy/presentation/screens/my_library/widgets/library_item_tile.dart';
+import 'package:quizzy/presentation/theme/app_theme.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({
@@ -90,7 +91,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      // backgroundColor uses theme default (AppColors.surface)
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) {
           return [
@@ -108,9 +109,9 @@ class _LibraryScreenState extends State<LibraryScreen>
                 controller: _tabController,
                 isScrollable: true,
                 indicatorWeight: 4,
-                indicatorColor: Theme.of(context).primaryColor,
-                labelColor: Theme.of(context).primaryColor,
-                unselectedLabelColor: Colors.grey,
+                indicatorColor: AppColors.primary,
+                labelColor: AppColors.primary,
+                unselectedLabelColor: Colors.white60,
                 labelStyle: const TextStyle(fontWeight: FontWeight.bold),
                 tabs: const [
                   Tab(text: "Explorar"),
@@ -193,7 +194,7 @@ class _LibraryScreenState extends State<LibraryScreen>
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
+              // Color implied by theme (white in dark mode)
             ),
           ),
         ),
@@ -244,11 +245,11 @@ class _LibraryScreenState extends State<LibraryScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.15),
+            color: Colors.black.withValues(alpha: 0.15),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -256,11 +257,12 @@ class _LibraryScreenState extends State<LibraryScreen>
       ),
       child: TextField(
         controller: _searchController,
+        style: const TextStyle(color: Colors.white),
         decoration: const InputDecoration(
-          icon: Icon(Icons.search, color: Colors.grey),
+          icon: Icon(Icons.search, color: Colors.white54),
           border: InputBorder.none,
           hintText: "Buscar kahoots...",
-          hintStyle: TextStyle(color: Colors.grey),
+          hintStyle: TextStyle(color: Colors.white38),
         ),
       ),
     );
@@ -356,11 +358,11 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.2),
             offset: const Offset(0, 4),
             blurRadius: 12,
           ),
@@ -386,9 +388,9 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
                       fit: BoxFit.cover,
                       errorBuilder:
                           (_, __, ___) => Container(
-                            color: Colors.grey[300],
+                            color: Colors.white10,
                             child: const Center(
-                              child: Icon(Icons.image_not_supported, size: 50),
+                              child: Icon(Icons.image_not_supported, size: 50, color: Colors.white24),
                             ),
                           ),
                     ),
@@ -402,7 +404,7 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
+                        color: Colors.black.withValues(alpha: 0.7),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -425,11 +427,11 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Theme.of(context).cardColor.withValues(alpha: 0.9),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withOpacity(0.1),
+                                color: Colors.black.withValues(alpha: 0.1),
                                 blurRadius: 4,
                               ),
                             ],
@@ -438,7 +440,7 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
                             _isFavorite
                                 ? Icons.favorite_rounded
                                 : Icons.favorite_border_rounded,
-                            color: _isFavorite ? Colors.red : Colors.grey[700],
+                            color: _isFavorite ? Colors.red : Colors.grey[400],
                             size: 20,
                           ),
                         ),
@@ -451,7 +453,7 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
               if (hasProgress)
                 LinearProgressIndicator(
                   value: progressValue,
-                  backgroundColor: Colors.grey[100],
+                  backgroundColor: Colors.white10,
                   color:
                       progressValue >= 1.0
                           ? Colors.green
@@ -471,7 +473,7 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
                           style: TextStyle(
                             fontSize: 10,
                             fontWeight: FontWeight.bold,
-                            color: Colors.grey[500],
+                            color: Colors.white54,
                             letterSpacing: 1.0,
                           ),
                         ),
