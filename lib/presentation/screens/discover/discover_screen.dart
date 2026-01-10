@@ -274,6 +274,8 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                                             index: entry.key + 1,
                                             onTap: () =>
                                                 _navigateToGame(entry.value.id),
+                                            onFavoriteToggle: () =>
+                                                _toggleFavorite(entry.value),
                                           ),
                                         ),
                                       )
@@ -293,6 +295,51 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _toggleFavorite(QuizSummary quiz) async {
+    // Optimistic update
+    setState(() {
+      final updatedQuiz = quiz.copyWith(isFavorite: !quiz.isFavorite);
+
+      // Update in _quizzes
+      final index = _quizzes.indexWhere((q) => q.id == quiz.id);
+      if (index != -1) {
+        _quizzes[index] = updatedQuiz;
+      }
+
+      // Update in _filteredQuizzes
+      final filteredIndex = _filteredQuizzes.indexWhere((q) => q.id == quiz.id);
+      if (filteredIndex != -1) {
+        _filteredQuizzes[filteredIndex] = updatedQuiz;
+      }
+    });
+
+    try {
+      await widget.controller.toggleFavorite(quiz.id, quiz.isFavorite);
+    } catch (e) {
+      // Revert if failed
+      if (!mounted) return;
+      setState(() {
+        // Revert in _quizzes
+        final index = _quizzes.indexWhere((q) => q.id == quiz.id);
+        if (index != -1) {
+          _quizzes[index] = quiz; // quiz has original state
+        }
+
+        // Revert in _filteredQuizzes
+        final filteredIndex = _filteredQuizzes.indexWhere(
+          (q) => q.id == quiz.id,
+        );
+        if (filteredIndex != -1) {
+          _filteredQuizzes[filteredIndex] = quiz;
+        }
+
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error updating favorite: $e')));
+      });
+    }
   }
 
   Future<void> _loadFeaturedQuizzes() async {

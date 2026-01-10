@@ -30,6 +30,7 @@ import 'package:quizzy/application/library/usecases/get_in_progress.dart';
 import 'package:quizzy/application/library/usecases/get_my_creations.dart';
 import 'package:quizzy/application/library/usecases/mark_as_favorite.dart';
 import 'package:quizzy/application/library/usecases/unmark_as_favorite.dart';
+import 'package:quizzy/infrastructure/library/repositories/http_library_repository.dart';
 import 'package:quizzy/infrastructure/library/repositories/mock_library_repository.dart';
 import 'package:quizzy/presentation/bloc/library/library_cubit.dart';
 import 'package:quizzy/infrastructure/solo-game/data_sources/http_game_service.dart';
@@ -157,11 +158,31 @@ class _QuizzyAppState extends State<QuizzyApp> {
     final discoveryRepository = HttpDiscoveryRepository(
       client: authenticatedClient,
     );
+
+    // Library Repository
+    final libraryRepository = HttpLibraryRepository(
+      client: authenticatedClient,
+    );
+
+    final markAsFavoriteUseCase = MarkAsFavoriteUseCase(libraryRepository);
+    final unmarkAsFavoriteUseCase = UnmarkAsFavoriteUseCase(libraryRepository);
+
+    final libraryCubit = LibraryCubit(
+      getMyCreationsUseCase: GetMyCreationsUseCase(libraryRepository),
+      getFavoritesUseCase: GetFavoritesUseCase(libraryRepository),
+      getInProgressUseCase: GetInProgressUseCase(libraryRepository),
+      getCompletedUseCase: GetCompletedUseCase(libraryRepository),
+      markAsFavoriteUseCase: markAsFavoriteUseCase,
+      unmarkAsFavoriteUseCase: unmarkAsFavoriteUseCase,
+    );
+
     final discoveryController = DiscoveryController(
       getCategoriesUseCase: GetCategoriesUseCase(discoveryRepository),
       getFeaturedQuizzesUseCase: GetFeaturedQuizzesUseCase(discoveryRepository),
       searchQuizzesUseCase: SearchQuizzesUseCase(discoveryRepository),
       getThemesUseCase: GetThemesUseCase(discoveryRepository),
+      markAsFavoriteUseCase: markAsFavoriteUseCase,
+      unmarkAsFavoriteUseCase: unmarkAsFavoriteUseCase,
     );
 
     // Game service needs authenticated client for /attempts endpoints
@@ -183,20 +204,6 @@ class _QuizzyAppState extends State<QuizzyApp> {
       updateKahootUseCase: UpdateKahootUseCase(kahootsRepository),
       getKahootUseCase: GetKahootUseCase(kahootsRepository),
       deleteKahootUseCase: DeleteKahootUseCase(kahootsRepository),
-    );
-
-    final libraryRepository = MockLibraryRepository();
-    /*final libraryRepository = HttpLibraryRepository(
-      client: http.Client(),
-      baseUrl: mockBaseUrl,
-    );*/
-    final libraryCubit = LibraryCubit(
-      getMyCreationsUseCase: GetMyCreationsUseCase(libraryRepository),
-      getFavoritesUseCase: GetFavoritesUseCase(libraryRepository),
-      getInProgressUseCase: GetInProgressUseCase(libraryRepository),
-      getCompletedUseCase: GetCompletedUseCase(libraryRepository),
-      markAsFavoriteUseCase: MarkAsFavoriteUseCase(libraryRepository),
-      unmarkAsFavoriteUseCase: UnmarkAsFavoriteUseCase(libraryRepository),
     );
 
     const defaultAuthorId = String.fromEnvironment(

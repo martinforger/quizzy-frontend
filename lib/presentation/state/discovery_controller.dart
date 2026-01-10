@@ -7,18 +7,25 @@ import 'package:quizzy/domain/discovery/entities/paginated_quizzes.dart';
 import 'package:quizzy/domain/discovery/entities/quiz_summary.dart';
 import 'package:quizzy/domain/discovery/entities/quiz_theme.dart';
 
+import 'package:quizzy/application/library/usecases/mark_as_favorite.dart';
+import 'package:quizzy/application/library/usecases/unmark_as_favorite.dart';
+
 class DiscoveryController {
   DiscoveryController({
     required this.getCategoriesUseCase,
     required this.getFeaturedQuizzesUseCase,
     required this.searchQuizzesUseCase,
     required this.getThemesUseCase,
+    required this.markAsFavoriteUseCase,
+    required this.unmarkAsFavoriteUseCase,
   });
 
   final GetCategoriesUseCase getCategoriesUseCase;
   final GetFeaturedQuizzesUseCase getFeaturedQuizzesUseCase;
   final SearchQuizzesUseCase searchQuizzesUseCase;
   final GetThemesUseCase getThemesUseCase;
+  final MarkAsFavoriteUseCase markAsFavoriteUseCase;
+  final UnmarkAsFavoriteUseCase unmarkAsFavoriteUseCase;
 
   // Obtiene categorias desde el caso de uso.
   Future<List<Category>> fetchCategories() {
@@ -70,5 +77,13 @@ class DiscoveryController {
 
   Future<List<QuizTheme>> fetchThemes() {
     return getThemesUseCase();
+  }
+
+  Future<void> toggleFavorite(String quizId, bool isFavorite) async {
+    if (isFavorite) {
+      await unmarkAsFavoriteUseCase(quizId);
+    } else {
+      await markAsFavoriteUseCase(quizId);
+    }
   }
 }
