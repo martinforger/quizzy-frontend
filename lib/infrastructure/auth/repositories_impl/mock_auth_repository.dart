@@ -1,5 +1,6 @@
 import 'package:quizzy/domain/auth/entities/user.dart';
 import 'package:quizzy/domain/auth/repositories/auth_repository.dart';
+import 'package:quizzy/infrastructure/auth/repositories_impl/mock_data_store.dart';
 
 class MockAuthRepository implements AuthRepository {
   @override
@@ -17,6 +18,15 @@ class MockAuthRepository implements AuthRepository {
       userType: userType,
       createdAt: DateTime.now(),
     );
+    
+    // Update store with registered info
+    final store = MockDataStore();
+    store.currentUser = store.currentUser.copyWith(
+      name: name,
+      email: email,
+      userType: userType,
+    );
+
     return (user, 'mock-access-token');
   }
 
@@ -26,6 +36,10 @@ class MockAuthRepository implements AuthRepository {
     required String password,
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
+    
+    // Update store based on login email
+    MockDataStore().updateWithEmail(email);
+
     // Simulate successful login for any input
     return 'mock-access-token';
   }
