@@ -8,6 +8,7 @@ class UpdateProfileUseCase {
 
   Future<UserProfile> call({
     String? name,
+    String? email,
     String? description,
     String? avatarUrl,
     String? userType,
@@ -15,6 +16,7 @@ class UpdateProfileUseCase {
   }) {
     return _repository.updateProfile(
       name: name,
+      email: email,
       description: description,
       avatarUrl: avatarUrl,
       userType: userType,

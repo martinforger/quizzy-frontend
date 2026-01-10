@@ -38,6 +38,7 @@ class HttpProfileRepository implements ProfileRepository {
   @override
   Future<UserProfile> updateProfile({
     String? name,
+    String? email,
     String? description,
     String? avatarUrl,
     String? userType,
@@ -47,6 +48,7 @@ class HttpProfileRepository implements ProfileRepository {
 
     final bodyMap = <String, dynamic>{};
     if (name != null) bodyMap['name'] = name;
+    if (email != null) bodyMap['email'] = email;
     if (description != null) bodyMap['description'] = description;
     if (avatarUrl != null) bodyMap['avatarUrl'] = avatarUrl;
     if (userType != null) bodyMap['userType'] = userType;

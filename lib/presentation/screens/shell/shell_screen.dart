@@ -59,17 +59,8 @@ class _ShellScreenState extends State<ShellScreen> {
     final pages = <Widget>[
       HomeScreen(
         profileController: widget.profileController,
-        onMenuTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => ProfileScreen(
-                profileController: widget.profileController,
-                authController: widget.authController,
-                onLogout: widget.onLogout,
-              ),
-            ),
-          );
-        },
+        authController: widget.authController,
+        onLogout: widget.onLogout,
       ),
       DiscoverScreen(
         controller: widget.discoveryController,
