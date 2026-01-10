@@ -4,28 +4,23 @@ import 'package:http/http.dart' as http;
 import 'package:quizzy/domain/auth/entities/user_profile.dart';
 import 'package:quizzy/domain/auth/repositories/profile_repository.dart';
 import 'package:quizzy/infrastructure/auth/dtos/user_profile_dto.dart';
+import 'package:quizzy/infrastructure/core/backend_config.dart';
 
 class HttpProfileRepository implements ProfileRepository {
   final http.Client client;
-  final String baseUrl;
 
-  HttpProfileRepository({
-    required this.client,
-    required this.baseUrl,
-  });
+  HttpProfileRepository({required this.client});
 
-  Uri _resolve(String path) => Uri.parse('$baseUrl/$path');
-  
+  /// Builds URL dynamically using current backend from BackendSettings
+  Uri _resolve(String path) => Uri.parse('${BackendSettings.baseUrl}/$path');
+
   Map<String, String> get _headers => {'Content-Type': 'application/json'};
 
   @override
   Future<UserProfile> getProfile() async {
     final uri = _resolve('profile');
-    
-    final response = await client.get(
-      uri,
-      headers: _headers,
-    );
+
+    final response = await client.get(uri, headers: _headers);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
@@ -74,17 +69,13 @@ class HttpProfileRepository implements ProfileRepository {
     required String newPassword,
   }) async {
     final uri = _resolve('profile/password');
-    
+
     final body = json.encode({
       'currentPassword': currentPassword,
       'newPassword': newPassword,
     });
 
-    final response = await client.patch(
-      uri,
-      headers: _headers,
-      body: body,
-    );
+    final response = await client.patch(uri, headers: _headers, body: body);
 
     if (response.statusCode != 204) {
       throw Exception('Failed to update password: ${response.body}');

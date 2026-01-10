@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:quizzy/infrastructure/core/backend_config.dart';
 import 'package:quizzy/presentation/state/auth_controller.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -23,7 +24,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isRegistering = false;
-  
+
   // For registration
   final _nameController = TextEditingController();
 
@@ -49,8 +50,10 @@ class _LoginScreenState extends State<LoginScreen> {
           'student', // Default user type
         );
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Registro exitoso. Por favor inicia sesión.')),
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Registro exitoso. Por favor inicia sesión.'),
+            ),
           );
           setState(() => _isRegistering = false);
         }
@@ -65,16 +68,18 @@ class _LoginScreenState extends State<LoginScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('Tiempo de espera agotado. Por favor verifica tu conexión.'),
+            content: Text(
+              'Tiempo de espera agotado. Por favor verifica tu conexión.',
+            ),
             backgroundColor: Colors.red,
           ),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -96,18 +101,21 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    _isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold,
-                        ),
-                    textAlign: TextAlign.center,
-                  ).animate().fadeIn(duration: 600.ms).slideY(begin: -0.2, end: 0),
+                        _isRegistering ? 'Crear Cuenta' : 'Iniciar Sesión',
+                        style: Theme.of(context).textTheme.headlineMedium
+                            ?.copyWith(
+                              color: Colors.orange,
+                              fontWeight: FontWeight.bold,
+                            ),
+                        textAlign: TextAlign.center,
+                      )
+                      .animate()
+                      .fadeIn(duration: 600.ms)
+                      .slideY(begin: -0.2, end: 0),
                   const SizedBox(height: 20),
-                  Image.asset(
-                    'assets/images/logo.png',
-                    height: 150,
-                  ).animate().scale(duration: 600.ms, curve: Curves.easeOutBack),
+                  Image.asset('assets/images/logo.png', height: 150)
+                      .animate()
+                      .scale(duration: 600.ms, curve: Curves.easeOutBack),
                   const SizedBox(height: 30),
                   if (_isRegistering) ...[
                     _buildModernTextField(
@@ -162,7 +170,8 @@ class _LoginScreenState extends State<LoginScreen> {
                   ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
                   const SizedBox(height: 24),
                   TextButton(
-                    onPressed: () => setState(() => _isRegistering = !_isRegistering),
+                    onPressed: () =>
+                        setState(() => _isRegistering = !_isRegistering),
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.grey[400],
                     ),
@@ -171,11 +180,14 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(color: Colors.grey[400], fontSize: 14),
                         children: [
                           TextSpan(
-                              text: _isRegistering
-                                  ? '¿Ya tienes cuenta? '
-                                  : '¿No tienes cuenta? '),
+                            text: _isRegistering
+                                ? '¿Ya tienes cuenta? '
+                                : '¿No tienes cuenta? ',
+                          ),
                           TextSpan(
-                            text: _isRegistering ? 'Inicia sesión' : 'Regístrate',
+                            text: _isRegistering
+                                ? 'Inicia sesión'
+                                : 'Regístrate',
                             style: const TextStyle(
                               color: Colors.orange,
                               fontWeight: FontWeight.bold,
@@ -185,7 +197,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                   ).animate().fadeIn(delay: 500.ms),
-                  const SizedBox(height: 120),
+                  const SizedBox(height: 40),
+                  // Backend Selector
+                  _buildBackendSelector().animate().fadeIn(delay: 600.ms),
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -225,9 +240,84 @@ class _LoginScreenState extends State<LoginScreen> {
           borderRadius: BorderRadius.circular(16),
           borderSide: const BorderSide(color: Colors.orange, width: 1.5),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 20,
+          vertical: 18,
+        ),
       ),
       validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+    );
+  }
+
+  Widget _buildBackendSelector() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1E1E),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey[800]!, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.dns_outlined, color: Colors.grey[400], size: 18),
+              const SizedBox(width: 8),
+              Text(
+                'Servidor Backend',
+                style: TextStyle(
+                  color: Colors.grey[400],
+                  fontSize: 12,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          DropdownButtonHideUnderline(
+            child: DropdownButton<BackendEnvironment>(
+              value: BackendSettings.currentEnv,
+              isExpanded: true,
+              dropdownColor: const Color(0xFF2A2A2A),
+              icon: const Icon(Icons.keyboard_arrow_down, color: Colors.orange),
+              style: const TextStyle(color: Colors.white, fontSize: 16),
+              items: BackendEnvironment.values.map((env) {
+                String label;
+                IconData icon;
+                switch (env) {
+                  case BackendEnvironment.equipoA:
+                    label = 'Equipo A';
+                    icon = Icons.cloud;
+                  case BackendEnvironment.equipoB:
+                    label = 'Equipo B';
+                    icon = Icons.cloud_outlined;
+                  case BackendEnvironment.privado:
+                    label = 'Privado';
+                    icon = Icons.developer_mode;
+                }
+                return DropdownMenuItem(
+                  value: env,
+                  child: Row(
+                    children: [
+                      Icon(icon, color: Colors.orange, size: 20),
+                      const SizedBox(width: 12),
+                      Text(label),
+                    ],
+                  ),
+                );
+              }).toList(),
+              onChanged: (env) {
+                if (env != null) {
+                  setState(() {
+                    BackendSettings.setEnvironment(env);
+                  });
+                }
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

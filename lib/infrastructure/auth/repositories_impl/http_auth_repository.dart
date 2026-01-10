@@ -4,20 +4,17 @@ import 'package:http/http.dart' as http;
 import 'package:quizzy/domain/auth/entities/user.dart';
 import 'package:quizzy/domain/auth/repositories/auth_repository.dart';
 import 'package:quizzy/infrastructure/auth/dtos/user_dto.dart';
+import 'package:quizzy/infrastructure/core/backend_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class HttpAuthRepository implements AuthRepository {
   final http.Client client;
-  final String baseUrl;
   final SharedPreferences sharedPreferences;
 
-  HttpAuthRepository({
-    required this.client,
-    required this.baseUrl,
-    required this.sharedPreferences,
-  });
+  HttpAuthRepository({required this.client, required this.sharedPreferences});
 
-  Uri _resolve(String path) => Uri.parse('$baseUrl/$path');
+  /// Builds URL dynamically using current backend from BackendSettings
+  Uri _resolve(String path) => Uri.parse('${BackendSettings.baseUrl}/$path');
 
   Future<String?> _getToken() async {
     return sharedPreferences.getString('accessToken');
@@ -46,11 +43,9 @@ class HttpAuthRepository implements AuthRepository {
       'userType': userType,
     });
 
-    final response = await client.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: body,
-    ).timeout(const Duration(seconds: 30));
+    final response = await client
+        .post(uri, headers: {'Content-Type': 'application/json'}, body: body)
+        .timeout(const Duration(seconds: 30));
 
     if (response.statusCode == 201) {
       final data = json.decode(response.body);
@@ -69,20 +64,20 @@ class HttpAuthRepository implements AuthRepository {
     required String password,
   }) async {
     final uri = _resolve('auth/login');
-    final body = json.encode({
-      'email': email,
-      'password': password,
-    });
+    final body = json.encode({'email': email, 'password': password});
 
-    final response = await client.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: body,
-    ).timeout(const Duration(seconds: 30));
+    final response = await client
+        .post(uri, headers: {'Content-Type': 'application/json'}, body: body)
+        .timeout(const Duration(seconds: 30));
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
-      final token = data['accessToken'] as String;
+    // Accept any 2xx status code as success
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      final data = json.decode(response.body) as Map<String, dynamic>;
+      // Support both 'accessToken' (spec) and 'token' (some backends)
+      final token = (data['accessToken'] ?? data['token']) as String?;
+      if (token == null || token.isEmpty) {
+        throw Exception('Login response missing token');
+      }
       await _saveToken(token);
       return token;
     } else {
@@ -95,19 +90,18 @@ class HttpAuthRepository implements AuthRepository {
     final uri = _resolve('auth/logout');
     // Using the injected client which should be an AuthenticatedHttpClient (or similar)
     // that automatically adds the Authorization header if a token exists.
-    
+
     // We try to call the logout endpoint
-    final response = await client.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-    ).timeout(const Duration(seconds: 30));
+    final response = await client
+        .post(uri, headers: {'Content-Type': 'application/json'})
+        .timeout(const Duration(seconds: 30));
 
     // Regardless of server response (204 or 401), we clear local token
     if (response.statusCode == 204 || response.statusCode == 401) {
       await _deleteToken();
     } else {
-      // If server error, we might still want to delete token locally, 
-      // but let's stick to the spec which says throw exception? 
+      // If server error, we might still want to delete token locally,
+      // but let's stick to the spec which says throw exception?
       // Actually, usually logout should always clear local state.
       // But adhering to previous logic:
       throw Exception('Failed to logout: ${response.body}');
@@ -119,11 +113,9 @@ class HttpAuthRepository implements AuthRepository {
     final uri = _resolve('auth/password-reset/request');
     final body = json.encode({'email': email});
 
-    final response = await client.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: body,
-    ).timeout(const Duration(seconds: 30));
+    final response = await client
+        .post(uri, headers: {'Content-Type': 'application/json'}, body: body)
+        .timeout(const Duration(seconds: 30));
 
     if (response.statusCode != 204) {
       throw Exception('Failed to request password reset: ${response.body}');
@@ -141,11 +133,9 @@ class HttpAuthRepository implements AuthRepository {
       'newPassword': newPassword,
     });
 
-    final response = await client.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: body,
-    ).timeout(const Duration(seconds: 30));
+    final response = await client
+        .post(uri, headers: {'Content-Type': 'application/json'}, body: body)
+        .timeout(const Duration(seconds: 30));
 
     if (response.statusCode != 204) {
       throw Exception('Failed to confirm password reset: ${response.body}');
