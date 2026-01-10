@@ -4,11 +4,14 @@ import 'package:quizzy/presentation/screens/discover/discover_screen.dart';
 import 'package:quizzy/presentation/screens/join/join_screen.dart';
 import 'package:quizzy/presentation/screens/library/library_screen.dart';
 import 'package:quizzy/presentation/screens/home/home_screen.dart';
+import 'package:quizzy/presentation/state/auth_controller.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
 import 'package:quizzy/presentation/bloc/library/library_cubit.dart';
+import 'package:quizzy/presentation/state/profile_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'package:quizzy/presentation/screens/kahoots/kahoot_editor_screen.dart';
+import 'package:quizzy/presentation/screens/profile/profile_screen.dart';
 
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
@@ -26,8 +29,11 @@ class ShellScreen extends StatefulWidget {
     required this.getAttemptStateUseCase,
     required this.kahootController,
     required this.libraryCubit,
+    required this.profileController,
+    required this.authController,
     required this.defaultKahootAuthorId,
     required this.defaultKahootThemeId,
+    required this.onLogout,
   });
 
   final DiscoveryController discoveryController;
@@ -38,8 +44,11 @@ class ShellScreen extends StatefulWidget {
   final GetAttemptStateUseCase getAttemptStateUseCase;
   final KahootController kahootController;
   final LibraryCubit libraryCubit;
+  final ProfileController profileController;
+  final AuthController authController;
   final String defaultKahootAuthorId;
   final String defaultKahootThemeId;
+  final VoidCallback onLogout;
 
   @override
   State<ShellScreen> createState() => _ShellScreenState();
@@ -51,12 +60,18 @@ class _ShellScreenState extends State<ShellScreen> {
   @override
   Widget build(BuildContext context) {
     final pages = <Widget>[
-      const HomeScreen(),
+      HomeScreen(
+        profileController: widget.profileController,
+        authController: widget.authController,
+        onLogout: widget.onLogout,
+      ),
       DiscoverScreen(
         controller: widget.discoveryController,
         startAttemptUseCase: widget.startAttemptUseCase,
         submitAnswerUseCase: widget.submitAnswerUseCase,
         getSummaryUseCase: widget.getSummaryUseCase,
+        manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
+        getAttemptStateUseCase: widget.getAttemptStateUseCase,
       ),
       LibraryScreen(
         startAttemptUseCase: widget.startAttemptUseCase,
@@ -66,6 +81,7 @@ class _ShellScreenState extends State<ShellScreen> {
         getAttemptStateUseCase: widget.getAttemptStateUseCase,
         libraryCubit: widget.libraryCubit,
       ),
+
       const JoinScreen(),
     ];
 
@@ -155,6 +171,7 @@ class _ShellScreenState extends State<ShellScreen> {
                       icon: Icon(Icons.bookmarks_rounded),
                       label: 'Catálogo',
                     ),
+
                     BottomNavigationBarItem(
                       icon: Icon(Icons.qr_code_rounded),
                       label: 'Unirse',

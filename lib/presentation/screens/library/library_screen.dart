@@ -11,6 +11,9 @@ import 'package:quizzy/presentation/bloc/library/library_cubit.dart';
 import 'package:quizzy/presentation/screens/game/game_screen.dart';
 import 'package:quizzy/presentation/screens/my_library/widgets/library_item_tile.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
+import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
+import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_state.dart';
+import 'package:quizzy/presentation/screens/multiplayer/host/host_lobby_screen.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({
@@ -80,7 +83,8 @@ class _LibraryScreenState extends State<LibraryScreen>
   }
 
   void _loadSession() async {
-    final sessions = await widget.manageLocalAttemptUseCase.getAllGameSessions();
+    final sessions = await widget.manageLocalAttemptUseCase
+        .getAllGameSessions();
     if (mounted) {
       setState(() {
         _savedSessions = sessions;
@@ -98,7 +102,10 @@ class _LibraryScreenState extends State<LibraryScreen>
             SliverAppBar(
               title: const Text(
                 'Biblioteca',
-                style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: 1.0),
+                style: TextStyle(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: 1.0,
+                ),
               ),
               centerTitle: false,
               expandedHeight: 120.0,
@@ -131,8 +138,17 @@ class _LibraryScreenState extends State<LibraryScreen>
               controller: _tabController,
               children: [
                 _buildExploreTab(),
-                _buildLibraryList(state, (s) => s.creations, allowFavToggle: false),
-                _buildLibraryList(state, (s) => s.favorites, allowFavToggle: true, isFavList: true),
+                _buildLibraryList(
+                  state,
+                  (s) => s.creations,
+                  allowFavToggle: false,
+                ),
+                _buildLibraryList(
+                  state,
+                  (s) => s.favorites,
+                  allowFavToggle: true,
+                  isFavList: true,
+                ),
                 _buildLibraryList(state, (s) => s.inProgress),
                 _buildLibraryList(state, (s) => s.completed),
               ],
@@ -143,20 +159,30 @@ class _LibraryScreenState extends State<LibraryScreen>
     );
   }
 
-  Widget _buildLibraryList(LibraryState state, List Function(LibraryState) selector,
-      {bool allowFavToggle = false, bool isFavList = false}) {
+  Widget _buildLibraryList(
+    LibraryState state,
+    List Function(LibraryState) selector, {
+    bool allowFavToggle = false,
+    bool isFavList = false,
+  }) {
     if (state.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (state.error != null) {
       return Center(child: Text('Error: ${state.error}'));
     }
-    return _buildList(selector(state),
-        allowFavToggle: allowFavToggle, isFavList: isFavList);
+    return _buildList(
+      selector(state),
+      allowFavToggle: allowFavToggle,
+      isFavList: isFavList,
+    );
   }
 
-  Widget _buildList(List items,
-      {bool allowFavToggle = false, bool isFavList = false}) {
+  Widget _buildList(
+    List items, {
+    bool allowFavToggle = false,
+    bool isFavList = false,
+  }) {
     if (items.isEmpty) {
       return const Center(child: Text('No hay elementos'));
     }
@@ -199,41 +225,41 @@ class _LibraryScreenState extends State<LibraryScreen>
           ),
         ),
         _LibraryGameCard(
-          title: "Mock Kahoot Demo",
-          description: "Prueba la funcionalidad del juego con este quiz.",
-          imageUrl:
-              "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&q=80&w=1000",
-          quizId: "kahoot-demo-id",
-          questionsCount: 10,
-          category: "General",
-          startAttemptUseCase: widget.startAttemptUseCase,
-          submitAnswerUseCase: widget.submitAnswerUseCase,
-          getSummaryUseCase: widget.getSummaryUseCase,
-          manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
-          getAttemptStateUseCase: widget.getAttemptStateUseCase,
-          savedSession: _savedSessions?['kahoot-demo-id'],
-          onGameStarted: _loadSession,
-        )
+              title: "Mock Kahoot Demo",
+              description: "Prueba la funcionalidad del juego con este quiz.",
+              imageUrl:
+                  "https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?auto=format&fit=crop&q=80&w=1000",
+              quizId: "kahoot-demo-id",
+              questionsCount: 10,
+              category: "General",
+              startAttemptUseCase: widget.startAttemptUseCase,
+              submitAnswerUseCase: widget.submitAnswerUseCase,
+              getSummaryUseCase: widget.getSummaryUseCase,
+              manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
+              getAttemptStateUseCase: widget.getAttemptStateUseCase,
+              savedSession: _savedSessions?['kahoot-demo-id'],
+              onGameStarted: _loadSession,
+            )
             .animate()
             .fadeIn(duration: 500.ms)
             .slideX(begin: 0.1, end: 0, curve: Curves.easeOutQuad),
         const SizedBox(height: 16),
         _LibraryGameCard(
-          title: "Patrones de Diseño",
-          description: "Pon a prueba tus conocimientos sobre patrones.",
-          imageUrl:
-              "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=1000",
-          quizId: "quiz-design-patterns",
-          questionsCount: 15,
-          category: "Software",
-          startAttemptUseCase: widget.startAttemptUseCase,
-          submitAnswerUseCase: widget.submitAnswerUseCase,
-          getSummaryUseCase: widget.getSummaryUseCase,
-          manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
-          getAttemptStateUseCase: widget.getAttemptStateUseCase,
-          savedSession: _savedSessions?['quiz-design-patterns'],
-          onGameStarted: _loadSession,
-        )
+              title: "Patrones de Diseño",
+              description: "Pon a prueba tus conocimientos sobre patrones.",
+              imageUrl:
+                  "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&q=80&w=1000",
+              quizId: "quiz-design-patterns",
+              questionsCount: 15,
+              category: "Software",
+              startAttemptUseCase: widget.startAttemptUseCase,
+              submitAnswerUseCase: widget.submitAnswerUseCase,
+              getSummaryUseCase: widget.getSummaryUseCase,
+              manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
+              getAttemptStateUseCase: widget.getAttemptStateUseCase,
+              savedSession: _savedSessions?['quiz-design-patterns'],
+              onGameStarted: _loadSession,
+            )
             .animate()
             .fadeIn(delay: 100.ms, duration: 500.ms)
             .slideX(begin: 0.1, end: 0, curve: Curves.easeOutQuad),
@@ -320,9 +346,10 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
       vsync: this,
       duration: const Duration(milliseconds: 200),
     );
-    _favScaleAnimation = Tween<double>(begin: 1.0, end: 1.4).animate(
-      CurvedAnimation(parent: _favController, curve: Curves.easeInOut),
-    );
+    _favScaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.4,
+    ).animate(CurvedAnimation(parent: _favController, curve: Curves.easeInOut));
   }
 
   @override
@@ -347,8 +374,7 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
 
     if (widget.savedSession != null &&
         widget.savedSession!['quizId'] == widget.quizId) {
-      final current =
-          widget.savedSession!['currentQuestionIndex'] as int? ?? 0;
+      final current = widget.savedSession!['currentQuestionIndex'] as int? ?? 0;
       final total = widget.savedSession!['totalQuestions'] as int? ?? 1;
       if (total > 0) {
         hasProgress = true;
@@ -386,13 +412,16 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
                     child: Image.network(
                       widget.imageUrl,
                       fit: BoxFit.cover,
-                      errorBuilder:
-                          (_, __, ___) => Container(
-                            color: Colors.white10,
-                            child: const Center(
-                              child: Icon(Icons.image_not_supported, size: 50, color: Colors.white24),
-                            ),
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.white10,
+                        child: const Center(
+                          child: Icon(
+                            Icons.image_not_supported,
+                            size: 50,
+                            color: Colors.white24,
                           ),
+                        ),
+                      ),
                     ),
                   ),
                   Positioned(
@@ -427,7 +456,9 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
                         child: Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor.withValues(alpha: 0.9),
+                            color: Theme.of(
+                              context,
+                            ).cardColor.withValues(alpha: 0.9),
                             shape: BoxShape.circle,
                             boxShadow: [
                               BoxShadow(
@@ -447,6 +478,17 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
                       ),
                     ),
                   ),
+                  if (hasProgress && progressValue >= 1.0)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 12.0),
+                      child: Text(
+                        "Completado",
+                        style: TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
                 ],
               ),
               // Progress Bar
@@ -454,10 +496,9 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
                 LinearProgressIndicator(
                   value: progressValue,
                   backgroundColor: Colors.white10,
-                  color:
-                      progressValue >= 1.0
-                          ? Colors.green
-                          : Theme.of(context).primaryColor,
+                  color: progressValue >= 1.0
+                      ? Colors.green
+                      : Theme.of(context).primaryColor,
                   minHeight: 4,
                 ),
 
@@ -508,12 +549,11 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
                         onPressed: () => _navigateToGame(context),
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 12),
-                          backgroundColor:
-                              hasProgress
-                                  ? (progressValue >= 1.0
-                                      ? Colors.green
-                                      : Theme.of(context).primaryColor)
-                                  : Theme.of(context).primaryColor,
+                          backgroundColor: hasProgress
+                              ? (progressValue >= 1.0
+                                    ? Colors.green
+                                    : Theme.of(context).primaryColor)
+                              : Theme.of(context).primaryColor,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -522,8 +562,8 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
                         child: Text(
                           hasProgress
                               ? (progressValue >= 1.0
-                                  ? "Ver Resultados"
-                                  : "Continuar")
+                                    ? "Ver Resultados"
+                                    : "Continuar")
                               : "Jugar",
                           style: const TextStyle(
                             color: Colors.white,
@@ -545,18 +585,16 @@ class _LibraryGameCardState extends State<_LibraryGameCard>
   Future<void> _navigateToGame(BuildContext context) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder:
-            (context) => BlocProvider(
-              create:
-                  (_) => GameCubit(
-                    startAttemptUseCase: widget.startAttemptUseCase,
-                    submitAnswerUseCase: widget.submitAnswerUseCase,
-                    getSummaryUseCase: widget.getSummaryUseCase,
-                    manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
-                    getAttemptStateUseCase: widget.getAttemptStateUseCase,
-                  ),
-              child: GameScreen(quizId: widget.quizId),
-            ),
+        builder: (context) => BlocProvider(
+          create: (_) => GameCubit(
+            startAttemptUseCase: widget.startAttemptUseCase,
+            submitAnswerUseCase: widget.submitAnswerUseCase,
+            getSummaryUseCase: widget.getSummaryUseCase,
+            manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
+            getAttemptStateUseCase: widget.getAttemptStateUseCase,
+          ),
+          child: GameScreen(quizId: widget.quizId),
+        ),
       ),
     );
     // Refresh session info when returning
