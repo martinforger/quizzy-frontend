@@ -22,7 +22,7 @@ class HttpKahootsRepository implements KahootsRepository {
       uri,
       headers: {'content-type': 'application/json'},
       body: jsonEncode(_toJson(kahoot)),
-    );
+    ).timeout(const Duration(seconds: 30));
     _ensureSuccess(response, 'Error al crear kahoot', expected: [201]);
     final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
     return _mapKahoot(data);
@@ -36,7 +36,7 @@ class HttpKahootsRepository implements KahootsRepository {
       uri,
       headers: {'content-type': 'application/json'},
       body: jsonEncode(_toJson(kahoot)),
-    );
+    ).timeout(const Duration(seconds: 30));
     _ensureSuccess(response, 'Error al actualizar kahoot');
     final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
     return _mapKahoot(data);
@@ -45,7 +45,7 @@ class HttpKahootsRepository implements KahootsRepository {
   @override
   Future<Kahoot> getKahoot(String kahootId) async {
     final uri = _resolve('kahoots/$kahootId');
-    final response = await client.get(uri);
+    final response = await client.get(uri).timeout(const Duration(seconds: 30));
     _ensureSuccess(response, 'Error al obtener kahoot');
     final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
     return _mapKahoot(data);
@@ -54,7 +54,7 @@ class HttpKahootsRepository implements KahootsRepository {
   @override
   Future<void> deleteKahoot(String kahootId) async {
     final uri = _resolve('kahoots/$kahootId');
-    final response = await client.delete(uri);
+    final response = await client.delete(uri).timeout(const Duration(seconds: 30));
     _ensureSuccess(response, 'Error al borrar kahoot', expected: [200, 204]);
   }
 

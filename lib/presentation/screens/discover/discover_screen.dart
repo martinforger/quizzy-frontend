@@ -276,6 +276,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
         }
         _isLoadingQuizzes = false;
       });
+    } on TimeoutException {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingQuizzes = false;
+        _errorMessage = 'Tiempo de espera agotado. Verifica tu conexión.';
+      });
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -313,6 +319,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
       setState(() {
         _filteredQuizzes = result;
         _isSearching = false;
+      });
+    } on TimeoutException {
+      if (!mounted) return;
+      setState(() {
+        _isSearching = false;
+        _errorMessage = 'Tiempo de espera agotado. Verifica tu conexión.';
       });
     } catch (e) {
       if (!mounted) return;
