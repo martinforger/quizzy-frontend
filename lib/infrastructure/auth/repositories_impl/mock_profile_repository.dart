@@ -13,6 +13,7 @@ class MockProfileRepository implements ProfileRepository {
   @override
   Future<UserProfile> updateProfile({
     String? name,
+    String? email,
     String? description,
     String? avatarUrl,
     String? userType,
@@ -23,6 +24,7 @@ class MockProfileRepository implements ProfileRepository {
     final current = MockDataStore().currentUser;
     final updated = current.copyWith(
       name: name,
+      email: email,
       description: description,
       userType: userType,
       avatarUrl: avatarUrl,

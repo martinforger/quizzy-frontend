@@ -1,9 +1,11 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:quizzy/domain/auth/entities/user_profile.dart';
 import 'package:quizzy/presentation/state/auth_controller.dart';
 import 'package:quizzy/presentation/state/profile_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
+import 'package:quizzy/presentation/widgets/user_avatar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({
@@ -27,6 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   // Controllers for editing
   final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _avatarUrlController = TextEditingController();
   String? _selectedLanguage;
@@ -34,6 +37,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   bool _isEditing = false;
   bool _isLoading = false;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
@@ -50,17 +54,42 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   void dispose() {
     _nameController.dispose();
+    _emailController.dispose();
     _descriptionController.dispose();
     _avatarUrlController.dispose();
     super.dispose();
   }
 
   void _populateFields(UserProfile profile) {
-    _nameController.text = profile.name;
-    _descriptionController.text = profile.description;
-    _avatarUrlController.text = profile.avatarUrl;
-    _selectedLanguage = profile.language;
-    _selectedUserType = profile.userType;
+    if (_nameController.text.isEmpty) {
+      _nameController.text = profile.name;
+      _emailController.text = profile.email;
+      _descriptionController.text = profile.description;
+      _avatarUrlController.text = profile.avatarUrl;
+      _selectedLanguage = profile.language;
+      _selectedUserType = profile.userType;
+    }
+  }
+
+  void _updateAvatar(String url) {
+    setState(() {
+      _avatarUrlController.text = url;
+    });
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        _updateAvatar(image.path);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al seleccionar imagen: $e')),
+        );
+      }
+    }
   }
 
   Future<void> _saveProfile() async {
@@ -73,6 +102,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       await widget.profileController.updateProfile(
         name: _nameController.text,
+        email: _emailController.text,
         description: _descriptionController.text,
         avatarUrl: _avatarUrlController.text,
         language: _selectedLanguage,
@@ -284,17 +314,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
+
                   // Avatar
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundImage: profile.avatarUrl.isNotEmpty
-                        ? NetworkImage(profile.avatarUrl)
-                        : null,
-                    child: profile.avatarUrl.isEmpty
-                        ? const Icon(Icons.person, size: 50)
-                        : null,
+                  Stack(
+                    children: [
+                      UserAvatar(
+                        avatarUrl: _isEditing && _avatarUrlController.text.isNotEmpty
+                            ? _avatarUrlController.text
+                            : profile.avatarUrl,
+                        radius: 50,
+                      ),
+                      if (_isEditing)
+                        Positioned(
+                          bottom: 0,
+                          right: 0,
+                          child: CircleAvatar(
+                            backgroundColor: AppColors.primary,
+                            radius: 18,
+                            child: IconButton(
+                              icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                              onPressed: _pickImage,
+                            ),
+                          ),
+                        ),
+                    ],
                   ),
                   const SizedBox(height: 16),
+
                   
                   // Stats
                   Row(
@@ -310,10 +356,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   // Fields
                   TextFormField(
                     controller: _nameController,
+                    style: const TextStyle(color: Colors.white),
                     decoration: const InputDecoration(
                       labelText: 'Nombre',
+                      labelStyle: TextStyle(color: Colors.white70),
                       border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                      prefixIcon: Icon(Icons.person, color: Colors.white70),
                     ),
                     enabled: _isEditing,
                     validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
@@ -322,10 +371,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   TextFormField(
                     controller: _descriptionController,
+                    style: const TextStyle(color: Colors.white),
                     decoration: const InputDecoration(
                       labelText: 'Descripción',
+                      labelStyle: TextStyle(color: Colors.white70),
                       border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.description),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                      prefixIcon: Icon(Icons.description, color: Colors.white70),
                     ),
                     enabled: _isEditing,
                     maxLines: 3,
@@ -333,33 +385,62 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 16),
 
                   TextFormField(
-                    initialValue: profile.email,
+                    controller: _emailController,
+                    style: const TextStyle(color: Colors.white),
                     decoration: const InputDecoration(
                       labelText: 'Email',
+                      labelStyle: TextStyle(color: Colors.white70),
                       border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.email),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                      prefixIcon: Icon(Icons.email, color: Colors.white70),
                     ),
-                    enabled: false, // Email usually not editable directly
+                    enabled: _isEditing,
+                    validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
                   ),
                   const SizedBox(height: 16),
 
                   if (_isEditing) ...[
                     TextFormField(
                       controller: _avatarUrlController,
+                      style: const TextStyle(color: Colors.white),
                       decoration: const InputDecoration(
-                        labelText: 'URL del Avatar',
+                        labelText: 'URL de Foto',
+                        labelStyle: TextStyle(color: Colors.white70),
+                        helperText: 'Pega un enlace de imagen (http...)',
+                        helperStyle: TextStyle(color: Colors.white54),
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.image),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                        prefixIcon: Icon(Icons.image, color: Colors.white70),
                       ),
+                      onChanged: (value) => setState(() {}),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      height: 60,
+                      child: ListView(
+                        scrollDirection: Axis.horizontal,
+                        children: [
+                          _AvatarPreset(url: 'https://i.pravatar.cc/150?u=1', onTap: _updateAvatar),
+                          _AvatarPreset(url: 'https://i.pravatar.cc/150?u=2', onTap: _updateAvatar),
+                          _AvatarPreset(url: 'https://i.pravatar.cc/150?u=3', onTap: _updateAvatar),
+                          _AvatarPreset(url: 'https://i.pravatar.cc/150?u=4', onTap: _updateAvatar),
+                          _AvatarPreset(url: 'https://i.pravatar.cc/150?u=5', onTap: _updateAvatar),
+                          _AvatarPreset(url: 'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg', onTap: _updateAvatar),
+                        ],
+                  ),
+                ),
+                const SizedBox(height: 16),
                     
                     DropdownButtonFormField<String>(
                       value: _selectedLanguage,
+                      style: const TextStyle(color: Colors.white),
+                      dropdownColor: const Color(0xFF1E1B21),
                       decoration: const InputDecoration(
                         labelText: 'Idioma',
+                        labelStyle: TextStyle(color: Colors.white70),
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.language),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                        prefixIcon: Icon(Icons.language, color: Colors.white70),
                       ),
                       items: const [
                         DropdownMenuItem(value: 'es', child: Text('Español')),
@@ -371,10 +452,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     DropdownButtonFormField<String>(
                       value: _selectedUserType,
+                      style: const TextStyle(color: Colors.white),
+                      dropdownColor: const Color(0xFF1E1B21),
                       decoration: const InputDecoration(
                         labelText: 'Tipo de Usuario',
+                        labelStyle: TextStyle(color: Colors.white70),
                         border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.badge),
+                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
+                        prefixIcon: Icon(Icons.badge, color: Colors.white70),
                       ),
                       items: const [
                         DropdownMenuItem(value: 'Estudiante', child: Text('Estudiante')),
@@ -426,6 +511,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+}
+
+class _AvatarPreset extends StatelessWidget {
+  const _AvatarPreset({required this.url, required this.onTap});
+  final String url;
+  final ValueChanged<String> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      child: UserAvatar(
+        avatarUrl: url,
+        radius: 25,
+        onTap: () => onTap(url),
       ),
     );
   }

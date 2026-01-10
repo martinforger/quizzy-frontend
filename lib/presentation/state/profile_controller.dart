@@ -20,6 +20,7 @@ class ProfileController {
 
   Future<UserProfile> updateProfile({
     String? name,
+    String? email,
     String? description,
     String? avatarUrl,
     String? userType,
@@ -27,6 +28,7 @@ class ProfileController {
   }) {
     return updateProfileUseCase(
       name: name,
+      email: email,
       description: description,
       avatarUrl: avatarUrl,
       userType: userType,
