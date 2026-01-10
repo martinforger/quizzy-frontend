@@ -5,56 +5,63 @@ import 'package:quizzy/domain/kahoots/entities/kahoot.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_answer.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_question.dart';
 import 'package:quizzy/domain/kahoots/repositories/kahoots_repository.dart';
+import 'package:quizzy/infrastructure/core/backend_config.dart';
 
 class HttpKahootsRepository implements KahootsRepository {
-  HttpKahootsRepository({
-    required this.client,
-    required String baseUrl,
-  }) : _baseUri = Uri.parse(baseUrl);
+  HttpKahootsRepository({required this.client});
 
   final http.Client client;
-  final Uri _baseUri;
 
   @override
   Future<Kahoot> createKahoot(Kahoot kahoot) async {
     final uri = _resolve('kahoots');
-    final response = await client.post(
-      uri,
-      headers: {'content-type': 'application/json'},
-      body: jsonEncode(_toJson(kahoot)),
-    );
+    final response = await client
+        .post(
+          uri,
+          headers: {'content-type': 'application/json'},
+          body: jsonEncode(_toJson(kahoot)),
+        )
+        .timeout(const Duration(seconds: 30));
     _ensureSuccess(response, 'Error al crear kahoot', expected: [201]);
-    final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
+    final Map<String, dynamic> data =
+        json.decode(response.body) as Map<String, dynamic>;
     return _mapKahoot(data);
   }
 
   @override
   Future<Kahoot> updateKahoot(Kahoot kahoot) async {
-    if (kahoot.id == null) throw Exception('kahoot.id requerido para actualizar');
+    if (kahoot.id == null)
+      throw Exception('kahoot.id requerido para actualizar');
     final uri = _resolve('kahoots/${kahoot.id}');
-    final response = await client.put(
-      uri,
-      headers: {'content-type': 'application/json'},
-      body: jsonEncode(_toJson(kahoot)),
-    );
+    final response = await client
+        .put(
+          uri,
+          headers: {'content-type': 'application/json'},
+          body: jsonEncode(_toJson(kahoot)),
+        )
+        .timeout(const Duration(seconds: 30));
     _ensureSuccess(response, 'Error al actualizar kahoot');
-    final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
+    final Map<String, dynamic> data =
+        json.decode(response.body) as Map<String, dynamic>;
     return _mapKahoot(data);
   }
 
   @override
   Future<Kahoot> getKahoot(String kahootId) async {
     final uri = _resolve('kahoots/$kahootId');
-    final response = await client.get(uri);
+    final response = await client.get(uri).timeout(const Duration(seconds: 30));
     _ensureSuccess(response, 'Error al obtener kahoot');
-    final Map<String, dynamic> data = json.decode(response.body) as Map<String, dynamic>;
+    final Map<String, dynamic> data =
+        json.decode(response.body) as Map<String, dynamic>;
     return _mapKahoot(data);
   }
 
   @override
   Future<void> deleteKahoot(String kahootId) async {
     final uri = _resolve('kahoots/$kahootId');
-    final response = await client.delete(uri);
+    final response = await client
+        .delete(uri)
+        .timeout(const Duration(seconds: 30));
     _ensureSuccess(response, 'Error al borrar kahoot', expected: [200, 204]);
   }
 
@@ -69,7 +76,9 @@ class HttpKahootsRepository implements KahootsRepository {
       authorId: json['authorId'] as String?,
       category: json['category'] as String?,
       status: json['status'] as String?,
-      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'] as String) : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'] as String)
+          : null,
       playCount: (json['playCount'] as num?)?.toInt(),
       questions: (json['questions'] as List<dynamic>? ?? [])
           .map((q) => _mapQuestion(q as Map<String, dynamic>))
@@ -118,12 +127,14 @@ class HttpKahootsRepository implements KahootsRepository {
           'timeLimit': q.timeLimit,
           'points': q.points,
           'answers': q.answers
-              .map((a) => {
-                    if (a.id != null) 'id': a.id,
-                    'text': a.text,
-                    'mediaId': a.mediaId,
-                    'isCorrect': a.isCorrect,
-                  })
+              .map(
+                (a) => {
+                  if (a.id != null) 'id': a.id,
+                  'text': a.text,
+                  'mediaId': a.mediaId,
+                  'isCorrect': a.isCorrect,
+                },
+              )
               .toList(),
         };
         if (q.id != null) qMap['id'] = q.id;
@@ -135,12 +146,16 @@ class HttpKahootsRepository implements KahootsRepository {
   }
 
   Uri _resolve(String path) {
-    final base = _baseUri.toString();
+    final base = BackendSettings.baseUrl;
     final separator = base.endsWith('/') ? '' : '/';
     return Uri.parse('$base$separator$path');
   }
 
-  void _ensureSuccess(http.Response response, String message, {List<int> expected = const [200]}) {
+  void _ensureSuccess(
+    http.Response response,
+    String message, {
+    List<int> expected = const [200],
+  }) {
     if (!expected.contains(response.statusCode)) {
       throw Exception('$message: ${response.statusCode} ${response.body}');
     }

@@ -6,7 +6,9 @@ import 'package:shelf/shelf_io.dart';
 import 'package:shelf_router/shelf_router.dart';
 import 'package:shelf_cors_headers/shelf_cors_headers.dart';
 
-import '../lib/data.dart';
+import 'package:quizzy_mock_server/data.dart';
+import 'package:quizzy_mock_server/routes/auth_routes.dart';
+import 'package:quizzy_mock_server/routes/profile_routes.dart';
 
 void main(List<String> args) async {
   final port = int.tryParse(Platform.environment['PORT'] ?? '') ?? 3000;
@@ -14,6 +16,10 @@ void main(List<String> args) async {
 
   final List<Map<String, dynamic>> _categories = categories.map((e) => Map<String, dynamic>.from(e)).toList();
   final List<Map<String, dynamic>> _kahoots = seedKahoots.map((e) => Map<String, dynamic>.from(e)).toList();
+
+  // Auth & Profile endpoints
+  router.mount('/auth', AuthRoutes().router.call);
+  router.mount('/profile', ProfileRoutes().router.call);
 
   // Explore endpoints (epica 6)
   router.get('/explore', (Request req) {
