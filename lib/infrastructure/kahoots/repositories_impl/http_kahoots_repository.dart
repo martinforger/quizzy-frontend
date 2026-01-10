@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
+import 'package:quizzy/domain/kahoots/entities/game_state.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_answer.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_question.dart';
@@ -57,6 +58,16 @@ class HttpKahootsRepository implements KahootsRepository {
   }
 
   @override
+  Future<Kahoot> inspectKahoot(String kahootId) async {
+    final uri = _resolve('kahoots/inspect/$kahootId');
+    final response = await client.get(uri).timeout(const Duration(seconds: 30));
+    _ensureSuccess(response, 'Error al inspeccionar kahoot');
+    final Map<String, dynamic> data =
+        json.decode(response.body) as Map<String, dynamic>;
+    return _mapKahoot(data);
+  }
+
+  @override
   Future<void> deleteKahoot(String kahootId) async {
     final uri = _resolve('kahoots/$kahootId');
     final response = await client
@@ -71,15 +82,28 @@ class HttpKahootsRepository implements KahootsRepository {
       title: json['title'] as String?,
       description: json['description'] as String?,
       coverImageId: json['coverImageId'] as String?,
-      visibility: json['visibility'] as String?,
+      visibility: (json['visibility'] as String?)?.toLowerCase(),
       themeId: json['themeId'] as String?,
-      authorId: json['authorId'] as String?,
+      authorId: json['author'] is Map
+          ? json['author']['id'] as String?
+          : json['authorId'] as String?,
+      authorName: json['author'] is Map
+          ? json['author']['name'] as String?
+          : null,
       category: json['category'] as String?,
-      status: json['status'] as String?,
+      status: (json['status'] as String?)?.toLowerCase() == 'publish'
+          ? 'published'
+          : 'draft',
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String)
           : null,
       playCount: (json['playCount'] as num?)?.toInt(),
+      isInProgress: json['isInProgress'] as bool?,
+      isCompleted: json['isCompleted'] as bool?,
+      isFavorite: json['isFavorite'] as bool?,
+      gameState: json['gameState'] != null
+          ? _mapGameState(json['gameState'] as Map<String, dynamic>)
+          : null,
       questions: (json['questions'] as List<dynamic>? ?? [])
           .map((q) => _mapQuestion(q as Map<String, dynamic>))
           .toList(),
@@ -91,7 +115,7 @@ class HttpKahootsRepository implements KahootsRepository {
       id: json['id'] as String?,
       text: json['text'] as String?,
       mediaId: json['mediaId'] as String?,
-      type: json['type'] as String?,
+      type: _mapTypeFromApi(json['type'] as String?),
       timeLimit: (json['timeLimit'] as num?)?.toInt(),
       points: (json['points'] as num?)?.toInt(),
       answers: (json['answers'] as List<dynamic>? ?? [])
@@ -114,18 +138,17 @@ class HttpKahootsRepository implements KahootsRepository {
       'title': kahoot.title,
       'description': kahoot.description,
       'coverImageId': kahoot.coverImageId,
-      'visibility': kahoot.visibility,
+      'visibility': kahoot.visibility == 'public' ? 'Public' : 'Private',
       'themeId': kahoot.themeId,
-      'authorId': kahoot.authorId,
       'category': kahoot.category,
-      'status': kahoot.status,
+      'status': kahoot.status == 'published' ? 'Publish' : 'Draft',
       'questions': kahoot.questions.map((q) {
         final qMap = <String, dynamic>{
           'text': q.text,
           'mediaId': q.mediaId,
-          'type': q.type,
+          'type': _mapTypeToApi(q.type, q.answers),
           'timeLimit': q.timeLimit,
-          'points': q.points,
+          'points': q.points ?? 1000,
           'answers': q.answers
               .map(
                 (a) => {
@@ -141,8 +164,34 @@ class HttpKahootsRepository implements KahootsRepository {
         return qMap;
       }).toList(),
     };
-    if (kahoot.id != null) map['id'] = kahoot.id;
     return map;
+  }
+
+  GameState _mapGameState(Map<String, dynamic> json) {
+    return GameState(
+      attemptId: json['attemptId'] as String?,
+      currentScore: (json['currentScore'] as num?)?.toInt(),
+      currentSlide: (json['currentSlide'] as num?)?.toInt(),
+      totalSlides: (json['totalSlides'] as num?)?.toInt(),
+      lastPlayedAt: json['lastPlayedAt'] != null
+          ? DateTime.tryParse(json['lastPlayedAt'] as String)
+          : null,
+    );
+  }
+
+  String? _mapTypeToApi(String? type, List<KahootAnswer> answers) {
+    if (type == 'quiz') {
+      final correctCount = answers.where((a) => a.isCorrect).length;
+      return correctCount > 1 ? 'multiple' : 'single';
+    }
+    if (type == 'trueFalse') return 'true_false';
+    return type;
+  }
+
+  String? _mapTypeFromApi(String? type) {
+    if (type == 'single' || type == 'multiple') return 'quiz';
+    if (type == 'true_false') return 'trueFalse';
+    return type;
   }
 
   Uri _resolve(String path) {

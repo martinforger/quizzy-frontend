@@ -80,6 +80,7 @@ class _ShellScreenState extends State<ShellScreen> {
         manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
         getAttemptStateUseCase: widget.getAttemptStateUseCase,
         libraryCubit: widget.libraryCubit,
+        kahootController: widget.kahootController,
       ),
 
       const JoinScreen(),
