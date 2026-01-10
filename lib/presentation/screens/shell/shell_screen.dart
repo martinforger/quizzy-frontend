@@ -3,7 +3,6 @@ import 'package:quizzy/application/solo-game/useCases/get_attempt_state_use_case
 import 'package:quizzy/presentation/screens/discover/discover_screen.dart';
 import 'package:quizzy/presentation/screens/join/join_screen.dart';
 import 'package:quizzy/presentation/screens/library/library_screen.dart';
-import 'package:quizzy/presentation/screens/my_library/my_library_screen.dart';
 import 'package:quizzy/presentation/screens/home/home_screen.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
@@ -65,9 +64,9 @@ class _ShellScreenState extends State<ShellScreen> {
         getSummaryUseCase: widget.getSummaryUseCase,
         manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
         getAttemptStateUseCase: widget.getAttemptStateUseCase,
+        libraryCubit: widget.libraryCubit,
       ),
       const JoinScreen(),
-      MyLibraryScreen(cubit: widget.libraryCubit),
     ];
 
     return Scaffold(
@@ -159,10 +158,6 @@ class _ShellScreenState extends State<ShellScreen> {
                     BottomNavigationBarItem(
                       icon: Icon(Icons.qr_code_rounded),
                       label: 'Unirse',
-                    ),
-                    BottomNavigationBarItem(
-                      icon: Icon(Icons.person),
-                      label: 'Biblioteca',
                     ),
                   ],
                 ),

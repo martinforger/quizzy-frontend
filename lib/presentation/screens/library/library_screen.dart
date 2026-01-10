@@ -7,7 +7,9 @@ import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dar
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_case.dart';
 import 'package:quizzy/presentation/bloc/game_cubit.dart';
+import 'package:quizzy/presentation/bloc/library/library_cubit.dart';
 import 'package:quizzy/presentation/screens/game/game_screen.dart';
+import 'package:quizzy/presentation/screens/my_library/widgets/library_item_tile.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({
@@ -17,6 +19,7 @@ class LibraryScreen extends StatefulWidget {
     required this.getSummaryUseCase,
     required this.manageLocalAttemptUseCase,
     required this.getAttemptStateUseCase,
+    required this.libraryCubit,
   });
 
   final StartAttemptUseCase startAttemptUseCase;
@@ -24,6 +27,7 @@ class LibraryScreen extends StatefulWidget {
   final GetSummaryUseCase getSummaryUseCase;
   final ManageLocalAttemptUseCase manageLocalAttemptUseCase;
   final GetAttemptStateUseCase getAttemptStateUseCase;
+  final LibraryCubit libraryCubit;
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
@@ -38,12 +42,37 @@ class _LibraryScreenState extends State<LibraryScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
+    _tabController.addListener(_handleTabSelection);
     _loadSession();
+  }
+
+  void _handleTabSelection() {
+    if (_tabController.indexIsChanging) {
+      _loadDataForTab(_tabController.index);
+    }
+  }
+
+  void _loadDataForTab(int index) {
+    switch (index) {
+      case 1:
+        widget.libraryCubit.loadMyCreations();
+        break;
+      case 2:
+        widget.libraryCubit.loadFavorites();
+        break;
+      case 3:
+        widget.libraryCubit.loadInProgress();
+        break;
+      case 4:
+        widget.libraryCubit.loadCompleted();
+        break;
+    }
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabSelection);
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -77,6 +106,7 @@ class _LibraryScreenState extends State<LibraryScreen>
               forceElevated: innerBoxIsScrolled,
               bottom: TabBar(
                 controller: _tabController,
+                isScrollable: true,
                 indicatorWeight: 4,
                 indicatorColor: Theme.of(context).primaryColor,
                 labelColor: Theme.of(context).primaryColor,
@@ -84,33 +114,69 @@ class _LibraryScreenState extends State<LibraryScreen>
                 labelStyle: const TextStyle(fontWeight: FontWeight.bold),
                 tabs: const [
                   Tab(text: "Explorar"),
-                  Tab(text: "Recientes"),
+                  Tab(text: "Creaciones"),
                   Tab(text: "Favoritos"),
+                  Tab(text: "En Progreso"),
+                  Tab(text: "Completados"),
                 ],
               ),
             ),
           ];
         },
-        body: TabBarView(
-          controller: _tabController,
-          children: [
-            // Tab 1: Explorar (Existing content enhanced)
-            _buildExploreTab(),
-            // Tab 2: Recientes (Placeholder UI)
-            _buildEmptyState(
-              icon: Icons.history_edu,
-              title: "Sin actividad reciente",
-              message: "Tus juegos jugados recientemente aparecerán aquí.",
-            ),
-            // Tab 3: Favoritos (Placeholder UI)
-            _buildEmptyState(
-              icon: Icons.favorite_border_rounded,
-              title: "Aún no tienes favoritos",
-              message: "Guarda los kahoots que más te gusten para encontrarlos rápido.",
-            ),
-          ],
+        body: BlocBuilder<LibraryCubit, LibraryState>(
+          bloc: widget.libraryCubit,
+          builder: (context, state) {
+            return TabBarView(
+              controller: _tabController,
+              children: [
+                _buildExploreTab(),
+                _buildLibraryList(state, (s) => s.creations, allowFavToggle: false),
+                _buildLibraryList(state, (s) => s.favorites, allowFavToggle: true, isFavList: true),
+                _buildLibraryList(state, (s) => s.inProgress),
+                _buildLibraryList(state, (s) => s.completed),
+              ],
+            );
+          },
         ),
       ),
+    );
+  }
+
+  Widget _buildLibraryList(LibraryState state, List Function(LibraryState) selector,
+      {bool allowFavToggle = false, bool isFavList = false}) {
+    if (state.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (state.error != null) {
+      return Center(child: Text('Error: ${state.error}'));
+    }
+    return _buildList(selector(state),
+        allowFavToggle: allowFavToggle, isFavList: isFavList);
+  }
+
+  Widget _buildList(List items,
+      {bool allowFavToggle = false, bool isFavList = false}) {
+    if (items.isEmpty) {
+      return const Center(child: Text('No hay elementos'));
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        return LibraryItemTile(
+          item: item,
+          isFavorite: isFavList,
+          onFavoriteToggle: allowFavToggle
+              ? () {
+                  widget.libraryCubit.toggleFavorite(item.id, isFavList);
+                }
+              : null,
+          onTap: () {
+            // TODO: Implement navigation
+          },
+        );
+      },
     );
   }
 
@@ -197,46 +263,6 @@ class _LibraryScreenState extends State<LibraryScreen>
           hintStyle: TextStyle(color: Colors.grey),
         ),
       ),
-    );
-  }
-
-  Widget _buildEmptyState({
-    required IconData icon,
-    required String title,
-    required String message,
-  }) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, size: 60, color: Colors.grey[400]),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 40),
-            child: Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.grey[500]),
-            ),
-          ),
-        ],
-      ).animate().scale(duration: 400.ms, curve: Curves.easeOutBack),
     );
   }
 }
