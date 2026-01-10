@@ -3,7 +3,11 @@ import 'package:quizzy/domain/kahoots/entities/kahoot_answer.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_question.dart';
 
 class QuestionEditorScreen extends StatefulWidget {
-  const QuestionEditorScreen({super.key, required this.question, required this.index});
+  const QuestionEditorScreen({
+    super.key,
+    required this.question,
+    required this.index,
+  });
 
   final KahootQuestion question;
   final int index;
@@ -14,17 +18,28 @@ class QuestionEditorScreen extends StatefulWidget {
 
 class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
   late TextEditingController _textController;
-  late TextEditingController _timeController;
+  int _timeLimit = 20;
   late TextEditingController _pointsController;
   late String _type;
   late List<KahootAnswer> _answers;
+
+  final List<int> _allowedTimes = [5, 10, 20, 30, 45, 60, 90, 120, 180, 240];
 
   @override
   void initState() {
     super.initState();
     _textController = TextEditingController(text: widget.question.text);
-    _timeController = TextEditingController(text: widget.question.timeLimit?.toString() ?? '20');
-    _pointsController = TextEditingController(text: widget.question.points?.toString() ?? '');
+    // Set initial time limit, defaulting to 20 if null or not in list (optional: snap to nearest?)
+    final t = widget.question.timeLimit ?? 20;
+    if (_allowedTimes.contains(t)) {
+      _timeLimit = t;
+    } else {
+      _timeLimit = 20; // Default fallback
+    }
+
+    _pointsController = TextEditingController(
+      text: widget.question.points?.toString() ?? '',
+    );
     _type = widget.question.type ?? 'quiz';
     _answers = widget.question.answers.isNotEmpty
         ? List<KahootAnswer>.from(widget.question.answers)
@@ -40,7 +55,6 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
   @override
   void dispose() {
     _textController.dispose();
-    _timeController.dispose();
     _pointsController.dispose();
     super.dispose();
   }
@@ -65,7 +79,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
       text: _textController.text.trim(),
       mediaId: widget.question.mediaId,
       type: _type,
-      timeLimit: int.tryParse(_timeController.text),
+      timeLimit: _timeLimit,
       points: int.tryParse(_pointsController.text),
       answers: _answers,
     );
@@ -76,7 +90,10 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
     setState(() {
       _answers = [
         ..._answers,
-        KahootAnswer(text: 'Respuesta ${_answers.length + 1}', isCorrect: false),
+        KahootAnswer(
+          text: 'Respuesta ${_answers.length + 1}',
+          isCorrect: false,
+        ),
       ];
     });
   }
@@ -90,9 +107,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
           KahootAnswer(text: 'Falso', isCorrect: false),
         ];
       } else if (value == 'shortAnswer') {
-        _answers = [
-          KahootAnswer(text: 'Respuesta correcta', isCorrect: true),
-        ];
+        _answers = [KahootAnswer(text: 'Respuesta correcta', isCorrect: true)];
       } else if (!initial && _answers.length < 4) {
         _answers = [
           KahootAnswer(text: 'Respuesta 1', isCorrect: true),
@@ -131,7 +146,10 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Text('Respuesta ${idx + 1}', style: const TextStyle(fontWeight: FontWeight.w700)),
+                  Text(
+                    'Respuesta ${idx + 1}',
+                    style: const TextStyle(fontWeight: FontWeight.w700),
+                  ),
                   const Spacer(),
                   IconButton(
                     onPressed: () {
@@ -139,7 +157,10 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                       if (_answers.length <= 1) return;
                       setState(() => _answers.removeAt(idx));
                     },
-                    icon: const Icon(Icons.delete_forever, color: Colors.redAccent),
+                    icon: const Icon(
+                      Icons.delete_forever,
+                      color: Colors.redAccent,
+                    ),
                     tooltip: 'Eliminar respuesta',
                   ),
                   IconButton(
@@ -148,7 +169,9 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                       _toggleCorrect(idx);
                     },
                     icon: Icon(
-                      answer.isCorrect ? Icons.check_circle : Icons.radio_button_unchecked,
+                      answer.isCorrect
+                          ? Icons.check_circle
+                          : Icons.radio_button_unchecked,
                       color: Colors.white,
                     ),
                     tooltip: 'Marcar correcta',
@@ -213,8 +236,14 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
             dropdownColor: const Color(0xFF1E1A22),
             items: const [
               DropdownMenuItem(value: 'quiz', child: Text('Quiz')),
-              DropdownMenuItem(value: 'trueFalse', child: Text('Verdadero/Falso')),
-              DropdownMenuItem(value: 'shortAnswer', child: Text('Respuesta corta')),
+              DropdownMenuItem(
+                value: 'trueFalse',
+                child: Text('Verdadero/Falso'),
+              ),
+              DropdownMenuItem(
+                value: 'shortAnswer',
+                child: Text('Respuesta corta'),
+              ),
             ],
             onChanged: (v) {
               if (v == null) return;
@@ -222,12 +251,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
             },
           ),
         ),
-        actions: [
-          TextButton(
-            onPressed: _save,
-            child: const Text('Listo'),
-          )
-        ],
+        actions: [TextButton(onPressed: _save, child: const Text('Listo'))],
       ),
       body: Stack(
         children: [
@@ -248,9 +272,16 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: const [
-                        Icon(Icons.add_box_rounded, size: 42, color: Colors.white54),
+                        Icon(
+                          Icons.add_box_rounded,
+                          size: 42,
+                          color: Colors.white54,
+                        ),
                         SizedBox(height: 8),
-                        Text('Añadir multimedia', style: TextStyle(color: Colors.white70)),
+                        Text(
+                          'Añadir multimedia',
+                          style: TextStyle(color: Colors.white70),
+                        ),
                       ],
                     ),
                   ),
@@ -260,30 +291,50 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.purple.shade600,
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Icons.timer, size: 16, color: Colors.white),
-                        const SizedBox(width: 6),
-                        SizedBox(
-                          width: 40,
-                          child: TextField(
-                            controller: _timeController,
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
-                            keyboardType: TextInputType.number,
-                            decoration: const InputDecoration(
-                              isDense: true,
-                              border: InputBorder.none,
-                            ),
-                          ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<int>(
+                        value: _timeLimit,
+                        dropdownColor: Colors.purple.shade800,
+                        icon: const Icon(
+                          Icons.arrow_drop_down,
+                          color: Colors.white,
                         ),
-                        const Text('s', style: TextStyle(color: Colors.white)),
-                      ],
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                        onChanged: (v) {
+                          if (v != null) {
+                            setState(() => _timeLimit = v);
+                          }
+                        },
+                        items: _allowedTimes.map((t) {
+                          return DropdownMenuItem<int>(
+                            value: t,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.timer,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 8),
+                                Text('$t s'),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ),
                   ),
                 ),
@@ -335,8 +386,13 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.white,
                     backgroundColor: Colors.white10,
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ],
@@ -366,7 +422,11 @@ class _AnswerCard extends StatelessWidget {
         color: color,
         borderRadius: BorderRadius.circular(14),
         boxShadow: [
-          BoxShadow(color: color.withOpacity(0.35), blurRadius: 12, offset: const Offset(0, 6)),
+          BoxShadow(
+            color: color.withOpacity(0.35),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
         ],
       ),
       child: Stack(
@@ -381,8 +441,14 @@ class _AnswerCard extends StatelessWidget {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 12),
               child: Text(
-                (answer.text?.isNotEmpty ?? false) ? answer.text! : 'Añadir respuesta',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
+                (answer.text?.isNotEmpty ?? false)
+                    ? answer.text!
+                    : 'Añadir respuesta',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
