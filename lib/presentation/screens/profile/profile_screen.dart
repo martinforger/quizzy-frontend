@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:quizzy/domain/auth/entities/user_profile.dart';
 import 'package:quizzy/presentation/state/auth_controller.dart';
@@ -235,33 +236,55 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  Widget _buildStatCard(String label, String value) {
+  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      width: 110,
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.withOpacity(0.2)),
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.15),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+               color: color.withOpacity(0.1),
+               shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(height: 12),
           Text(
             value,
             style: const TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
+              color: Colors.white,
             ),
           ),
+          const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
-              color: Colors.grey[600],
+              color: Colors.grey[400],
               fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
+            textAlign: TextAlign.center,
           ),
         ],
       ),
-    );
+    ).animate().fade().scale(duration: 400.ms, curve: Curves.easeOutBack);
   }
 
   @override
@@ -316,87 +339,134 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
 
                   // Avatar
-                  Stack(
-                    children: [
-                      UserAvatar(
-                        avatarUrl: _isEditing && _avatarUrlController.text.isNotEmpty
-                            ? _avatarUrlController.text
-                            : profile.avatarUrl,
-                        radius: 50,
-                      ),
-                      if (_isEditing)
-                        Positioned(
-                          bottom: 0,
-                          right: 0,
-                          child: CircleAvatar(
-                            backgroundColor: AppColors.primary,
-                            radius: 18,
-                            child: IconButton(
-                              icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
-                              onPressed: _pickImage,
-                            ),
+                  Center(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                         // Glow effect
+                        Container(
+                          width: 120,
+                          height: 120,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(
+                                color: AppColors.primary.withValues(alpha: 0.4),
+                                blurRadius: 40,
+                                spreadRadius: -5,
+                              ),
+                            ],
                           ),
+                        ).animate().fade(duration: 800.ms),
+
+                        UserAvatar(
+                          avatarUrl: _isEditing && _avatarUrlController.text.isNotEmpty
+                              ? _avatarUrlController.text
+                              : profile.avatarUrl,
+                          radius: 60,
                         ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
+                        if (_isEditing)
+                          Positioned(
+                            bottom: 0,
+                            right: 4,
+                            child: CircleAvatar(
+                              backgroundColor: AppColors.primary,
+                              radius: 18,
+                              child: IconButton(
+                                icon: const Icon(Icons.camera_alt, size: 18, color: Colors.white),
+                                onPressed: _pickImage,
+                              ),
+                            ).animate().scale(duration: 300.ms, curve: Curves.easeOutBack),
+                          ),
+                      ],
+                    ),
+                  ).animate().scale(duration: 600.ms, curve: Curves.elasticOut),
+                  const SizedBox(height: 32),
 
                   
                   // Stats
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      _buildStatCard('Racha', '${profile.gameStreak} 🔥'),
+                      _buildStatCard('Racha Actual', '${profile.gameStreak}', Icons.local_fire_department_rounded, const Color(0xFFFF5722)),
                       const SizedBox(width: 16),
-                      _buildStatCard('Tipo', profile.userType),
+                      _buildStatCard('Membresía', profile.userType, Icons.workspace_premium_rounded, const Color(0xFFFFD700)),
                     ],
-                  ),
+                  ).animate().slideY(begin: 0.2, end: 0, duration: 600.ms, curve: Curves.easeOut),
                   const SizedBox(height: 24),
 
                   // Fields
                   TextFormField(
                     controller: _nameController,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Nombre',
-                      labelStyle: TextStyle(color: Colors.white70),
-                      border: OutlineInputBorder(),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-                      prefixIcon: Icon(Icons.person, color: Colors.white70),
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      filled: true,
+                      fillColor: AppColors.card,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.primary),
+                      ),
+                      prefixIcon: const Icon(Icons.person, color: Colors.white70),
                     ),
                     enabled: _isEditing,
                     validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
-                  ),
+                  ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
                   const SizedBox(height: 16),
 
                   TextFormField(
                     controller: _descriptionController,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Descripción',
-                      labelStyle: TextStyle(color: Colors.white70),
-                      border: OutlineInputBorder(),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-                      prefixIcon: Icon(Icons.description, color: Colors.white70),
+                      labelStyle: const TextStyle(color: Colors.white70),
+                      filled: true,
+                      fillColor: AppColors.card,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12), 
+                        borderSide: const BorderSide(color: Colors.white12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.primary),
+                      ),
+                      prefixIcon: const Icon(Icons.description, color: Colors.white70),
+                      alignLabelWithHint: true,
                     ),
                     enabled: _isEditing,
                     maxLines: 3,
-                  ),
+                  ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.2, end: 0),
                   const SizedBox(height: 16),
 
                   TextFormField(
                     controller: _emailController,
                     style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Email',
-                      labelStyle: TextStyle(color: Colors.white70),
-                      border: OutlineInputBorder(),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-                      prefixIcon: Icon(Icons.email, color: Colors.white70),
+                      labelStyle: const TextStyle(color: Colors.white70),
+                       filled: true,
+                      fillColor: AppColors.card,
+                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: Colors.white12),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: const BorderSide(color: AppColors.primary),
+                      ),
+                      prefixIcon: const Icon(Icons.email, color: Colors.white70),
                     ),
                     enabled: _isEditing,
                     validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
-                  ),
+                  ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
                   const SizedBox(height: 16),
 
                   if (_isEditing) ...[
@@ -419,32 +489,46 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     DropdownButtonFormField<String>(
                       value: _selectedLanguage,
                       style: const TextStyle(color: Colors.white),
-                      dropdownColor: const Color(0xFF1E1B21),
-                      decoration: const InputDecoration(
+                      dropdownColor: AppColors.card,
+                      decoration: InputDecoration(
                         labelText: 'Idioma',
-                        labelStyle: TextStyle(color: Colors.white70),
-                        border: OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-                        prefixIcon: Icon(Icons.language, color: Colors.white70),
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        filled: true,
+                        fillColor: AppColors.card,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.white12)),
+                        focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: AppColors.primary)),
+                        prefixIcon: const Icon(Icons.language, color: Colors.white70),
                       ),
                       items: const [
                         DropdownMenuItem(value: 'es', child: Text('Español')),
                         DropdownMenuItem(value: 'en', child: Text('English')),
                       ],
                       onChanged: (v) => setState(() => _selectedLanguage = v),
-                    ),
+                    ).animate().fadeIn(delay: 500.ms).slideY(begin: 0.2, end: 0),
                     const SizedBox(height: 16),
 
                     DropdownButtonFormField<String>(
                       value: _selectedUserType,
                       style: const TextStyle(color: Colors.white),
-                      dropdownColor: const Color(0xFF1E1B21),
-                      decoration: const InputDecoration(
+                      dropdownColor: AppColors.card,
+                      decoration: InputDecoration(
                         labelText: 'Tipo de Usuario',
-                        labelStyle: TextStyle(color: Colors.white70),
-                        border: OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-                        prefixIcon: Icon(Icons.badge, color: Colors.white70),
+                        labelStyle: const TextStyle(color: Colors.white70),
+                        filled: true,
+                        fillColor: AppColors.card,
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                        enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            borderSide: const BorderSide(color: Colors.white12)),
+                        focusedBorder: OutlineInputBorder(
+                             borderRadius: BorderRadius.circular(12),
+                             borderSide: const BorderSide(color: AppColors.primary)),
+                        prefixIcon: const Icon(Icons.badge, color: Colors.white70),
                       ),
                       items: const [
                         DropdownMenuItem(value: 'Estudiante', child: Text('Estudiante')),
@@ -453,7 +537,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         DropdownMenuItem(value: 'Otro', child: Text('Otro')),
                       ],
                       onChanged: (v) => setState(() => _selectedUserType = v),
-                    ),
+                    ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
                     const SizedBox(height: 24),
 
                     SizedBox(
