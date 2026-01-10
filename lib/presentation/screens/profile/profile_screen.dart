@@ -400,21 +400,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 16),
 
                   if (_isEditing) ...[
-                    TextFormField(
-                      controller: _avatarUrlController,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        labelText: 'URL de Foto',
-                        labelStyle: TextStyle(color: Colors.white70),
-                        helperText: 'Pega un enlace de imagen (http...)',
-                        helperStyle: TextStyle(color: Colors.white54),
-                        border: OutlineInputBorder(),
-                        enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white30)),
-                        prefixIcon: Icon(Icons.image, color: Colors.white70),
-                      ),
-                      onChanged: (value) => setState(() {}),
-                    ),
-                    const SizedBox(height: 8),
                     SizedBox(
                       height: 60,
                       child: ListView(
