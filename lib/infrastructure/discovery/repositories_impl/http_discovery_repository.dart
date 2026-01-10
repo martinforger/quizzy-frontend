@@ -68,14 +68,13 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
       id: json['id'] as String,
       title: json['title'] as String? ?? 'Untitled quiz',
       author: _extractAuthor(json['author']),
+      // API returns 'category' field directly
       tag:
           (json['category'] as String?) ??
-          _extractFirstTheme(json['themes']) ??
+          (json['themeId'] as String?) ??
           'General',
-      thumbnailUrl:
-          _resolveMedia(json['coverImageId'] as String?) ??
-          (json['kahootImage'] as String?) ??
-          (json['thumbnailUrl'] as String? ?? ''),
+      // API returns coverImageId as URL string directly
+      thumbnailUrl: (json['coverImageId'] as String?) ?? '',
       description: json['description'] as String?,
       playCount: (json['playCount'] as num?)?.toInt(),
     );
@@ -166,22 +165,6 @@ class HttpDiscoveryRepository implements DiscoveryRepository {
       return authorJson;
     }
     return 'Unknown';
-  }
-
-  String? _extractFirstTheme(dynamic themesJson) {
-    if (themesJson is List && themesJson.isNotEmpty) {
-      final first = themesJson.first;
-      if (first is String) return first;
-      if (first is Map<String, dynamic>) return first['name'] as String?;
-    }
-    return null;
-  }
-
-  String? _resolveMedia(String? mediaIdOrUrl) {
-    if (mediaIdOrUrl == null || mediaIdOrUrl.isEmpty) return null;
-    if (mediaIdOrUrl.startsWith('http')) return mediaIdOrUrl;
-    // Endpoint de media no disponible aún para ids; evitar construir URLs inválidas.
-    return null;
   }
 
   Uri _resolve(String path, {Map<String, String>? queryParameters}) {

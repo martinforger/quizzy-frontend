@@ -129,8 +129,10 @@ class _QuizzyAppState extends State<QuizzyApp> {
       updateProfileUseCase: UpdateProfileUseCase(profileRepository),
       updatePasswordUseCase: UpdatePasswordUseCase(profileRepository),
     );
-
-    final discoveryRepository = HttpDiscoveryRepository(client: http.Client());
+    // Discovery uses authenticated client for endpoints that may require auth
+    final discoveryRepository = HttpDiscoveryRepository(
+      client: authenticatedClient,
+    );
     final discoveryController = DiscoveryController(
       getCategoriesUseCase: GetCategoriesUseCase(discoveryRepository),
       getFeaturedQuizzesUseCase: GetFeaturedQuizzesUseCase(discoveryRepository),
@@ -138,7 +140,8 @@ class _QuizzyAppState extends State<QuizzyApp> {
       getThemesUseCase: GetThemesUseCase(discoveryRepository),
     );
 
-    final gameService = HttpGameService(httpClient: http.Client());
+    // Game service needs authenticated client for /attempts endpoints
+    final gameService = HttpGameService(httpClient: authenticatedClient);
     final localGameStorage = LocalGameStorage();
     final gameRepository = GameRepositoryImpl(gameService, localGameStorage);
     final startAttemptUseCase = StartAttemptUseCase(gameRepository);
@@ -147,7 +150,10 @@ class _QuizzyAppState extends State<QuizzyApp> {
     final manageLocalAttemptUseCase = ManageLocalAttemptUseCase(gameRepository);
     final getAttemptStateUseCase = GetAttemptStateUseCase(gameRepository);
 
-    final kahootsRepository = HttpKahootsRepository(client: http.Client());
+    // Kahoots also needs authenticated client for CRUD operations
+    final kahootsRepository = HttpKahootsRepository(
+      client: authenticatedClient,
+    );
     final kahootController = KahootController(
       createKahootUseCase: CreateKahootUseCase(kahootsRepository),
       updateKahootUseCase: UpdateKahootUseCase(kahootsRepository),

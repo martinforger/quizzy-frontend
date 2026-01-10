@@ -45,7 +45,8 @@ class OptionModel extends OptionEntity {
     return OptionModel(
       // Forzamos a String por si el backend manda un número 1 en vez de "1"
       index: json['index'].toString(),
-      text: json['text'],
+      // Check multiple possible field names for the text
+      text: json['text'] ?? json['answer'] ?? json['content'] ?? json['label'],
       mediaUrl: json['mediaID'] ?? json['mediaUrl'],
     );
   }

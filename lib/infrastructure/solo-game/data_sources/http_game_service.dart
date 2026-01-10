@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../../core/backend_config.dart';
 import 'game_remote_data_source.dart';
@@ -37,11 +38,20 @@ class HttpGameService implements GameRemoteDataSource {
   /// Response: {attemptId, firstSlide: {...}}
   @override
   Future<Map<String, dynamic>> startNewAttempt(String kahootId) async {
+    final url = _buildUrl('/attempts');
+    final body = jsonEncode({'kahootId': kahootId});
+
+    debugPrint('🎮 [GameService] POST $url');
+    debugPrint('🎮 [GameService] Body: $body');
+
     final response = await httpClient.post(
-      Uri.parse(_buildUrl('/attempts')),
+      Uri.parse(url),
       headers: _buildHeaders(),
-      body: jsonEncode({'kahootId': kahootId}),
+      body: body,
     );
+
+    debugPrint('🎮 [GameService] Response Status: ${response.statusCode}');
+    debugPrint('🎮 [GameService] Response Body: ${response.body}');
 
     if (response.statusCode == 401) {
       throw Exception('401 Unauthorized: Usuario no autenticado');
@@ -70,10 +80,16 @@ class HttpGameService implements GameRemoteDataSource {
   /// Usar este endpoint para reanudar un kahoot singleplayer pausado.
   @override
   Future<Map<String, dynamic>> getAttemptState(String attemptId) async {
+    final url = _buildUrl('/attempts/$attemptId');
+    debugPrint('🎮 [GameService] GET $url');
+
     final response = await httpClient.get(
-      Uri.parse(_buildUrl('/attempts/$attemptId')),
+      Uri.parse(url),
       headers: _buildHeaders(),
     );
+
+    debugPrint('🎮 [GameService] Response Status: ${response.statusCode}');
+    debugPrint('🎮 [GameService] Response Body: ${response.body}');
 
     if (response.statusCode == 404) {
       throw Exception(
@@ -108,11 +124,18 @@ class HttpGameService implements GameRemoteDataSource {
       'timeElapsedSeconds': body['timeElapsedSeconds'],
     };
 
+    final url = _buildUrl('/attempts/$attemptId/answer');
+    debugPrint('🎮 [GameService] POST $url');
+    debugPrint('🎮 [GameService] Body: ${jsonEncode(apiBody)}');
+
     final response = await httpClient.post(
-      Uri.parse(_buildUrl('/attempts/$attemptId/answer')),
+      Uri.parse(url),
       headers: _buildHeaders(),
       body: jsonEncode(apiBody),
     );
+
+    debugPrint('🎮 [GameService] Response Status: ${response.statusCode}');
+    debugPrint('🎮 [GameService] Response Body: ${response.body}');
 
     if (response.statusCode == 400) {
       throw Exception(

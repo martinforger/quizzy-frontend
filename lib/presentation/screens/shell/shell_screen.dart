@@ -67,6 +67,8 @@ class _ShellScreenState extends State<ShellScreen> {
         startAttemptUseCase: widget.startAttemptUseCase,
         submitAnswerUseCase: widget.submitAnswerUseCase,
         getSummaryUseCase: widget.getSummaryUseCase,
+        manageLocalAttemptUseCase: widget.manageLocalAttemptUseCase,
+        getAttemptStateUseCase: widget.getAttemptStateUseCase,
       ),
       LibraryScreen(
         startAttemptUseCase: widget.startAttemptUseCase,
