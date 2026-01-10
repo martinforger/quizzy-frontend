@@ -10,17 +10,12 @@ class AuthenticatedHttpClient extends http.BaseClient {
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
     final token = _prefs.getString('accessToken');
-    
+
     if (token != null && token.isNotEmpty) {
+      print('🔐 [AuthenticatedHttpClient] Token: $token');
       request.headers['Authorization'] = 'Bearer $token';
     }
-    
-    // Ensure Content-Type is set for JSON requests if not already set, 
-    // although libraries usually handle this, explicit setting is good for API clients.
-    // However, the repositories were setting it manually.
-    // We can also make this a "JsonHttpClient" decorator if we wanted to enforce JSON,
-    // but for now let's stick to Authentication Aspect.
-    
+
     return _inner.send(request);
   }
 }

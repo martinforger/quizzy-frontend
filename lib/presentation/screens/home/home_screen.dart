@@ -50,6 +50,16 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadProfile();
   }
 
+  Future<void> _handleLogout() async {
+    try {
+      await widget.authController.logout();
+    } catch (e) {
+      debugPrint("Logout warning: $e");
+    } finally {
+      widget.onLogout();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -76,10 +86,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: _openProfile,
                   child: Row(
                     children: [
-                      UserAvatar(
-                        avatarUrl: avatarUrl,
-                        radius: 16,
-                      ),
+                      UserAvatar(avatarUrl: avatarUrl, radius: 16),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -97,6 +104,10 @@ class _HomeScreenState extends State<HomeScreen> {
               IconButton(
                 icon: const Icon(Icons.notifications_outlined),
                 onPressed: () {},
+              ),
+              IconButton(
+                icon: const Icon(Icons.logout, color: Colors.redAccent),
+                onPressed: _handleLogout,
               ),
             ],
           ),
@@ -131,7 +142,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
-                  
+
                   // Featured Banner
                   Container(
                     width: double.infinity,
@@ -287,10 +298,7 @@ class _ActionCard extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
             ),
