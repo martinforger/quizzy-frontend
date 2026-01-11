@@ -48,6 +48,10 @@ import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quizzy/application/auth/usecases/login_use_case.dart';
 import 'package:quizzy/application/auth/usecases/register_use_case.dart';
+import 'package:quizzy/application/notifications/usecases/register_device_use_case.dart';
+import 'package:quizzy/application/notifications/usecases/unregister_device_use_case.dart';
+import 'package:quizzy/infrastructure/notifications/repositories_impl/http_notification_repository.dart';
+import 'package:quizzy/infrastructure/notifications/services/push_notification_service.dart';
 import 'package:quizzy/application/auth/usecases/logout_use_case.dart';
 import 'package:quizzy/application/auth/usecases/request_password_reset_use_case.dart';
 import 'package:quizzy/application/auth/usecases/confirm_password_reset_use_case.dart';
@@ -138,12 +142,20 @@ class _QuizzyAppState extends State<QuizzyApp> {
             client: authenticatedClient,
             sharedPreferences: widget.sharedPreferences,
           );
+
+    // Notifications - Using HTTP repository directly as per pattern (no mock yet)
+    final notificationRepository = HttpNotificationRepository(client: authenticatedClient);
+    final pushNotificationService = getIt<PushNotificationService>();
+
     final authController = AuthController(
       loginUseCase: LoginUseCase(authRepository),
       registerUseCase: RegisterUseCase(authRepository),
       logoutUseCase: LogoutUseCase(authRepository),
       requestPasswordResetUseCase: RequestPasswordResetUseCase(authRepository),
       confirmPasswordResetUseCase: ConfirmPasswordResetUseCase(authRepository),
+      registerDeviceUseCase: RegisterDeviceUseCase(notificationRepository),
+      unregisterDeviceUseCase: UnregisterDeviceUseCase(notificationRepository),
+      pushNotificationService: pushNotificationService,
     );
 
     // ProfileRepository: Uses BackendSettings.baseUrl dynamically
