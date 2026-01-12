@@ -64,6 +64,7 @@ import 'application/notifications/usecases/mark_notification_read_use_case.dart'
 import 'presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
 import 'presentation/bloc/game_cubit.dart';
 import 'presentation/bloc/library/library_cubit.dart';
+import 'presentation/bloc/notifications/notifications_cubit.dart';
 import 'presentation/state/auth_controller.dart';
 
 import 'infrastructure/notifications/services/push_notification_service.dart';
@@ -216,6 +217,13 @@ Future<void> init() async {
       nextPhaseUseCase: getIt(),
       endSessionUseCase: getIt(),
       repository: getIt(),
+    ),
+  );
+
+  getIt.registerFactory(
+    () => NotificationsCubit(
+      getNotificationsUseCase: getIt(),
+      markNotificationReadUseCase: getIt(),
     ),
   );
 }
