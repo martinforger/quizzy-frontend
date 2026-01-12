@@ -114,7 +114,8 @@ class _QuizzyAppState extends State<QuizzyApp> {
     const envUrl = String.fromEnvironment('MOCK_BASE_URL');
     if (envUrl.isNotEmpty) return envUrl;
     if (defaultTargetPlatform == TargetPlatform.android) {
-      return 'http://10.0.2.2:3000/';
+      // Para dispositivo físico usamos la IP real de tu PC:
+      return 'http://192.168.18.20:3000/';
     }
     return 'http://127.0.0.1:3000/';
   }
