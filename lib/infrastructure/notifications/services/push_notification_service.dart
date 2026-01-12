@@ -12,9 +12,13 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 }
 
 class PushNotificationService {
-  final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
+  // Lazy initialization to prevent native crashes during instantiation
+  FirebaseMessaging? _firebaseMessagingInstance;
+  FirebaseMessaging get _firebaseMessaging => _firebaseMessagingInstance ??= FirebaseMessaging.instance;
 
   Future<void> initialize() async {
+    // Ensure instance is ready
+    final _ = _firebaseMessaging;
     // 1. Request Permission
     await _requestPermission();
 
@@ -30,6 +34,9 @@ class PushNotificationService {
         print('Message also contained a notification: ${message.notification}');
       }
     });
+
+    // Obtener token en segundo plano (sin await) para evitar bloqueos
+    getToken();
   }
 
   Future<void> _requestPermission() async {
