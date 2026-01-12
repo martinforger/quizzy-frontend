@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quizzy/domain/auth/entities/user_profile.dart';
+import 'package:quizzy/injection_container.dart';
+import 'package:quizzy/presentation/bloc/notifications/notifications_cubit.dart';
+import 'package:quizzy/presentation/screens/notifications/notifications_screen.dart';
 import 'package:quizzy/presentation/state/auth_controller.dart';
 import 'package:quizzy/presentation/state/profile_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
@@ -103,7 +107,16 @@ class _HomeScreenState extends State<HomeScreen> {
             actions: [
               IconButton(
                 icon: const Icon(Icons.notifications_outlined),
-                onPressed: () {},
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => BlocProvider(
+                        create: (_) => getIt<NotificationsCubit>(),
+                        child: const NotificationsScreen(),
+                      ),
+                    ),
+                  );
+                },
               ),
               IconButton(
                 icon: const Icon(Icons.logout, color: Colors.redAccent),
