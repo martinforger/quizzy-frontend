@@ -35,6 +35,14 @@ class PushNotificationService {
       }
     });
 
+    // SUSCRIPCIÓN A TEMAS (Nuevo):
+    // Protegemos esto con try-catch para que no cierre la app si falla
+    try {
+      await _firebaseMessaging.subscribeToTopic('novedades');
+    } catch (e) {
+      print('Warning: Failed to subscribe to topic: $e');
+    }
+
     // Obtener token en segundo plano (sin await) para evitar bloqueos
     getToken();
   }
