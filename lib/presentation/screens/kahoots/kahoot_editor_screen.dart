@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_answer.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_question.dart';
+import 'package:quizzy/domain/media/entities/media_asset.dart';
 import 'package:quizzy/presentation/screens/kahoots/question_editor_screen.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
+import 'package:quizzy/presentation/state/media_controller.dart';
 
 class KahootEditorScreen extends StatefulWidget {
   const KahootEditorScreen({
     super.key,
     required this.kahootController,
+    required this.mediaController,
     required this.defaultAuthorId,
     required this.defaultThemeId,
     this.existingKahoot,
   });
 
   final KahootController kahootController;
+  final MediaController mediaController;
   final String defaultAuthorId;
   final String defaultThemeId;
   final Kahoot? existingKahoot;
@@ -30,6 +35,10 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
   String _visibility = 'private';
   String _status = 'draft';
   String _category = '';
+  String? _coverUrl;
+  String? _coverAssetId;
+  bool _coverUploading = false;
+  final ImagePicker _imagePicker = ImagePicker();
   bool _saving = false;
   String? _error;
   final List<KahootQuestion> _questions = [];
@@ -45,6 +54,9 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
     _titleController = TextEditingController(text: k?.title ?? '');
     _descriptionController = TextEditingController(text: k?.description ?? '');
     _coverController = TextEditingController(text: k?.coverImageId ?? '');
+    if (k?.coverImageId != null && k!.coverImageId!.startsWith('http')) {
+      _coverUrl = k.coverImageId;
+    }
     if (k != null) {
       _visibility = k.visibility ?? 'private';
       _status = k.status ?? 'draft';
@@ -117,9 +129,11 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
         description: _descriptionController.text.trim().isEmpty
             ? null
             : _descriptionController.text.trim(),
-        coverImageId: _coverController.text.trim().isEmpty
-            ? null
-            : _coverController.text.trim(),
+        coverImageId:
+            _coverAssetId ??
+            (_coverController.text.trim().isEmpty
+                ? null
+                : _coverController.text.trim()),
         visibility: _visibility,
         category:
             _category, // Ensure category is sent even if empty string? Mapping handles it?
@@ -146,84 +160,323 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
     }
   }
 
-  void _openTypeSelector() {
-    showModalBottomSheet(
+  Future<void> _pickCoverImage() async {
+    try {
+      setState(() => _coverUploading = true);
+      final file = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (file == null) {
+        if (mounted) setState(() => _coverUploading = false);
+        return;
+      }
+      final bytes = await file.readAsBytes();
+      final asset = await widget.mediaController.upload(
+        bytes: bytes,
+        filename: file.name,
+        category: 'image',
+      );
+      if (!mounted) return;
+      setState(() {
+        _coverAssetId = asset.assetId;
+        _coverUrl = asset.url;
+        _coverController.text = asset.assetId;
+        _coverUploading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _coverUploading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
+    }
+  }
+
+  Future<void> _openCoverLibrary() async {
+    final future = widget.mediaController.listThemes();
+    await showModalBottomSheet(
       context: context,
       backgroundColor: const Color(0xFF1E1A22),
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        final types = [
-          ('quiz', 'Quiz'),
-          ('trueFalse', 'Verdadero/Falso'),
-          ('shortAnswer', 'Respuesta corta'),
+        String query = '';
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Banco de imagenes',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    decoration: const InputDecoration(
+                      hintText: 'Buscar imagen...',
+                      filled: true,
+                      fillColor: Color(0xFF27222C),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (value) => setSheetState(() => query = value),
+                  ),
+                  const SizedBox(height: 16),
+                  FutureBuilder<List<MediaAsset>>(
+                    future: future,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Text('No pudimos cargar el banco de imagenes'),
+                        );
+                      }
+                      final items = (snapshot.data ?? []).where((asset) {
+                        final needle = query.trim().toLowerCase();
+                        if (needle.isEmpty) return true;
+                        final name = asset.name?.toLowerCase() ?? '';
+                        final category = asset.category?.toLowerCase() ?? '';
+                        return name.contains(needle) ||
+                            category.contains(needle);
+                      }).toList();
+                      if (items.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Text('Sin resultados'),
+                        );
+                      }
+                      return SizedBox(
+                        height: 320,
+                        child: GridView.builder(
+                          itemCount: items.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 0.9,
+                              ),
+                          itemBuilder: (context, index) {
+                            final asset = items[index];
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() {
+                                  _coverAssetId = asset.assetId;
+                                  _coverUrl = asset.url;
+                                  _coverController.text = asset.assetId;
+                                });
+                                Navigator.of(context).pop();
+                              },
+                              child: AnimatedScale(
+                                scale: 1,
+                                duration: const Duration(milliseconds: 150),
+                                child: ClipRRect(
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Stack(
+                                    children: [
+                                      Positioned.fill(
+                                        child: Image.network(
+                                          asset.url,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (_, __, ___) =>
+                                              const ColoredBox(
+                                                color: Color(0xFF27222C),
+                                                child: Icon(
+                                                  Icons.broken_image_outlined,
+                                                  color: Colors.white70,
+                                                ),
+                                              ),
+                                        ),
+                                      ),
+                                      Positioned(
+                                        left: 8,
+                                        right: 8,
+                                        bottom: 8,
+                                        child: Text(
+                                          asset.name ?? 'Imagen',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.w600,
+                                            fontSize: 12,
+                                            shadows: [
+                                              Shadow(
+                                                color: Colors.black54,
+                                                blurRadius: 6,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _openTypeSelector() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1A22),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        final tiles = [
+          {
+            'id': 'quiz',
+            'label': 'Quiz',
+            'icon': Icons.grid_view_rounded,
+            'color': const Color(0xFF6C5CE7),
+          },
+          {
+            'id': 'trueFalse',
+            'label': 'Verdadero o falso',
+            'icon': Icons.rule_rounded,
+            'color': const Color(0xFF00B894),
+          },
+          {
+            'id': 'shortAnswer',
+            'label': 'Respuesta corta',
+            'icon': Icons.short_text_rounded,
+            'color': const Color(0xFFFF9F43),
+          },
         ];
         return Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.only(
+            left: 16,
+            right: 16,
+            top: 16,
+            bottom: MediaQuery.of(ctx).padding.bottom + 24,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Añadir pregunta',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text(
+                    'Cambiar tipo de pregunta',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                ],
               ),
               const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: types
-                    .map(
-                      (t) => GestureDetector(
-                        onTap: () {
-                          Navigator.of(ctx).pop();
-                          _addQuestion(t.$1);
-                        },
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          padding: const EdgeInsets.all(14),
-                          width: 140,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              colors: t.$1 == 'quiz'
-                                  ? [
-                                      const Color(0xFF5F4B8B),
-                                      const Color(0xFF7F5AF0),
-                                    ]
-                                  : t.$1 == 'trueFalse'
-                                  ? [
-                                      const Color(0xFF3EADCF),
-                                      const Color(0xFFABE9CD),
-                                    ]
-                                  : [
-                                      const Color(0xFFFF8C37),
-                                      const Color(0xFFFF5F6D),
-                                    ],
-                            ),
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                t.$2,
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 6),
-                              const Text(
-                                'Tap para seleccionar',
-                                style: TextStyle(color: Colors.white70),
-                              ),
-                            ],
-                          ),
-                        ),
+              const Text(
+                'Prueba de conocimientos',
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 12),
+              GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: tiles.length,
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                  childAspectRatio: 1.6,
+                ),
+                itemBuilder: (context, index) {
+                  final tile = tiles[index];
+                  final color = tile['color'] as Color;
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.of(ctx).pop();
+                      _addQuestion(tile['id'] as String);
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2A2A2D),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: Colors.white10),
                       ),
-                    )
-                    .toList(),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(tile['icon'] as IconData, color: color),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              tile['label'] as String,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -235,7 +488,7 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0B12),
+      backgroundColor: Colors.transparent,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(55),
         child: AppBar(
@@ -309,6 +562,11 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
       ),
       body: Stack(
         children: [
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(color: const Color(0xFF121014)),
+            ),
+          ),
           SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
             child: Column(
@@ -368,7 +626,13 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
                         )
                       : const SizedBox.shrink(),
                 ),
-                _CoverField(controller: _coverController),
+                _CoverField(
+                  controller: _coverController,
+                  isUploading: _coverUploading,
+                  onPick: _pickCoverImage,
+                  onLibrary: _openCoverLibrary,
+                  previewUrl: _coverUrl,
+                ),
                 const SizedBox(height: 16),
                 _LabeledField(
                   label: 'Título',
@@ -554,8 +818,11 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
     final question = _questions[index];
     final updated = await Navigator.of(context).push<KahootQuestion>(
       MaterialPageRoute(
-        builder: (_) =>
-            QuestionEditorScreen(question: question, index: index + 1),
+        builder: (_) => QuestionEditorScreen(
+          question: question,
+          index: index + 1,
+          mediaController: widget.mediaController,
+        ),
         fullscreenDialog: true,
       ),
     );
@@ -882,14 +1149,29 @@ class _LabeledField extends StatelessWidget {
 }
 
 class _CoverField extends StatelessWidget {
-  const _CoverField({required this.controller});
+  const _CoverField({
+    required this.controller,
+    required this.onPick,
+    required this.onLibrary,
+    required this.isUploading,
+    this.previewUrl,
+  });
 
   final TextEditingController controller;
+  final VoidCallback onPick;
+  final VoidCallback onLibrary;
+  final bool isUploading;
+  final String? previewUrl;
 
   @override
   Widget build(BuildContext context) {
+    final coverUrl =
+        previewUrl ??
+        (controller.text.trim().startsWith('http')
+            ? controller.text.trim()
+            : '');
     return GestureDetector(
-      onTap: () {},
+      onTap: isUploading ? null : onPick,
       child: Container(
         height: 160,
         width: double.infinity,
@@ -897,43 +1179,76 @@ class _CoverField extends StatelessWidget {
           color: const Color(0xFF1E1A22),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white.withOpacity(0.05)),
+          image: coverUrl.isNotEmpty
+              ? DecorationImage(
+                  image: NetworkImage(coverUrl),
+                  fit: BoxFit.cover,
+                )
+              : null,
         ),
         child: Stack(
           children: [
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  Icon(Icons.image_outlined, size: 36, color: Colors.white54),
-                  SizedBox(height: 8),
-                  Text(
-                    'Añadir imagen de portada',
-                    style: TextStyle(color: Colors.white70),
+            if (coverUrl.isEmpty)
+              Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: const [
+                    Icon(Icons.image_outlined, size: 36, color: Colors.white54),
+                    SizedBox(height: 8),
+                    Text(
+                      'Añadir imagen de portada',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ],
+                ),
+              ),
+            Positioned(
+              right: 12,
+              top: 12,
+              child: Row(
+                children: [
+                  ElevatedButton(
+                    onPressed: onLibrary,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black45,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Buscar'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: isUploading ? null : onPick,
+                    icon: isUploading
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.cloud_upload_outlined, size: 18),
+                    label: Text(isUploading ? 'Subiendo...' : 'Subir'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black54,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                 ],
               ),
             ),
-            Positioned(
-              left: 12,
-              right: 12,
-              bottom: 12,
-              child: TextField(
-                controller: controller,
-                decoration: const InputDecoration(
-                  hintText: 'URL de imagen (temporal, media upload pendiente)',
-                  filled: true,
-                  fillColor: Color(0xFF27222C),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide.none,
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
-                  ),
-                  contentPadding: EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 10,
-                  ),
-                ),
-              ),
-            ),
+            const SizedBox.shrink(),
           ],
         ),
       ),
