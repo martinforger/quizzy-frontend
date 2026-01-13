@@ -1,16 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_answer.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_question.dart';
+import 'package:quizzy/domain/media/entities/media_asset.dart';
+import 'package:quizzy/presentation/state/media_controller.dart';
 
 class QuestionEditorScreen extends StatefulWidget {
   const QuestionEditorScreen({
     super.key,
     required this.question,
     required this.index,
+    required this.mediaController,
   });
 
   final KahootQuestion question;
   final int index;
+  final MediaController mediaController;
 
   @override
   State<QuestionEditorScreen> createState() => _QuestionEditorScreenState();
@@ -22,6 +27,11 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
   late TextEditingController _pointsController;
   late String _type;
   late List<KahootAnswer> _answers;
+  final ImagePicker _imagePicker = ImagePicker();
+  String? _mediaUrl;
+  String? _mediaAssetId;
+  bool _mediaUploading = false;
+  final Map<int, String> _answerMediaUrls = {};
 
   final List<int> _allowedTimes = [5, 10, 20, 30, 45, 60, 90, 120, 180, 240];
 
@@ -49,6 +59,20 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
             KahootAnswer(text: 'Respuesta 3', isCorrect: false),
             KahootAnswer(text: 'Respuesta 4', isCorrect: false),
           ];
+    final initialMediaId = widget.question.mediaId;
+    if (initialMediaId != null && initialMediaId.startsWith('http')) {
+      _mediaUrl = initialMediaId;
+      _mediaAssetId = null;
+    } else {
+      _mediaUrl = null;
+      _mediaAssetId = initialMediaId;
+    }
+    for (var i = 0; i < _answers.length; i++) {
+      final mediaId = _answers[i].mediaId;
+      if (mediaId != null && mediaId.startsWith('http')) {
+        _answerMediaUrls[i] = mediaId;
+      }
+    }
     _applyType(_type, initial: true);
   }
 
@@ -77,7 +101,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
     final updated = KahootQuestion(
       id: widget.question.id,
       text: _textController.text.trim(),
-      mediaId: widget.question.mediaId,
+      mediaId: _mediaAssetId ?? _mediaUrl,
       type: _type,
       timeLimit: _timeLimit,
       points: int.tryParse(_pointsController.text),
@@ -96,6 +120,233 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
         ),
       ];
     });
+  }
+
+  Future<void> _pickQuestionMedia() async {
+    try {
+      setState(() => _mediaUploading = true);
+      final file = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (file == null) {
+        if (mounted) setState(() => _mediaUploading = false);
+        return;
+      }
+      final bytes = await file.readAsBytes();
+      final asset = await widget.mediaController.upload(
+        bytes: bytes,
+        filename: file.name,
+        category: 'image',
+      );
+      if (!mounted) return;
+      setState(() {
+        _mediaUrl = asset.url;
+        _mediaAssetId = asset.assetId;
+        _mediaUploading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _mediaUploading = false);
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
+    }
+  }
+
+  Future<void> _pickAnswerMedia(int idx) async {
+    try {
+      final file = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (file == null) return;
+      final bytes = await file.readAsBytes();
+      final asset = await widget.mediaController.upload(
+        bytes: bytes,
+        filename: file.name,
+        category: 'image',
+      );
+      if (!mounted) return;
+      setState(() {
+        final current = _answers[idx];
+        _answers[idx] = KahootAnswer(
+          id: current.id,
+          text: current.text,
+          mediaId: asset.assetId,
+          isCorrect: current.isCorrect,
+        );
+        _answerMediaUrls[idx] = asset.url;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
+    }
+  }
+
+  Future<void> _openMediaLibrary({
+    required ValueChanged<MediaAsset> onSelected,
+  }) async {
+    final future = widget.mediaController.listThemes();
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1A22),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        String query = '';
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                left: 16,
+                right: 16,
+                top: 16,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.white24,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  const Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Banco de imagenes',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    decoration: const InputDecoration(
+                      hintText: 'Buscar imagen...',
+                      filled: true,
+                      fillColor: Color(0xFF27222C),
+                      border: OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (value) => setSheetState(() => query = value),
+                  ),
+                  const SizedBox(height: 16),
+                  FutureBuilder<List<MediaAsset>>(
+                    future: future,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 24),
+                          child: CircularProgressIndicator(),
+                        );
+                      }
+                      if (snapshot.hasError) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Text('No pudimos cargar el banco de imagenes'),
+                        );
+                      }
+                      final items = (snapshot.data ?? []).where((asset) {
+                        final needle = query.trim().toLowerCase();
+                        if (needle.isEmpty) return true;
+                        final name = asset.name?.toLowerCase() ?? '';
+                        final category = asset.category?.toLowerCase() ?? '';
+                        return name.contains(needle) ||
+                            category.contains(needle);
+                      }).toList();
+                      if (items.isEmpty) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Text('Sin resultados'),
+                        );
+                      }
+                      return SizedBox(
+                        height: 320,
+                        child: GridView.builder(
+                          itemCount: items.length,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 3,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 0.9,
+                              ),
+                          itemBuilder: (context, index) {
+                            final asset = items[index];
+                            return GestureDetector(
+                              onTap: () {
+                                onSelected(asset);
+                                Navigator.of(context).pop();
+                              },
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(12),
+                                child: Stack(
+                                  children: [
+                                    Positioned.fill(
+                                      child: Image.network(
+                                        asset.url,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            const ColoredBox(
+                                              color: Color(0xFF27222C),
+                                              child: Icon(
+                                                Icons.broken_image_outlined,
+                                                color: Colors.white70,
+                                              ),
+                                            ),
+                                      ),
+                                    ),
+                                    Positioned(
+                                      left: 8,
+                                      right: 8,
+                                      bottom: 8,
+                                      child: Text(
+                                        asset.name ?? 'Imagen',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.w600,
+                                          fontSize: 12,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black54,
+                                              blurRadius: 6,
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   void _applyType(String value, {bool initial = false}) {
@@ -117,6 +368,12 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
         ];
       }
     });
+    _syncAnswerMediaUrls();
+  }
+
+  void _syncAnswerMediaUrls() {
+    final validIndexes = _answers.asMap().keys.toSet();
+    _answerMediaUrls.removeWhere((key, _) => !validIndexes.contains(key));
   }
 
   Future<void> _openAnswerModal(int idx, Color color) async {
@@ -155,7 +412,10 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                     onPressed: () {
                       Navigator.of(ctx).maybePop();
                       if (_answers.length <= 1) return;
-                      setState(() => _answers.removeAt(idx));
+                      setState(() {
+                        _answers.removeAt(idx);
+                        _answerMediaUrls.remove(idx);
+                      });
                     },
                     icon: const Icon(
                       Icons.delete_forever,
@@ -204,6 +464,41 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                   });
                 },
               ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(ctx).maybePop();
+                      _pickAnswerMedia(idx);
+                    },
+                    icon: const Icon(Icons.image_outlined),
+                    label: const Text('Añadir imagen'),
+                  ),
+                  const SizedBox(width: 12),
+                  TextButton.icon(
+                    onPressed: () {
+                      Navigator.of(ctx).maybePop();
+                      _openMediaLibrary(
+                        onSelected: (asset) {
+                          setState(() {
+                            final current = _answers[idx];
+                            _answers[idx] = KahootAnswer(
+                              id: current.id,
+                              text: current.text,
+                              mediaId: asset.assetId,
+                              isCorrect: current.isCorrect,
+                            );
+                            _answerMediaUrls[idx] = asset.url;
+                          });
+                        },
+                      );
+                    },
+                    icon: const Icon(Icons.photo_library_outlined),
+                    label: const Text('Buscar'),
+                  ),
+                ],
+              ),
             ],
           ),
         );
@@ -223,7 +518,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0F0B12),
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         leading: IconButton(
@@ -255,32 +550,115 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
       ),
       body: Stack(
         children: [
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: const Color(0xFF121014),
+              ),
+            ),
+          ),
           SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
             child: Column(
               children: [
                 // Media
-                Container(
-                  height: 220,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF1E1A22),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.white10),
-                  ),
-                  child: Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: const [
-                        Icon(
-                          Icons.add_box_rounded,
-                          size: 42,
-                          color: Colors.white54,
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Añadir multimedia',
-                          style: TextStyle(color: Colors.white70),
+                GestureDetector(
+                  onTap: _mediaUploading ? null : _pickQuestionMedia,
+                  child: Container(
+                    height: 220,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1A22),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white10),
+                      image: _mediaUrl != null && _mediaUrl!.isNotEmpty
+                          ? DecorationImage(
+                              image: NetworkImage(_mediaUrl!),
+                              fit: BoxFit.cover,
+                            )
+                          : null,
+                    ),
+                    child: Stack(
+                      children: [
+                        if (_mediaUrl == null || _mediaUrl!.isEmpty)
+                          Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: const [
+                                Icon(
+                                  Icons.add_box_rounded,
+                                  size: 42,
+                                  color: Colors.white54,
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Añadir multimedia',
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                              ],
+                            ),
+                          ),
+                        Positioned(
+                          right: 12,
+                          top: 12,
+                          child: Row(
+                            children: [
+                              ElevatedButton(
+                                onPressed: () => _openMediaLibrary(
+                                  onSelected: (asset) {
+                                    setState(() {
+                                      _mediaAssetId = asset.assetId;
+                                      _mediaUrl = asset.url;
+                                    });
+                                  },
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black45,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 8,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                                child: const Text('Buscar'),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton.icon(
+                                onPressed: _mediaUploading
+                                    ? null
+                                    : _pickQuestionMedia,
+                                icon: _mediaUploading
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.cloud_upload_outlined,
+                                        size: 18,
+                                      ),
+                                label: Text(
+                                  _mediaUploading ? 'Subiendo...' : 'Subir',
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black54,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
@@ -372,9 +750,14 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                   itemBuilder: (context, idx) {
                     final answer = _answers[idx];
                     final color = colors[idx % colors.length];
+                    final previewUrl = _answerMediaUrls[idx] ?? '';
                     return GestureDetector(
                       onTap: () => _openAnswerModal(idx, color),
-                      child: _AnswerCard(color: color, answer: answer),
+                      child: _AnswerCard(
+                        color: color,
+                        answer: answer,
+                        mediaUrl: previewUrl,
+                      ),
                     );
                   },
                 ),
@@ -410,10 +793,15 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
 }
 
 class _AnswerCard extends StatelessWidget {
-  const _AnswerCard({required this.color, required this.answer});
+  const _AnswerCard({
+    required this.color,
+    required this.answer,
+    required this.mediaUrl,
+  });
 
   final Color color;
   final KahootAnswer answer;
+  final String mediaUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -437,24 +825,41 @@ class _AnswerCard extends StatelessWidget {
               top: 8,
               child: Icon(Icons.check_circle, color: Colors.white, size: 20),
             ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Text(
-                (answer.text?.isNotEmpty ?? false)
-                    ? answer.text!
-                    : 'Añadir respuesta',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
+          if (mediaUrl.isNotEmpty)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.network(
+                mediaUrl,
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: double.infinity,
+                errorBuilder: (_, __, ___) => const Center(
+                  child: Icon(
+                    Icons.broken_image_outlined,
+                    color: Colors.white70,
+                  ),
                 ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              ),
+            )
+          else
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Text(
+                  (answer.text?.isNotEmpty ?? false)
+                      ? answer.text!
+                      : 'Añadir respuesta',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ),
-          ),
         ],
       ),
     );
