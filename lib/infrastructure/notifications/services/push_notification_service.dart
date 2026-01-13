@@ -1,14 +1,21 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
+import '../../../firebase_options.dart';
 
 // Top-level function for background handling
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  // If you're going to use other Firebase services in the background, such as Firestore,
-  // make sure you call `initializeApp` before using other Firebase services.
-  await Firebase.initializeApp();
-  print('Handling a background message ${message.messageId}');
+  try {
+    // If you're going to use other Firebase services in the background, such as Firestore,
+    // make sure you call `initializeApp` before using other Firebase services.
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    print('Handling a background message ${message.messageId}');
+  } catch (e) {
+    print('CRITICAL: Error handling background message: $e');
+  }
 }
 
 class PushNotificationService {
@@ -27,11 +34,15 @@ class PushNotificationService {
 
     // 3. Foreground handler
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Got a message whilst in the foreground!');
-      print('Message data: ${message.data}');
+      try {
+        print('Got a message whilst in the foreground!');
+        print('Message data: ${message.data}');
 
-      if (message.notification != null) {
-        print('Message also contained a notification: ${message.notification}');
+        if (message.notification != null) {
+          print('Message also contained a notification: ${message.notification}');
+        }
+      } catch (e) {
+        print('Error handling foreground message: $e');
       }
     });
 
