@@ -4,6 +4,9 @@ import 'package:quizzy/domain/notifications/entities/notification_item.dart';
 import 'package:quizzy/presentation/bloc/notifications/notifications_cubit.dart';
 import 'package:quizzy/presentation/bloc/notifications/notifications_state.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
+import 'package:quizzy/presentation/screens/game/game_screen.dart';
+import 'package:quizzy/presentation/bloc/game_cubit.dart';
+import 'package:quizzy/injection_container.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -96,11 +99,16 @@ class _NotificationCard extends StatelessWidget {
       child: InkWell(
         onTap: () {
           context.read<NotificationsCubit>().markAsRead(notification.id);
-          // TODO: Funcionalidad de navegación basada en notification.type y resourceId (H9.1)
-          if (notification.type == 'quiz_assigned' || notification.type == 'quiz_completed') {
-             ScaffoldMessenger.of(context).showSnackBar(
-               const SnackBar(content: Text('Navegando al detalle del Quizz...')),
-             );
+          
+          if (notification.type == 'quiz_assigned' && notification.resourceId != null) {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => BlocProvider(
+                  create: (_) => getIt<GameCubit>(),
+                  child: GameScreen(quizId: notification.resourceId!),
+                ),
+              ),
+            );
           }
         },
         borderRadius: BorderRadius.circular(12),
