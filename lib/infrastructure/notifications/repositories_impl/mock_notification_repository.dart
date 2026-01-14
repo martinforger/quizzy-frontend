@@ -30,14 +30,14 @@ class MockNotificationRepository implements NotificationRepository {
   ];
 
   @override
-  Future<List<NotificationItem>> getNotifications({int limit = 20, int page = 1}) async {
+  Future<List<NotificationItem>> getNotifications({int limit = 20, int page = 1, required String accessToken}) async {
     // Simular delay de red
     await Future.delayed(const Duration(milliseconds: 800));
     return _mockNotifications;
   }
 
   @override
-  Future<NotificationItem> markAsRead(String id) async {
+  Future<NotificationItem> markAsRead(String id, {required String accessToken}) async {
     await Future.delayed(const Duration(milliseconds: 300));
     final index = _mockNotifications.indexWhere((n) => n.id == id);
     if (index != -1) {

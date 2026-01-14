@@ -65,13 +65,19 @@ class HttpNotificationRepository implements NotificationRepository {
   Future<List<NotificationItem>> getNotifications({
     int limit = 20,
     int page = 1,
+    required String accessToken,
   }) async {
     final uri = _resolve('notifications').replace(queryParameters: {
       'limit': limit.toString(),
       'page': page.toString(),
     });
 
-    final response = await client.get(uri);
+    final response = await client.get(
+      uri,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+      },
+    );
 
     if (response.statusCode == 200) {
       final List<dynamic> jsonList = jsonDecode(response.body);
@@ -84,11 +90,15 @@ class HttpNotificationRepository implements NotificationRepository {
   }
 
   @override
-  Future<NotificationItem> markAsRead(String id) async {
+  Future<NotificationItem> markAsRead(String id,
+      {required String accessToken}) async {
     final uri = _resolve('notifications/$id');
     final response = await client.patch(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
       body: jsonEncode({'isRead': true}),
     );
 

@@ -17,11 +17,16 @@ class HttpAuthRepository implements AuthRepository {
   Uri _resolve(String path) => Uri.parse('${BackendSettings.baseUrl}/$path');
 
   Future<String?> _getToken() async {
-    return sharedPreferences.getString('accessToken');
+    return getToken();
   }
 
   Future<void> _saveToken(String token) async {
     await sharedPreferences.setString('accessToken', token);
+  }
+
+  @override
+  Future<String?> getToken() async {
+    return sharedPreferences.getString('accessToken');
   }
 
   Future<void> _deleteToken() async {
