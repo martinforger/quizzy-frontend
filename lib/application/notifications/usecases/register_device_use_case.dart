@@ -5,7 +5,15 @@ class RegisterDeviceUseCase {
 
   RegisterDeviceUseCase(this._repository);
 
-  Future<void> call({required String token, required String deviceType}) {
-    return _repository.registerDevice(token: token, deviceType: deviceType);
+  Future<void> call({
+    required String token,
+    required String deviceType,
+    required String accessToken,
+  }) {
+    return _repository.registerDevice(
+      token: token,
+      deviceType: deviceType,
+      accessToken: accessToken,
+    );
   }
 }

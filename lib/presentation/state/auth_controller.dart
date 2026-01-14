@@ -36,7 +36,7 @@ class AuthController {
     final token = await loginUseCase(email: email, password: password);
     
     // Register device for push notifications
-    _registerDeviceToken();
+    _registerDeviceToken(token);
     
     return token;
   }
@@ -50,12 +50,12 @@ class AuthController {
     );
     
     // Register device for push notifications
-    _registerDeviceToken();
+    _registerDeviceToken(result.$2);
     
     return result;
   }
 
-  Future<void> _registerDeviceToken() async {
+  Future<void> _registerDeviceToken(String accessToken) async {
     try {
       final fcmToken = await pushNotificationService.getToken();
       if (fcmToken != null) {
@@ -63,7 +63,11 @@ class AuthController {
         if (Platform.isIOS) deviceType = 'ios';
         // Add other platforms if needed
 
-        await registerDeviceUseCase(token: fcmToken, deviceType: deviceType);
+        await registerDeviceUseCase(
+          token: fcmToken,
+          deviceType: deviceType,
+          accessToken: accessToken,
+        );
       }
     } catch (e) {
       print('Failed to register device token: $e');

@@ -5,7 +5,7 @@ class UnregisterDeviceUseCase {
 
   UnregisterDeviceUseCase(this._repository);
 
-  Future<void> call({required String token}) {
-    return _repository.unregisterDevice(token: token);
+  Future<void> call({required String token, String? accessToken}) {
+    return _repository.unregisterDevice(token: token, accessToken: accessToken);
   }
 }
