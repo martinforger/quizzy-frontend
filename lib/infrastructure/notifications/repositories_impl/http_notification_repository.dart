@@ -16,11 +16,15 @@ class HttpNotificationRepository implements NotificationRepository {
   Future<void> registerDevice({
     required String token,
     required String deviceType,
+    required String accessToken,
   }) async {
     final uri = _resolve('notifications/register-device');
     final response = await client.post(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $accessToken',
+      },
       body: jsonEncode({
         'token': token,
         'deviceType': deviceType,
@@ -33,11 +37,20 @@ class HttpNotificationRepository implements NotificationRepository {
   }
 
   @override
-  Future<void> unregisterDevice({required String token}) async {
+  Future<void> unregisterDevice({
+    required String token,
+    String? accessToken,
+  }) async {
     final uri = _resolve('notifications/unregister-device');
+    final Map<String, String> headers = {
+      'Content-Type': 'application/json',
+    };
+    if (accessToken != null) {
+      headers['Authorization'] = 'Bearer $accessToken';
+    }
     final response = await client.delete(
       uri,
-      headers: {'Content-Type': 'application/json'},
+      headers: headers,
       body: jsonEncode({
         'token': token,
       }),

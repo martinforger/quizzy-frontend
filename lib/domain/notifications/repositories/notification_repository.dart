@@ -4,10 +4,12 @@ abstract class NotificationRepository {
   Future<void> registerDevice({
     required String token,
     required String deviceType,
+    required String accessToken,
   });
 
   Future<void> unregisterDevice({
     required String token,
+    String? accessToken,
   });
 
   Future<List<NotificationItem>> getNotifications({

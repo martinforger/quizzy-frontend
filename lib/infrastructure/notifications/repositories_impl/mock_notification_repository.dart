@@ -57,12 +57,19 @@ class MockNotificationRepository implements NotificationRepository {
   }
 
   @override
-  Future<void> registerDevice({required String token, required String deviceType}) async {
+  Future<void> registerDevice({
+    required String token,
+    required String deviceType,
+    required String accessToken,
+  }) async {
     print('MOCK: Device registered with token: $token');
   }
 
   @override
-  Future<void> unregisterDevice({required String token}) async {
+  Future<void> unregisterDevice({
+    required String token,
+    String? accessToken,
+  }) async {
     print('MOCK: Device unregistered');
   }
 }
