@@ -6,7 +6,7 @@ class GetNotificationsUseCase {
 
   GetNotificationsUseCase(this._repository);
 
-  Future<List<NotificationItem>> call({int limit = 20, int page = 1}) {
-    return _repository.getNotifications(limit: limit, page: page);
+  Future<List<NotificationItem>> call({int limit = 20, int page = 1, required String accessToken}) {
+    return _repository.getNotifications(limit: limit, page: page, accessToken: accessToken);
   }
 }

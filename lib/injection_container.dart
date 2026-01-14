@@ -227,6 +227,7 @@ Future<void> init() async {
     () => NotificationsCubit(
       getNotificationsUseCase: getIt(),
       markNotificationReadUseCase: getIt(),
+      authRepository: getIt(),
     ),
   );
 }

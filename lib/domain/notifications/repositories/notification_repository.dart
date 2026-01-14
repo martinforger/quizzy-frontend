@@ -15,7 +15,8 @@ abstract class NotificationRepository {
   Future<List<NotificationItem>> getNotifications({
     int limit = 20,
     int page = 1,
+    required String accessToken,
   });
 
-  Future<NotificationItem> markAsRead(String id);
+  Future<NotificationItem> markAsRead(String id, {required String accessToken});
 }

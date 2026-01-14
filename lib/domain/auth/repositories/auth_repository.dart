@@ -21,4 +21,6 @@ abstract class AuthRepository {
     required String resetToken,
     required String newPassword,
   });
+
+  Future<String?> getToken();
 }

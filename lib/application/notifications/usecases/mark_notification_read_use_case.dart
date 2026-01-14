@@ -6,7 +6,7 @@ class MarkNotificationReadUseCase {
 
   MarkNotificationReadUseCase(this._repository);
 
-  Future<NotificationItem> call(String id) {
-    return _repository.markAsRead(id);
+  Future<NotificationItem> call(String id, {required String accessToken}) {
+    return _repository.markAsRead(id, accessToken: accessToken);
   }
 }

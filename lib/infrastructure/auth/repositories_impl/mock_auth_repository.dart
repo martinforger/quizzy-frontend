@@ -61,4 +61,9 @@ class MockAuthRepository implements AuthRepository {
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
   }
+
+  @override
+  Future<String?> getToken() async {
+    return 'mock-access-token';
+  }
 }
