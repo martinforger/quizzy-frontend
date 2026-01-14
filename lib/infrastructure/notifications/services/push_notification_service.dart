@@ -72,12 +72,15 @@ class PushNotificationService {
     print('User granted permission: ${settings.authorizationStatus}');
   }
 
+  String? _lastPrintToken;
+
   Future<String?> getToken() async {
     try {
       // Get the token
       String? token = await _firebaseMessaging.getToken();
-      if (kDebugMode) {
+      if (kDebugMode && token != _lastPrintToken) {
         print('FCM Token: $token');
+        _lastPrintToken = token;
       }
       return token;
     } catch (e) {
