@@ -8,11 +8,13 @@ import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dar
 import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_case.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
 import 'package:quizzy/presentation/state/media_controller.dart';
+import 'package:quizzy/presentation/state/reports_controller.dart';
 import 'package:quizzy/presentation/screens/kahoots/kahoot_editor_screen.dart';
 import 'package:quizzy/presentation/bloc/game_cubit.dart';
 import 'package:quizzy/presentation/bloc/library/library_cubit.dart';
 import 'package:quizzy/presentation/screens/game/game_screen.dart';
 import 'package:quizzy/presentation/screens/my_library/widgets/library_item_tile.dart';
+import 'package:quizzy/presentation/screens/reports/reports_history_tab.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
 import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_state.dart';
@@ -31,6 +33,7 @@ class LibraryScreen extends StatefulWidget {
     required this.libraryCubit,
     required this.kahootController,
     required this.mediaController,
+    required this.reportsController,
   });
 
   final StartAttemptUseCase startAttemptUseCase;
@@ -41,6 +44,7 @@ class LibraryScreen extends StatefulWidget {
   final LibraryCubit libraryCubit;
   final KahootController kahootController;
   final MediaController mediaController;
+  final ReportsController reportsController;
 
   @override
   State<LibraryScreen> createState() => _LibraryScreenState();
@@ -55,7 +59,7 @@ class _LibraryScreenState extends State<LibraryScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 5, vsync: this);
+    _tabController = TabController(length: 6, vsync: this);
     _tabController.addListener(_handleTabSelection);
     _loadSession();
   }
@@ -79,6 +83,9 @@ class _LibraryScreenState extends State<LibraryScreen>
         break;
       case 4:
         widget.libraryCubit.loadCompleted();
+        break;
+      case 5:
+        // Results tab uses its own controller fetch.
         break;
     }
   }
@@ -135,6 +142,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                   Tab(text: "Favoritos"),
                   Tab(text: "En Progreso"),
                   Tab(text: "Completados"),
+                  Tab(text: "Resultados"),
                 ],
               ),
             ),
@@ -161,6 +169,7 @@ class _LibraryScreenState extends State<LibraryScreen>
                 ),
                 _buildLibraryList(state, (s) => s.inProgress),
                 _buildLibraryList(state, (s) => s.completed),
+                ReportsHistoryTab(controller: widget.reportsController),
               ],
             );
           },
