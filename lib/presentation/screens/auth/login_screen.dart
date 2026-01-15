@@ -155,6 +155,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       icon: Icons.badge_outlined,
                     ).animate().fadeIn(delay: 100.ms).slideX(),
                     const SizedBox(height: 16),
+                    _buildModernTextField(
+                      controller: _emailController,
+                      label: 'Email',
+                      icon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                    ).animate().fadeIn(delay: 160.ms).slideX(),
+                    const SizedBox(height: 16),
                   ],
                   _buildModernTextField(
                     controller: _usernameController,

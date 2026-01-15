@@ -142,3 +142,33 @@ final List<Map<String, dynamic>> seedKahoots = [
     ],
   },
 ];
+
+final List<Map<String, dynamic>> themeMediaAssets = [
+  {
+    'assetId': 'asset-theme-001',
+    'url': 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=60',
+    'name': 'Theme 1',
+    'category': 'image',
+    'format': 'jpg',
+    'size': 204800,
+    'mimeType': 'image/jpeg',
+  },
+  {
+    'assetId': 'asset-theme-002',
+    'url': 'https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=800&q=60',
+    'name': 'Theme 2',
+    'category': 'image',
+    'format': 'jpg',
+    'size': 198700,
+    'mimeType': 'image/jpeg',
+  },
+  {
+    'assetId': 'asset-theme-003',
+    'url': 'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?auto=format&fit=crop&w=800&q=60',
+    'name': 'Theme 3',
+    'category': 'image',
+    'format': 'jpg',
+    'size': 221000,
+    'mimeType': 'image/jpeg',
+  },
+];
