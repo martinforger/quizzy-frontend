@@ -8,12 +8,14 @@ class RegisterUseCase {
 
   Future<(User, String)> call({
     required String name,
+    required String username,
     required String email,
     required String password,
     required String userType,
   }) {
     return _repository.register(
       name: name,
+      username: username,
       email: email,
       password: password,
       userType: userType,

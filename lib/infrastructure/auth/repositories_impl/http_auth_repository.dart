@@ -36,6 +36,7 @@ class HttpAuthRepository implements AuthRepository {
   @override
   Future<(User, String)> register({
     required String name,
+    required String username,
     required String email,
     required String password,
     required String userType,
@@ -43,6 +44,7 @@ class HttpAuthRepository implements AuthRepository {
     final uri = _resolve('auth/register');
     final body = json.encode({
       'name': name,
+      'username': username,
       'email': email,
       'password': password,
       'userType': userType,
@@ -65,11 +67,11 @@ class HttpAuthRepository implements AuthRepository {
 
   @override
   Future<String> login({
-    required String email,
+    required String username,
     required String password,
   }) async {
     final uri = _resolve('auth/login');
-    final body = json.encode({'email': email, 'password': password});
+    final body = json.encode({'username': username, 'password': password});
 
     final response = await client
         .post(uri, headers: {'Content-Type': 'application/json'}, body: body)
