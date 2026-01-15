@@ -226,10 +226,14 @@ class _QuizzyAppState extends State<QuizzyApp> {
     );
 
     // Reports (epica 10)
-    final reportsRepository = HttpReportsRepository(client: authenticatedClient);
+    final reportsRepository = HttpReportsRepository(
+      client: authenticatedClient,
+    );
     final reportsController = ReportsController(
       getSessionReportUseCase: GetSessionReportUseCase(reportsRepository),
-      getMultiplayerResultUseCase: GetMultiplayerResultUseCase(reportsRepository),
+      getMultiplayerResultUseCase: GetMultiplayerResultUseCase(
+        reportsRepository,
+      ),
       getSingleplayerResultUseCase: GetSingleplayerResultUseCase(
         reportsRepository,
       ),

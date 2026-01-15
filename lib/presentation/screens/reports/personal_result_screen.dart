@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:quizzy/domain/reports/entities/personal_result.dart';
-import 'package:quizzy/presentation/screens/reports/session_report_screen.dart';
 import 'package:quizzy/presentation/state/reports_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 
@@ -39,27 +39,7 @@ class _PersonalResultScreenState extends State<PersonalResultScreen> {
     final isMulti = widget.gameType.toLowerCase().contains('multi');
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Resultado'),
-        actions: [
-          if (isMulti)
-            IconButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => SessionReportScreen(
-                      controller: widget.controller,
-                      sessionId: widget.gameId,
-                      title: widget.title,
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.insights_rounded),
-              tooltip: 'Reporte de sesion',
-            ),
-        ],
-      ),
+      appBar: AppBar(title: const Text('Resultado')),
       body: FutureBuilder<PersonalResult>(
         future: _future,
         builder: (context, snapshot) {
@@ -87,18 +67,17 @@ class _PersonalResultScreenState extends State<PersonalResultScreen> {
 
           final avgSeconds = result.averageTimeMs / 1000.0;
           final scoreLabel = '${result.finalScore} pts';
+          final heroImage = _extractHeroImage(result);
 
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
-              Text(
-                widget.title.isEmpty ? 'Kahoot' : widget.title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
+              _HeroHeader(
+                title: widget.title.isEmpty ? 'Kahoot' : widget.title,
+                imageUrl: heroImage,
+                subtitle: isMulti ? 'Multiplayer' : 'Singleplayer',
+              ).animate().fadeIn(duration: 320.ms),
+              const SizedBox(height: 16),
               _StatsRow(
                 score: scoreLabel,
                 correct: '${result.correctAnswers}/${result.totalQuestions}',
@@ -106,17 +85,113 @@ class _PersonalResultScreenState extends State<PersonalResultScreen> {
                 ranking: result.rankingPosition != null
                     ? '#${result.rankingPosition}'
                     : null,
-              ),
-              const SizedBox(height: 16),
+              ).animate().fadeIn(duration: 320.ms, delay: 80.ms),
+              const SizedBox(height: 20),
               Text(
                 'Preguntas',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
-              ...result.questionResults.map((item) => _QuestionResultCard(item)),
+              ...result.questionResults.asMap().entries.map(
+                    (entry) => _QuestionResultCard(entry.value)
+                        .animate()
+                        .fadeIn(duration: 260.ms)
+                        .slideY(
+                          begin: 0.06,
+                          end: 0,
+                          delay: Duration(milliseconds: 60 * entry.key),
+                        ),
+                  ),
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _HeroHeader extends StatelessWidget {
+  const _HeroHeader({
+    required this.title,
+    required this.subtitle,
+    this.imageUrl,
+  });
+
+  final String title;
+  final String subtitle;
+  final String? imageUrl;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 180,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2C2333), Color(0xFF18151C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        boxShadow: AppShadows.medium,
+      ),
+      clipBehavior: Clip.hardEdge,
+      child: Stack(
+        children: [
+          if (imageUrl != null)
+            Positioned.fill(
+              child: Image.network(
+                imageUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              ),
+            ),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.black.withValues(alpha: 0.65),
+                    Colors.black.withValues(alpha: 0.15),
+                  ],
+                  begin: Alignment.bottomLeft,
+                  end: Alignment.topRight,
+                ),
+              ),
+            ),
+          ),
+          Positioned(
+            left: 16,
+            right: 16,
+            bottom: 16,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    subtitle,
+                    style: const TextStyle(fontSize: 11, color: Colors.white70),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -189,6 +264,7 @@ class _QuestionResultCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isCorrect = item.isCorrect;
     final color = isCorrect ? Colors.green : Colors.redAccent;
+    final mediaUrl = _firstMediaUrl(item.answerMediaUrls);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -201,6 +277,29 @@ class _QuestionResultCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (mediaUrl != null) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(14),
+              child: Image.network(
+                mediaUrl,
+                height: 140,
+                width: double.infinity,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Container(
+                  height: 140,
+                  color: Colors.white10,
+                  child: const Center(
+                    child: Icon(
+                      Icons.broken_image,
+                      color: Colors.white30,
+                      size: 28,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           Row(
             children: [
               Container(
@@ -339,4 +438,23 @@ class _ErrorState extends StatelessWidget {
       ),
     );
   }
+}
+
+String? _extractHeroImage(PersonalResult result) {
+  for (final item in result.questionResults) {
+    final url = _firstMediaUrl(item.answerMediaUrls);
+    if (url != null) {
+      return url;
+    }
+  }
+  return null;
+}
+
+String? _firstMediaUrl(List<String> urls) {
+  for (final url in urls) {
+    if (url.startsWith('http')) {
+      return url;
+    }
+  }
+  return null;
 }
