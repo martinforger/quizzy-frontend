@@ -20,6 +20,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
@@ -31,6 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _nameController.dispose();
@@ -60,7 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
       } else {
         await widget.authController.login(
-          _emailController.text,
+          _usernameController.text,
           _passwordController.text,
         );
         widget.onLoginSuccess();
@@ -152,12 +154,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       icon: Icons.person_outline_rounded,
                     ).animate().fadeIn(delay: 100.ms).slideX(),
                     const SizedBox(height: 16),
+                    _buildModernTextField(
+                      controller: _emailController,
+                      label: 'Email',
+                      icon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                    ).animate().fadeIn(delay: 160.ms).slideX(),
+                    const SizedBox(height: 16),
                   ],
                   _buildModernTextField(
-                    controller: _emailController,
-                    label: 'Email',
-                    icon: Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress,
+                    controller: _usernameController,
+                    label: 'Usuario',
+                    icon: Icons.account_circle_outlined,
                   ).animate().fadeIn(delay: 200.ms).slideX(),
                   const SizedBox(height: 16),
                   _buildModernTextField(
