@@ -26,8 +26,8 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isRegistering = false;
+  bool _isPasswordVisible = false;
 
-  // For registration
   final _nameController = TextEditingController();
 
   @override
@@ -169,20 +169,24 @@ class _LoginScreenState extends State<LoginScreen> {
                     icon: Icons.person_outline_rounded,
                   ).animate().fadeIn(delay: 150.ms).slideX(),
                   const SizedBox(height: 16),
-                  if (_isRegistering) ...[
-                    _buildModernTextField(
-                      controller: _emailController,
-                      label: 'Email',
-                      icon: Icons.email_outlined,
-                      keyboardType: TextInputType.emailAddress,
-                    ).animate().fadeIn(delay: 200.ms).slideX(),
-                    const SizedBox(height: 16),
-                  ],
                   _buildModernTextField(
                     controller: _passwordController,
                     label: 'Contraseña',
                     icon: Icons.lock_outline_rounded,
-                    obscureText: true,
+                    obscureText: !_isPasswordVisible,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? Icons.visibility_outlined
+                            : Icons.visibility_off_outlined,
+                        color: Colors.grey[400],
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          _isPasswordVisible = !_isPasswordVisible;
+                        });
+                      },
+                    ),
                   ).animate().fadeIn(delay: 300.ms).slideX(),
                   const SizedBox(height: 32),
                   ElevatedButton(
@@ -262,6 +266,7 @@ class _LoginScreenState extends State<LoginScreen> {
     required IconData icon,
     bool obscureText = false,
     TextInputType? keyboardType,
+    Widget? suffixIcon,
   }) {
     return TextFormField(
       controller: controller,
@@ -272,6 +277,7 @@ class _LoginScreenState extends State<LoginScreen> {
         labelText: label,
         labelStyle: TextStyle(color: Colors.grey[400]),
         prefixIcon: Icon(icon, color: Colors.orange),
+        suffixIcon: suffixIcon,
         filled: true,
         fillColor: const Color(0xFF1E1E1E),
         border: OutlineInputBorder(
