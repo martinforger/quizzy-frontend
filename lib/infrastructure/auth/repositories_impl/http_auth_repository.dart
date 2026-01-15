@@ -60,11 +60,11 @@ class HttpAuthRepository implements AuthRepository {
 
   @override
   Future<String> login({
-    required String email,
+    required String username,
     required String password,
   }) async {
     final uri = _resolve('auth/login');
-    final body = json.encode({'email': email, 'password': password});
+    final body = json.encode({'username': username, 'password': password});
 
     final response = await client
         .post(uri, headers: {'Content-Type': 'application/json'}, body: body)
