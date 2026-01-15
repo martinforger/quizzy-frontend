@@ -16,6 +16,8 @@ void main(List<String> args) async {
 
   final List<Map<String, dynamic>> _categories = categories.map((e) => Map<String, dynamic>.from(e)).toList();
   final List<Map<String, dynamic>> _kahoots = seedKahoots.map((e) => Map<String, dynamic>.from(e)).toList();
+  final List<Map<String, dynamic>> _mediaAssets =
+      themeMediaAssets.map((e) => Map<String, dynamic>.from(e)).toList();
 
   // Auth & Profile endpoints
   router.mount('/auth', AuthRoutes().router.call);
@@ -58,6 +60,25 @@ void main(List<String> args) async {
   });
 
   router.get('/explore/categories', (Request req) => _json({'data': _categories}));
+
+  // Media endpoints (epica 3)
+  router.get('/media/themes', (Request req) {
+    return _json(_mediaAssets);
+  });
+
+  router.post('/media/upload', (Request req) async {
+    final now = DateTime.now().millisecondsSinceEpoch;
+    final asset = {
+      'assetId': 'asset-$now',
+      'url': 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=800&q=60',
+      'mimeType': 'image/jpeg',
+      'size': 204800,
+      'format': 'jpg',
+      'category': 'image',
+    };
+    _mediaAssets.insert(0, asset);
+    return _json(asset, status: 201);
+  });
 
   // Kahoots CRUD (epica 2)
   router.get('/kahoots/<id>', (Request req, String id) {

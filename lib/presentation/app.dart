@@ -12,6 +12,12 @@ import 'package:quizzy/application/kahoots/usecases/delete_kahoot.dart';
 import 'package:quizzy/application/kahoots/usecases/get_kahoot.dart';
 import 'package:quizzy/application/kahoots/usecases/update_kahoot.dart';
 import 'package:quizzy/application/kahoots/usecases/inspect_kahoot.dart';
+import 'package:quizzy/application/media/usecases/list_theme_media.dart';
+import 'package:quizzy/application/media/usecases/upload_media.dart';
+import 'package:quizzy/application/reports/usecases/get_multiplayer_result.dart';
+import 'package:quizzy/application/reports/usecases/get_my_results.dart';
+import 'package:quizzy/application/reports/usecases/get_session_report.dart';
+import 'package:quizzy/application/reports/usecases/get_singleplayer_result.dart';
 import 'package:quizzy/application/solo-game/useCases/get_summary_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
@@ -23,6 +29,8 @@ import 'package:quizzy/infrastructure/auth/repositories_impl/mock_auth_repositor
 import 'package:quizzy/infrastructure/auth/repositories_impl/mock_profile_repository.dart';
 import 'package:quizzy/infrastructure/discovery/repositories_impl/http_discovery_repository.dart';
 import 'package:quizzy/infrastructure/kahoots/repositories_impl/http_kahoots_repository.dart';
+import 'package:quizzy/infrastructure/media/http_media_repository.dart';
+import 'package:quizzy/infrastructure/reports/http_reports_repository.dart';
 import 'package:quizzy/infrastructure/solo-game/data_sources/mock_game_service.dart';
 import 'package:quizzy/infrastructure/solo-game/data_sources/local_game_storage.dart';
 import 'package:quizzy/application/library/usecases/get_completed.dart';
@@ -44,7 +52,9 @@ import 'package:flutter/foundation.dart';
 import 'package:quizzy/presentation/state/auth_controller.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
+import 'package:quizzy/presentation/state/media_controller.dart';
 import 'package:quizzy/presentation/state/profile_controller.dart';
+import 'package:quizzy/presentation/state/reports_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quizzy/application/auth/usecases/login_use_case.dart';
@@ -222,6 +232,28 @@ class _QuizzyAppState extends State<QuizzyApp> {
       inspectKahootUseCase: InspectKahootUseCase(kahootsRepository),
     );
 
+    // Media (epica 3)
+    final mediaRepository = HttpMediaRepository(client: authenticatedClient);
+    final mediaController = MediaController(
+      uploadMediaUseCase: UploadMediaUseCase(mediaRepository),
+      listThemeMediaUseCase: ListThemeMediaUseCase(mediaRepository),
+    );
+
+    // Reports (epica 10)
+    final reportsRepository = HttpReportsRepository(
+      client: authenticatedClient,
+    );
+    final reportsController = ReportsController(
+      getSessionReportUseCase: GetSessionReportUseCase(reportsRepository),
+      getMultiplayerResultUseCase: GetMultiplayerResultUseCase(
+        reportsRepository,
+      ),
+      getSingleplayerResultUseCase: GetSingleplayerResultUseCase(
+        reportsRepository,
+      ),
+      getMyResultsUseCase: GetMyResultsUseCase(reportsRepository),
+    );
+
     const defaultAuthorId = String.fromEnvironment(
       'DEFAULT_AUTHOR_ID',
       defaultValue: 'bd64df91-e362-4f32-96c2-5ed08c0ce843',
@@ -258,6 +290,8 @@ class _QuizzyAppState extends State<QuizzyApp> {
                 manageLocalAttemptUseCase: manageLocalAttemptUseCase,
                 getAttemptStateUseCase: getAttemptStateUseCase,
                 kahootController: kahootController,
+                mediaController: mediaController,
+                reportsController: reportsController,
                 libraryCubit: libraryCubit,
                 profileController: profileController,
                 authController: authController,
