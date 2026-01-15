@@ -20,8 +20,8 @@ class AuthController {
     required this.confirmPasswordResetUseCase,
   });
 
-  Future<String> login(String email, String password) {
-    return loginUseCase(email: email, password: password);
+  Future<String> login(String username, String password) {
+    return loginUseCase(username: username, password: password);
   }
 
   Future<(User, String)> register(String name, String email, String password, String userType) {

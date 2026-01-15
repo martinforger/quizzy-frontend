@@ -18,16 +18,16 @@ class MockDataStore {
     createdAt: DateTime.now().subtract(const Duration(days: 100)),
   );
 
-  void updateWithEmail(String email) {
-    // Generar datos basados en el email para simular
-    final namePart = email.split('@').first;
+  void updateWithUsername(String username) {
+    // Generar datos basados en el username para simular
+    final namePart = username.trim().isEmpty ? 'user' : username.trim();
     // Capitalizar
     final name = namePart[0].toUpperCase() + namePart.substring(1);
     
     currentUser = UserProfile(
       id: 'mock-user-$namePart',
       name: name,
-      email: email,
+      email: '$namePart@example.com',
       description: 'Perfil simulado para $name',
       userType: 'Estudiante',
       avatarUrl: 'https://i.pravatar.cc/150?u=$namePart', // Generates deterministic avatar

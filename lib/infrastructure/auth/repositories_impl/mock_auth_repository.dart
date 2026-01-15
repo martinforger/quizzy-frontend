@@ -32,13 +32,13 @@ class MockAuthRepository implements AuthRepository {
 
   @override
   Future<String> login({
-    required String email,
+    required String username,
     required String password,
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
     
-    // Update store based on login email
-    MockDataStore().updateWithEmail(email);
+    // Update store based on login username
+    MockDataStore().updateWithUsername(username);
 
     // Simulate successful login for any input
     return 'mock-access-token';
