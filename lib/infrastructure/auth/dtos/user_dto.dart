@@ -3,6 +3,7 @@ import 'package:quizzy/domain/auth/entities/user.dart';
 class UserDto {
   final String id;
   final String name;
+  final String username;
   final String email;
   final String userType;
   final DateTime createdAt;
@@ -10,6 +11,7 @@ class UserDto {
   UserDto({
     required this.id,
     required this.name,
+    required this.username,
     required this.email,
     required this.userType,
     required this.createdAt,
@@ -19,6 +21,7 @@ class UserDto {
     return UserDto(
       id: json['id'] as String,
       name: json['name'] as String,
+      username: json['username'] as String? ?? json['name'] as String,
       email: json['email'] as String,
       userType: json['userType'] as String,
       createdAt: DateTime.parse(json['createdAt'] as String),
@@ -29,6 +32,7 @@ class UserDto {
     return User(
       id: id,
       name: name,
+      username: username,
       email: email,
       userType: userType,
       createdAt: createdAt,

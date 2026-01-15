@@ -132,8 +132,8 @@ Future<void> init() async {
 
   getIt.registerLazySingleton<NotificationRepository>(
     // Usamos Mock para pruebas independientes del backend
-    () => MockNotificationRepository(),
-    // () => HttpNotificationRepository(client: getIt<AuthenticatedHttpClient>()),
+    // () => MockNotificationRepository(),
+    () => HttpNotificationRepository(client: getIt<AuthenticatedHttpClient>()),
   );
 
   // Use Cases - Multiplayer

@@ -32,8 +32,8 @@ class AuthController {
     required this.pushNotificationService,
   });
 
-  Future<String> login(String email, String password) async {
-    final token = await loginUseCase(email: email, password: password);
+  Future<String> login(String username, String password) async {
+    final token = await loginUseCase(username: username, password: password);
     
     // Register device for push notifications
     _registerDeviceToken(token);
@@ -41,9 +41,10 @@ class AuthController {
     return token;
   }
 
-  Future<(User, String)> register(String name, String email, String password, String userType) async {
+  Future<(User, String)> register(String name, String username, String email, String password, String userType) async {
     final result = await registerUseCase(
       name: name,
+      username: username,
       email: email,
       password: password,
       userType: userType,
