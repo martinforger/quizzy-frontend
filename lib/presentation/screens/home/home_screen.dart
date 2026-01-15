@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quizzy/domain/auth/entities/user_profile.dart';
 import 'package:quizzy/injection_container.dart';
 import 'package:quizzy/presentation/bloc/notifications/notifications_cubit.dart';
+import 'package:quizzy/presentation/bloc/notifications/notifications_state.dart';
 import 'package:quizzy/presentation/screens/notifications/notifications_screen.dart';
 import 'package:quizzy/presentation/state/auth_controller.dart';
 import 'package:quizzy/presentation/state/profile_controller.dart';
@@ -105,16 +106,49 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             actions: [
-              IconButton(
-                icon: const Icon(Icons.notifications_outlined),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (context) => BlocProvider(
-                        create: (_) => getIt<NotificationsCubit>(),
-                        child: const NotificationsScreen(),
+              // Icono estilo Kahoot (Formas geométricas) con badge de notificación
+              BlocBuilder<NotificationsCubit, NotificationsState>(
+                builder: (context, state) {
+                  bool hasUnread = false;
+                  if (state is NotificationsLoaded) {
+                    hasUnread = state.notifications.any((n) => !n.isRead);
+                  }
+
+                  return Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.category_rounded, color: AppColors.primary),
+                        tooltip: 'Novedades',
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => const NotificationsScreen(), // Cubit is now global
+                            ),
+                          );
+                        },
                       ),
-                    ),
+                      if (hasUnread)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: AppColors.surface, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.red.withOpacity(0.5),
+                                  blurRadius: 4,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
                   );
                 },
               ),
