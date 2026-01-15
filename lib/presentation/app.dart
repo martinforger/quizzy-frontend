@@ -36,6 +36,7 @@ import 'package:quizzy/infrastructure/library/repositories/mock_library_reposito
 import 'package:quizzy/presentation/bloc/library/library_cubit.dart';
 import 'package:quizzy/infrastructure/solo-game/data_sources/http_game_service.dart';
 import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
+import 'package:quizzy/presentation/bloc/notifications/notifications_cubit.dart';
 import 'package:quizzy/infrastructure/solo-game/repositories/game_repository_impl.dart';
 import 'package:quizzy/infrastructure/solo-game/data_sources/local_game_storage.dart';
 import 'package:quizzy/presentation/screens/shell/shell_screen.dart';
@@ -230,8 +231,14 @@ class _QuizzyAppState extends State<QuizzyApp> {
       defaultValue: '8911c649-5db0-453d-8e1a-23331ffa40b9',
     );
 
-    return BlocProvider(
-      create: (_) => getIt<MultiplayerGameCubit>(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(create: (_) => getIt<MultiplayerGameCubit>()),
+        // Provide NotificationsCubit globally so HomeScreen can show badges
+        BlocProvider(
+          create: (_) => getIt<NotificationsCubit>()..loadNotifications(),
+        ),
+      ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Quizzy',
