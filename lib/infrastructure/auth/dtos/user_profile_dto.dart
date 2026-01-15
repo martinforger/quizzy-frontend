@@ -3,6 +3,7 @@ import 'package:quizzy/domain/auth/entities/user_profile.dart';
 class UserProfileDto {
   final String id;
   final String name;
+  final String username;
   final String email;
   final String description;
   final String userType;
@@ -16,6 +17,7 @@ class UserProfileDto {
   UserProfileDto({
     required this.id,
     required this.name,
+    required this.username,
     required this.email,
     required this.description,
     required this.userType,
@@ -30,8 +32,7 @@ class UserProfileDto {
   factory UserProfileDto.fromJson(Map<String, dynamic> json) {
     return UserProfileDto(
       id: json['id'] as String,
-      name: json['name'] as String,
-      email: json['email'] as String,
+      name: json['name'] as String,      username: json['username'] as String? ?? json['name'] as String,      email: json['email'] as String,
       description: json['description'] as String? ?? '',
       userType: json['userType'] as String,
       avatarUrl: json['avatarUrl'] as String? ?? '',
@@ -49,6 +50,7 @@ class UserProfileDto {
     return UserProfile(
       id: id,
       name: name,
+      username: username,
       email: email,
       description: description,
       userType: userType,

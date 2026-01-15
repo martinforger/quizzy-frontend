@@ -8,6 +8,7 @@ class MockDataStore {
   UserProfile currentUser = UserProfile(
     id: 'mock-user-id',
     name: 'Carlos',
+    username: 'carlos123',
     email: 'carlos@example.com',
     description: 'Amante de los quizzes y la tecnología.',
     userType: 'Estudiante',
@@ -18,16 +19,20 @@ class MockDataStore {
     createdAt: DateTime.now().subtract(const Duration(days: 100)),
   );
 
-  void updateWithUsername(String username) {
-    // Generar datos basados en el username para simular
-    final namePart = username.trim().isEmpty ? 'user' : username.trim();
+  void updateWithIdentifier(String identifier) {
+    // Generar datos basados en el identificador (usuario o email)
+    final namePart = identifier.contains('@') 
+        ? identifier.split('@').first 
+        : identifier;
+    
     // Capitalizar
-    final name = namePart[0].toUpperCase() + namePart.substring(1);
+    final name = namePart.isEmpty ? 'User' : (namePart[0].toUpperCase() + namePart.substring(1));
     
     currentUser = UserProfile(
       id: 'mock-user-$namePart',
       name: name,
-      email: '$namePart@example.com',
+      username: identifier.contains('@') ? namePart : identifier,
+      email: identifier.contains('@') ? identifier : '$namePart@example.com',
       description: 'Perfil simulado para $name',
       userType: 'Estudiante',
       avatarUrl: 'https://i.pravatar.cc/150?u=$namePart', // Generates deterministic avatar

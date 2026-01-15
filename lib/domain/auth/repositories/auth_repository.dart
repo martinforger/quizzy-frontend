@@ -3,6 +3,7 @@ import 'package:quizzy/domain/auth/entities/user.dart';
 abstract class AuthRepository {
   Future<(User, String)> register({
     required String name,
+    required String username,
     required String email,
     required String password,
     required String userType,
@@ -21,4 +22,6 @@ abstract class AuthRepository {
     required String resetToken,
     required String newPassword,
   });
+
+  Future<String?> getToken();
 }

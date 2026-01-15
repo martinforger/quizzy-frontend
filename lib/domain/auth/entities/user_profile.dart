@@ -1,6 +1,7 @@
 class UserProfile {
   final String id;
   final String name;
+  final String username;
   final String email;
   final String description;
   final String userType;
@@ -14,6 +15,7 @@ class UserProfile {
   UserProfile({
     required this.id,
     required this.name,
+    required this.username,
     required this.email,
     required this.description,
     required this.userType,
@@ -28,6 +30,7 @@ class UserProfile {
   UserProfile copyWith({
     String? id,
     String? name,
+    String? username,
     String? email,
     String? description,
     String? userType,
@@ -41,6 +44,7 @@ class UserProfile {
     return UserProfile(
       id: id ?? this.id,
       name: name ?? this.name,
+      username: username ?? this.username,
       email: email ?? this.email,
       description: description ?? this.description,
       userType: userType ?? this.userType,
