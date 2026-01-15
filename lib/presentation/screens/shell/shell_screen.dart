@@ -10,6 +10,7 @@ import 'package:quizzy/presentation/state/kahoot_controller.dart';
 import 'package:quizzy/presentation/state/media_controller.dart';
 import 'package:quizzy/presentation/bloc/library/library_cubit.dart';
 import 'package:quizzy/presentation/state/profile_controller.dart';
+import 'package:quizzy/presentation/state/reports_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'package:quizzy/presentation/screens/kahoots/kahoot_editor_screen.dart';
 import 'package:quizzy/presentation/screens/profile/profile_screen.dart';
@@ -30,6 +31,7 @@ class ShellScreen extends StatefulWidget {
     required this.getAttemptStateUseCase,
     required this.kahootController,
     required this.mediaController,
+    required this.reportsController,
     required this.libraryCubit,
     required this.profileController,
     required this.authController,
@@ -46,6 +48,7 @@ class ShellScreen extends StatefulWidget {
   final GetAttemptStateUseCase getAttemptStateUseCase;
   final KahootController kahootController;
   final MediaController mediaController;
+  final ReportsController reportsController;
   final LibraryCubit libraryCubit;
   final ProfileController profileController;
   final AuthController authController;
@@ -85,6 +88,7 @@ class _ShellScreenState extends State<ShellScreen> {
         libraryCubit: widget.libraryCubit,
         kahootController: widget.kahootController,
         mediaController: widget.mediaController,
+        reportsController: widget.reportsController,
       ),
 
       const JoinScreen(),
