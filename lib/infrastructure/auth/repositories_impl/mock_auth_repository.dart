@@ -6,6 +6,7 @@ class MockAuthRepository implements AuthRepository {
   @override
   Future<(User, String)> register({
     required String name,
+    required String username,
     required String email,
     required String password,
     required String userType,
@@ -14,6 +15,7 @@ class MockAuthRepository implements AuthRepository {
     final user = User(
       id: 'mock-user-id',
       name: name,
+      username: username,
       email: email,
       userType: userType,
       createdAt: DateTime.now(),
@@ -37,8 +39,8 @@ class MockAuthRepository implements AuthRepository {
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
     
-    // Update store based on login username
-    MockDataStore().updateWithUsername(username);
+    // Update store based on login identifier
+    MockDataStore().updateWithIdentifier(username);
 
     // Simulate successful login for any input
     return 'mock-access-token';
@@ -60,5 +62,10 @@ class MockAuthRepository implements AuthRepository {
     required String newPassword,
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
+  }
+
+  @override
+  Future<String?> getToken() async {
+    return 'mock-access-token';
   }
 }

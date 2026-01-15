@@ -48,6 +48,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (_isRegistering) {
         await widget.authController.register(
           _nameController.text,
+          _usernameController.text,
           _emailController.text,
           _passwordController.text,
           'student', // Default user type
@@ -151,7 +152,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     _buildModernTextField(
                       controller: _nameController,
                       label: 'Nombre',
-                      icon: Icons.person_outline_rounded,
+                      icon: Icons.badge_outlined,
                     ).animate().fadeIn(delay: 100.ms).slideX(),
                     const SizedBox(height: 16),
                     _buildModernTextField(
@@ -165,9 +166,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   _buildModernTextField(
                     controller: _usernameController,
                     label: 'Usuario',
-                    icon: Icons.account_circle_outlined,
-                  ).animate().fadeIn(delay: 200.ms).slideX(),
+                    icon: Icons.person_outline_rounded,
+                  ).animate().fadeIn(delay: 150.ms).slideX(),
                   const SizedBox(height: 16),
+                  if (_isRegistering) ...[
+                    _buildModernTextField(
+                      controller: _emailController,
+                      label: 'Email',
+                      icon: Icons.email_outlined,
+                      keyboardType: TextInputType.emailAddress,
+                    ).animate().fadeIn(delay: 200.ms).slideX(),
+                    const SizedBox(height: 16),
+                  ],
                   _buildModernTextField(
                     controller: _passwordController,
                     label: 'Contraseña',

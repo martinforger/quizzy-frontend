@@ -52,11 +52,23 @@ import 'application/library/usecases/unmark_as_favorite.dart';
 import 'application/library/usecases/get_in_progress.dart';
 import 'application/library/usecases/get_completed.dart';
 
+// Import Notifications
+import 'domain/notifications/repositories/notification_repository.dart';
+import 'infrastructure/notifications/repositories_impl/http_notification_repository.dart';
+import 'infrastructure/notifications/repositories_impl/mock_notification_repository.dart';
+import 'application/notifications/usecases/register_device_use_case.dart';
+import 'application/notifications/usecases/unregister_device_use_case.dart';
+import 'application/notifications/usecases/get_notifications_use_case.dart';
+import 'application/notifications/usecases/mark_notification_read_use_case.dart';
+
 // Import Cubits/Controllers
 import 'presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
 import 'presentation/bloc/game_cubit.dart';
 import 'presentation/bloc/library/library_cubit.dart';
+import 'presentation/bloc/notifications/notifications_cubit.dart';
 import 'presentation/state/auth_controller.dart';
+
+import 'infrastructure/notifications/services/push_notification_service.dart';
 
 final getIt = GetIt.instance;
 
@@ -65,6 +77,9 @@ Future<void> init() async {
   final sharedPreferences = await SharedPreferences.getInstance();
   getIt.registerLazySingleton(() => sharedPreferences);
   getIt.registerLazySingleton(() => http.Client());
+
+  // Firebase / Push Notifications
+  getIt.registerLazySingleton(() => PushNotificationService());
 
   // Core
   getIt.registerLazySingleton<AuthenticatedHttpClient>(
@@ -115,6 +130,12 @@ Future<void> init() async {
     () => HttpLibraryRepository(client: getIt<AuthenticatedHttpClient>()),
   );
 
+  getIt.registerLazySingleton<NotificationRepository>(
+    // Usamos Mock para pruebas independientes del backend
+    // () => MockNotificationRepository(),
+    () => HttpNotificationRepository(client: getIt<AuthenticatedHttpClient>()),
+  );
+
   // Use Cases - Multiplayer
   getIt.registerLazySingleton(() => CreateMultiplayerSessionUseCase(getIt()));
   getIt.registerLazySingleton(() => GetSessionPinByQrTokenUseCase(getIt()));
@@ -147,6 +168,12 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => GetInProgressUseCase(getIt()));
   getIt.registerLazySingleton(() => GetCompletedUseCase(getIt()));
 
+  // Use Cases - Notifications
+  getIt.registerLazySingleton(() => RegisterDeviceUseCase(getIt()));
+  getIt.registerLazySingleton(() => UnregisterDeviceUseCase(getIt()));
+  getIt.registerLazySingleton(() => GetNotificationsUseCase(getIt()));
+  getIt.registerLazySingleton(() => MarkNotificationReadUseCase(getIt()));
+
   // Cubits / Controllers
   getIt.registerFactory(
     () => AuthController(
@@ -155,6 +182,9 @@ Future<void> init() async {
       logoutUseCase: getIt(),
       requestPasswordResetUseCase: getIt(),
       confirmPasswordResetUseCase: getIt(),
+      registerDeviceUseCase: getIt(),
+      unregisterDeviceUseCase: getIt(),
+      pushNotificationService: getIt(),
     ),
   );
 
@@ -190,6 +220,14 @@ Future<void> init() async {
       nextPhaseUseCase: getIt(),
       endSessionUseCase: getIt(),
       repository: getIt(),
+    ),
+  );
+
+  getIt.registerFactory(
+    () => NotificationsCubit(
+      getNotificationsUseCase: getIt(),
+      markNotificationReadUseCase: getIt(),
+      authRepository: getIt(),
     ),
   );
 }
