@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:quizzy/domain/reports/entities/session_report.dart';
 import 'package:quizzy/presentation/state/reports_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
@@ -54,30 +55,48 @@ class _SessionReportScreenState extends State<SessionReportScreen> {
             return const Center(child: Text('No hay datos disponibles'));
           }
 
+          final date = _formatDate(report.executionDate);
+
           return ListView(
             padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
             children: [
-              Text(
-                widget.title.isEmpty ? 'Sesion' : widget.title,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
+              _SessionHero(
+                title: widget.title.isEmpty ? 'Sesion' : widget.title,
+                date: date,
+                players: report.playerRanking.length,
+              ).animate().fadeIn(duration: 320.ms),
+              const SizedBox(height: 16),
               Text(
                 'Jugadores',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              ...report.playerRanking.map(_RankingTile.new),
-              const SizedBox(height: 16),
+              ...report.playerRanking.asMap().entries.map(
+                    (entry) => _RankingTile(entry.value)
+                        .animate()
+                        .fadeIn(duration: 240.ms)
+                        .slideX(
+                          begin: 0.08,
+                          end: 0,
+                          delay: Duration(milliseconds: 50 * entry.key),
+                        ),
+                  ),
+              const SizedBox(height: 20),
               Text(
                 'Analisis por pregunta',
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 8),
-              ...report.questionAnalysis.map(_QuestionAnalysisTile.new),
+              ...report.questionAnalysis.asMap().entries.map(
+                    (entry) => _QuestionAnalysisTile(entry.value)
+                        .animate()
+                        .fadeIn(duration: 240.ms)
+                        .slideY(
+                          begin: 0.06,
+                          end: 0,
+                          delay: Duration(milliseconds: 60 * entry.key),
+                        ),
+                  ),
             ],
           );
         },
@@ -140,7 +159,12 @@ class _QuestionAnalysisTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 10),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.card,
+        gradient: LinearGradient(
+          colors: [
+            AppColors.card,
+            AppColors.card.withValues(alpha: 0.85),
+          ],
+        ),
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.border),
       ),
@@ -196,4 +220,73 @@ class _ErrorState extends StatelessWidget {
       ),
     );
   }
+}
+
+class _SessionHero extends StatelessWidget {
+  const _SessionHero({
+    required this.title,
+    required this.date,
+    required this.players,
+  });
+
+  final String title;
+  final String date;
+  final int players;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 170,
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF2B1F3A), Color(0xFF17141C)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.border),
+        boxShadow: AppShadows.medium,
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Reporte de sesión',
+                style: TextStyle(fontSize: 11, color: Colors.white70),
+              ),
+            ),
+            const Spacer(),
+            Text(
+              title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Fecha $date · $players jugadores',
+              style: const TextStyle(color: AppColors.textMuted),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _formatDate(DateTime date) {
+  final mm = date.month.toString().padLeft(2, '0');
+  final dd = date.day.toString().padLeft(2, '0');
+  return '${date.year}-$mm-$dd';
 }
