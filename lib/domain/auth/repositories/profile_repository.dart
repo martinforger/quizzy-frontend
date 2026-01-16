@@ -1,6 +1,8 @@
 import 'package:quizzy/domain/auth/entities/user_profile.dart';
 
 abstract class ProfileRepository {
+  Future<List<UserProfile>> getAllUsers();
+
   Future<UserProfile> getProfile();
 
   Future<UserProfile> getUserById(String id);

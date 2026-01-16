@@ -4,6 +4,8 @@ class User {
   final String username;
   final String email;
   final String userType;
+  final String state;
+  final bool isPremium;
   final DateTime createdAt;
 
   User({
@@ -12,6 +14,8 @@ class User {
     required this.username,
     required this.email,
     required this.userType,
+    required this.state,
+    required this.isPremium,
     required this.createdAt,
   });
 }

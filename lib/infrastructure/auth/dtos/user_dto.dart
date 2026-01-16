@@ -6,6 +6,8 @@ class UserDto {
   final String username;
   final String email;
   final String userType;
+  final String state;
+  final bool isPremium;
   final DateTime createdAt;
 
   UserDto({
@@ -14,6 +16,8 @@ class UserDto {
     required this.username,
     required this.email,
     required this.userType,
+    required this.state,
+    required this.isPremium,
     required this.createdAt,
   });
 
@@ -29,6 +33,8 @@ class UserDto {
       username: json['username'] as String,
       email: json['email'] as String,
       userType: json['type'] as String? ?? json['userType'] as String,
+      state: json['state'] as String? ?? 'ACTIVE',
+      isPremium: json['isPremium'] as bool? ?? false,
       createdAt: json['createdAt'] != null 
           ? DateTime.parse(json['createdAt'] as String) 
           : DateTime.now(),
@@ -42,6 +48,8 @@ class UserDto {
       username: username,
       email: email,
       userType: userType,
+      state: state,
+      isPremium: isPremium,
       createdAt: createdAt,
     );
   }

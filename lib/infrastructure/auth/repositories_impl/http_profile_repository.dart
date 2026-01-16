@@ -17,8 +17,23 @@ class HttpProfileRepository implements ProfileRepository {
   Map<String, String> get _headers => {'Content-Type': 'application/json'};
 
   @override
+  Future<List<UserProfile>> getAllUsers() async {
+    final uri = _resolve('user/');
+    final response = await client.get(uri, headers: _headers);
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = json.decode(response.body);
+      return data
+          .map((json) => UserProfileDto.fromJson(json).toDomain())
+          .toList();
+    } else {
+      throw Exception('Failed to load users: ${response.body}');
+    }
+  }
+
+  @override
   Future<UserProfile> getProfile() async {
-    final uri = _resolve('user/profile');
+    final uri = _resolve('user/profile/');
 
     final response = await client.get(uri, headers: _headers);
 
@@ -69,7 +84,7 @@ class HttpProfileRepository implements ProfileRepository {
     String? userType,
     String? language,
   }) async {
-    final uri = _resolve('user/profile');
+    final uri = _resolve('user/profile/');
 
     final bodyMap = <String, dynamic>{};
     if (name != null) bodyMap['name'] = name;
@@ -106,7 +121,7 @@ class HttpProfileRepository implements ProfileRepository {
     required String confirmNewPassword,
   }) async {
     // According to spec, password update is part of the general profile update
-    final uri = _resolve('user/profile');
+    final uri = _resolve('user/profile/');
 
     final body = json.encode({
       'currentPassword': currentPassword,
