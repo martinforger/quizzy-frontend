@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_answer.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_question.dart';
 import 'package:quizzy/domain/media/entities/media_asset.dart';
+import 'package:quizzy/infrastructure/ai/openai_image_service.dart';
 import 'package:quizzy/presentation/state/media_controller.dart';
 
 class QuestionEditorScreen extends StatefulWidget {
@@ -31,7 +32,9 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
   String? _mediaUrl;
   String? _mediaAssetId;
   bool _mediaUploading = false;
+  bool _aiQuestionLoading = false;
   final Map<int, String> _answerMediaUrls = {};
+  final OpenAiImageService _openAiImageService = OpenAiImageService();
 
   final List<int> _allowedTimes = [5, 10, 20, 30, 45, 60, 90, 120, 180, 240];
 
@@ -151,6 +154,36 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
+    }
+  }
+
+  Future<void> _suggestQuestionMedia() async {
+    final promptText = _textController.text.trim();
+    if (promptText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Escribe la pregunta para sugerir una imagen'),
+        ),
+      );
+      return;
+    }
+    setState(() => _aiQuestionLoading = true);
+    try {
+      final prompt =
+          'Crea una imagen clara y centrada para una pregunta de quiz: "$promptText".';
+      final url = await _openAiImageService.generateImageUrl(prompt: prompt);
+      if (!mounted) return;
+      setState(() {
+        _mediaUrl = url;
+        _mediaAssetId = null;
+        _aiQuestionLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _aiQuestionLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al sugerir imagen: $e')),
+      );
     }
   }
 
@@ -726,6 +759,38 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                                   ),
                                 ),
                                 child: const Text('Buscar'),
+                              ),
+                              const SizedBox(width: 8),
+                              ElevatedButton.icon(
+                                onPressed: _aiQuestionLoading
+                                    ? null
+                                    : _suggestQuestionMedia,
+                                icon: _aiQuestionLoading
+                                    ? const SizedBox(
+                                        width: 14,
+                                        height: 14,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                    : const Icon(
+                                        Icons.auto_awesome,
+                                        size: 18,
+                                      ),
+                                label: Text(
+                                  _aiQuestionLoading ? 'IA...' : 'IA',
+                                ),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.black45,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                ),
                               ),
                               const SizedBox(width: 8),
                               ElevatedButton.icon(

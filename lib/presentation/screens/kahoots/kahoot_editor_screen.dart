@@ -5,6 +5,7 @@ import 'package:quizzy/domain/kahoots/entities/kahoot_answer.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_question.dart';
 import 'package:quizzy/domain/discovery/entities/category.dart';
 import 'package:quizzy/domain/media/entities/media_asset.dart';
+import 'package:quizzy/infrastructure/ai/openai_image_service.dart';
 import 'package:quizzy/presentation/screens/kahoots/question_editor_screen.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
@@ -45,7 +46,9 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
   String? _coverUrl;
   String? _coverAssetId;
   bool _coverUploading = false;
+  bool _aiCoverLoading = false;
   final ImagePicker _imagePicker = ImagePicker();
+  final OpenAiImageService _openAiImageService = OpenAiImageService();
   bool _saving = false;
   String? _error;
   final List<KahootQuestion> _questions = [];
@@ -220,6 +223,38 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error al subir imagen: $e')));
+    }
+  }
+
+  Future<void> _suggestCoverImage() async {
+    final title = _titleController.text.trim();
+    final description = _descriptionController.text.trim();
+    if (title.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Agrega un titulo para sugerir imagen')),
+      );
+      return;
+    }
+    setState(() => _aiCoverLoading = true);
+    try {
+      final prompt = description.isEmpty
+          ? 'Crea una imagen para un kahoot titulado "$title".'
+          : 'Crea una imagen para un kahoot titulado "$title". '
+              'Descripcion: $description.';
+      final url = await _openAiImageService.generateImageUrl(prompt: prompt);
+      if (!mounted) return;
+      setState(() {
+        _coverUrl = url;
+        _coverAssetId = null;
+        _coverController.text = url;
+        _aiCoverLoading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _aiCoverLoading = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error al sugerir imagen: $e')),
+      );
     }
   }
 
@@ -659,8 +694,10 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
                 _CoverField(
                   controller: _coverController,
                   isUploading: _coverUploading,
+                  isAiLoading: _aiCoverLoading,
                   onPick: _pickCoverImage,
                   onLibrary: _openCoverLibrary,
+                  onAiSuggest: _suggestCoverImage,
                   previewUrl: _coverUrl,
                 ),
                 const SizedBox(height: 16),
@@ -1231,14 +1268,18 @@ class _CoverField extends StatelessWidget {
     required this.controller,
     required this.onPick,
     required this.onLibrary,
+    required this.onAiSuggest,
     required this.isUploading,
+    required this.isAiLoading,
     this.previewUrl,
   });
 
   final TextEditingController controller;
   final VoidCallback onPick;
   final VoidCallback onLibrary;
+  final VoidCallback onAiSuggest;
   final bool isUploading;
+  final bool isAiLoading;
   final String? previewUrl;
 
   @override
@@ -1299,6 +1340,29 @@ class _CoverField extends StatelessWidget {
                       ),
                     ),
                     child: const Text('Buscar'),
+                  ),
+                  const SizedBox(width: 8),
+                  ElevatedButton.icon(
+                    onPressed: isAiLoading ? null : onAiSuggest,
+                    icon: isAiLoading
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.auto_awesome, size: 18),
+                    label: Text(isAiLoading ? 'IA...' : 'IA'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black45,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
