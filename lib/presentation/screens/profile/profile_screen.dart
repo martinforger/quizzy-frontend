@@ -113,10 +113,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         userType: _selectedUserType,
       );
       
-      setState(() {
-        _isEditing = false;
-        _loadProfile(); // Reload to get updated data
-      });
+      if (mounted) {
+        setState(() {
+          _isEditing = false;
+          _loadProfile(); // Reload to get updated data
+        });
+      }
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -221,7 +223,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     obscureText: obscureCurrent,
                     validator: (value) =>
-                        value?.isEmpty ?? true ? 'Requerido' : null,
+                        value?.isEmpty ?? true ? 'Ingresa tu contraseña actual' : null,
                   ),
                   TextFormField(
                     controller: newPasswordController,
@@ -239,8 +241,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     obscureText: obscureNew,
-                    validator: (value) =>
-                        value?.isEmpty ?? true ? 'Requerido' : null,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Requerida';
+                      if (value.length < 6) return 'Mínimo 6 caracteres';
+                      return null;
+                    },
                   ),
                   TextFormField(
                     controller: confirmPasswordController,
@@ -259,7 +264,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                     obscureText: obscureConfirm,
                     validator: (value) {
-                      if (value?.isEmpty ?? true) return 'Requerido';
+                      if (value == null || value.isEmpty) return 'Por favor confirma la contraseña';
                       if (value != newPasswordController.text) {
                         return 'Las contraseñas no coinciden';
                       }
@@ -569,7 +574,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       prefixIcon: const Icon(Icons.person, color: Colors.white70),
                     ),
                     enabled: _isEditing,
-                    validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+                    validator: (v) => v?.isEmpty ?? true ? 'El nombre es requerido' : null,
                   ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.2, end: 0),
                   const SizedBox(height: 16),
 
@@ -618,7 +623,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       prefixIcon: const Icon(Icons.email, color: Colors.white70),
                     ),
                     enabled: _isEditing,
-                    validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'El email es requerido';
+                      final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                      if (!emailRegex.hasMatch(v)) {
+                         return 'Ingresa un correo electrónico válido';
+                      }
+                      return null;
+                    },
                   ).animate().fadeIn(delay: 400.ms).slideY(begin: 0.2, end: 0),
                   const SizedBox(height: 16),
 
