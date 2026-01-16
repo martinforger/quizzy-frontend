@@ -44,9 +44,10 @@ class HttpAuthRepository implements AuthRepository {
     final uri = _resolve('user/register');
     final body = json.encode({
       'name': name,
+      'username': username,
       'email': email,
       'password': password,
-      'userType': userType,
+      'type': userType,
     });
 
     final response = await client

@@ -70,8 +70,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _selectedLanguage = profile.language;
       // Normalize user type to match dropdown values (uppercase)
       final type = profile.userType.toUpperCase();
-      const validTypes = ['STUDENT', 'TEACHER', 'PROFESSIONAL', 'OTHER'];
-      _selectedUserType = validTypes.contains(type) ? type : 'OTHER';
+      const validTypes = ['STUDENT', 'TEACHER'];
+      _selectedUserType = validTypes.contains(type) ? type : 'STUDENT';
     }
   }
 
@@ -536,8 +536,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       items: const [
                         DropdownMenuItem(value: 'STUDENT', child: Text('Estudiante')),
                         DropdownMenuItem(value: 'TEACHER', child: Text('Profesor')),
-                        DropdownMenuItem(value: 'PROFESSIONAL', child: Text('Profesional')),
-                        DropdownMenuItem(value: 'OTHER', child: Text('Otro')),
                       ],
                       onChanged: (v) => setState(() => _selectedUserType = v),
                     ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),

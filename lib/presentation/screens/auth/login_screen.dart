@@ -27,6 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   bool _isRegistering = false;
   bool _isPasswordVisible = false;
+  String _selectedUserType = 'STUDENT';
 
   final _nameController = TextEditingController();
 
@@ -51,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
           _usernameController.text,
           _emailController.text,
           _passwordController.text,
-          'STUDENT', // Default user type
+          _selectedUserType,
         );
         if (mounted) {
           // Auto-login logic handled in repository
@@ -184,6 +185,42 @@ class _LoginScreenState extends State<LoginScreen> {
                       },
                     ),
                   ).animate().fadeIn(delay: 300.ms).slideX(),
+                  if (_isRegistering) ...[
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: _selectedUserType,
+                      dropdownColor: const Color(0xFF1E1E1E),
+                      style: const TextStyle(color: Colors.white),
+                      decoration: InputDecoration(
+                        labelText: 'Tipo de Usuario',
+                        labelStyle: TextStyle(color: Colors.grey[400]),
+                        prefixIcon: const Icon(Icons.school_outlined, color: Colors.orange),
+                        filled: true,
+                        fillColor: const Color(0xFF1E1E1E),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: BorderSide.none,
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          borderSide: const BorderSide(color: Colors.orange, width: 1.5),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 18,
+                        ),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'STUDENT', child: Text('Estudiante')),
+                        DropdownMenuItem(value: 'TEACHER', child: Text('Profesor')),
+                      ],
+                      onChanged: (v) => setState(() => _selectedUserType = v!),
+                    ).animate().fadeIn(delay: 350.ms).slideX(),
+                  ],
                   const SizedBox(height: 32),
                   ElevatedButton(
                     onPressed: _isLoading ? null : _submit,
