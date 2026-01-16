@@ -44,10 +44,9 @@ class HttpAuthRepository implements AuthRepository {
     final uri = _resolve('user/register');
     final body = json.encode({
       'name': name,
-      'username': username,
       'email': email,
       'password': password,
-      'type': userType,
+      'userType': userType,
     });
 
     final response = await client
@@ -79,7 +78,7 @@ class HttpAuthRepository implements AuthRepository {
     required String username,
     required String password,
   }) async {
-    final uri = _resolve('user/login');
+    final uri = _resolve('auth/login');
     final body = json.encode({'username': username, 'password': password});
 
     final response = await client
@@ -103,7 +102,7 @@ class HttpAuthRepository implements AuthRepository {
 
   @override
   Future<void> logout() async {
-    final uri = _resolve('user/logout');
+    final uri = _resolve('auth/logout');
 
     // Attempt to call the logout endpoint
     try {
@@ -121,7 +120,7 @@ class HttpAuthRepository implements AuthRepository {
 
   @override
   Future<void> requestPasswordReset({required String email}) async {
-    final uri = _resolve('user/password-reset/request');
+    final uri = _resolve('auth/password-reset/request');
     final body = json.encode({'email': email});
 
     final response = await client
@@ -138,7 +137,7 @@ class HttpAuthRepository implements AuthRepository {
     required String resetToken,
     required String newPassword,
   }) async {
-    final uri = _resolve('user/password-reset/confirm');
+    final uri = _resolve('auth/password-reset/confirm');
     final body = json.encode({
       'resetToken': resetToken,
       'newPassword': newPassword,

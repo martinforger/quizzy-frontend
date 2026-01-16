@@ -30,16 +30,25 @@ class UserProfileDto {
   });
 
   factory UserProfileDto.fromJson(Map<String, dynamic> json) {
+    if (json.containsKey('userProfileDetails')) {
+      final details = json['userProfileDetails'] as Map<String, dynamic>;
+      json['name'] = details['name'];
+      json['description'] = details['description'];
+      json['avatarUrl'] = details['avatarAssetUrl'];
+    }
+
     return UserProfileDto(
       id: json['id'] as String,
-      name: json['name'] as String,      username: json['username'] as String? ?? json['name'] as String,      email: json['email'] as String,
+      name: json['name'] as String? ?? 'Unknown',
+      username: json['username'] as String? ?? json['name'] as String,
+      email: json['email'] as String,
       description: json['description'] as String? ?? '',
-      userType: json['userType'] as String,
+      userType: json['type'] as String? ?? json['userType'] as String,
       avatarUrl: json['avatarUrl'] as String? ?? '',
-      theme: json['theme'] as String? ?? 'light',
+      theme: json['preferences'] != null ? (json['preferences']['theme'] as String?) ?? 'light' : 'light',
       language: json['language'] as String? ?? 'es',
       gameStreak: json['gameStreak'] as int? ?? 0,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'] as String)
           : null,

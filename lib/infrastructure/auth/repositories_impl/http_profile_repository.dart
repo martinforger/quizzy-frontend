@@ -18,13 +18,15 @@ class HttpProfileRepository implements ProfileRepository {
 
   @override
   Future<UserProfile> getProfile() async {
-    final uri = _resolve('profile');
+    final uri = _resolve('user/profile');
 
     final response = await client.get(uri, headers: _headers);
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return UserProfileDto.fromJson(data).toDomain();
+      // Backend wraps response in 'user' object
+      final userData = data['user'] != null ? data['user'] : data;
+      return UserProfileDto.fromJson(userData).toDomain();
     } else {
       throw Exception('Failed to get profile: ${response.body}');
     }
@@ -39,7 +41,7 @@ class HttpProfileRepository implements ProfileRepository {
     String? userType,
     String? language,
   }) async {
-    final uri = _resolve('profile');
+    final uri = _resolve('user/profile');
 
     final bodyMap = <String, dynamic>{};
     if (name != null) bodyMap['name'] = name;
@@ -57,7 +59,8 @@ class HttpProfileRepository implements ProfileRepository {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      return UserProfileDto.fromJson(data).toDomain();
+      final userData = data['user'] != null ? data['user'] : data;
+      return UserProfileDto.fromJson(userData).toDomain();
     } else {
       throw Exception('Failed to update profile: ${response.body}');
     }
@@ -68,7 +71,7 @@ class HttpProfileRepository implements ProfileRepository {
     required String currentPassword,
     required String newPassword,
   }) async {
-    final uri = _resolve('profile/password');
+    final uri = _resolve('user/password');
 
     final body = json.encode({
       'currentPassword': currentPassword,
