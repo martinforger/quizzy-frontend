@@ -8,6 +8,7 @@ import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dar
 import 'package:quizzy/application/solo-game/useCases/manage_local_attempt_use_case.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
 import 'package:quizzy/presentation/state/media_controller.dart';
+import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/state/reports_controller.dart';
 import 'package:quizzy/presentation/screens/kahoots/kahoot_editor_screen.dart';
 import 'package:quizzy/presentation/bloc/game_cubit.dart';
@@ -33,6 +34,7 @@ class LibraryScreen extends StatefulWidget {
     required this.libraryCubit,
     required this.kahootController,
     required this.mediaController,
+    required this.discoveryController,
     required this.reportsController,
   });
 
@@ -44,6 +46,7 @@ class LibraryScreen extends StatefulWidget {
   final LibraryCubit libraryCubit;
   final KahootController kahootController;
   final MediaController mediaController;
+  final DiscoveryController discoveryController;
   final ReportsController reportsController;
 
   @override
@@ -258,6 +261,7 @@ class _LibraryScreenState extends State<LibraryScreen>
           builder: (_) => KahootEditorScreen(
             kahootController: widget.kahootController,
             mediaController: widget.mediaController,
+            discoveryController: widget.discoveryController,
             defaultAuthorId:
                 'bd64df91-e362-4f32-96c2-5ed08c0ce843', // Should get from controller or args?
             defaultThemeId: '8911c649-5db0-453d-8e1a-23331ffa40b9', // Same here

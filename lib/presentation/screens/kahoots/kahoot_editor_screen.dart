@@ -3,8 +3,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_answer.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_question.dart';
+import 'package:quizzy/domain/discovery/entities/category.dart';
 import 'package:quizzy/domain/media/entities/media_asset.dart';
 import 'package:quizzy/presentation/screens/kahoots/question_editor_screen.dart';
+import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
 import 'package:quizzy/presentation/state/media_controller.dart';
 
@@ -13,6 +15,7 @@ class KahootEditorScreen extends StatefulWidget {
     super.key,
     required this.kahootController,
     required this.mediaController,
+    required this.discoveryController,
     required this.defaultAuthorId,
     required this.defaultThemeId,
     this.existingKahoot,
@@ -20,6 +23,7 @@ class KahootEditorScreen extends StatefulWidget {
 
   final KahootController kahootController;
   final MediaController mediaController;
+  final DiscoveryController discoveryController;
   final String defaultAuthorId;
   final String defaultThemeId;
   final Kahoot? existingKahoot;
@@ -35,6 +39,9 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
   String _visibility = 'private';
   String _status = 'draft';
   String _category = '';
+  List<Category> _categories = [];
+  bool _categoriesLoading = true;
+  String? _categoriesError;
   String? _coverUrl;
   String? _coverAssetId;
   bool _coverUploading = false;
@@ -63,6 +70,7 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
       _category = k.category ?? '';
       _questions.addAll(k.questions);
     }
+    _loadCategories();
   }
 
   @override
@@ -71,6 +79,28 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
     _descriptionController.dispose();
     _coverController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadCategories() async {
+    setState(() {
+      _categoriesLoading = true;
+      _categoriesError = null;
+    });
+    try {
+      final items = await widget.discoveryController.fetchCategories();
+      if (!mounted) return;
+      items.sort((a, b) => a.name.compareTo(b.name));
+      setState(() {
+        _categories = items;
+        _categoriesLoading = false;
+      });
+    } catch (_) {
+      if (!mounted) return;
+      setState(() {
+        _categoriesLoading = false;
+        _categoriesError = 'No pudimos cargar las categorias';
+      });
+    }
   }
 
   void _addQuestion(String type) {
@@ -694,11 +724,7 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
                 const SizedBox(height: 12),
                 _LabeledField(
                   label: 'Categoría',
-                  child: _buildTextField(
-                    TextEditingController(text: _category),
-                    hint: 'Ej: Geography',
-                    onChanged: (v) => _category = v,
-                  ),
+                  child: _buildCategoryField(),
                 ),
                 const SizedBox(height: 16),
                 Row(
@@ -811,6 +837,58 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
       onChanged: onChanged,
       decoration: _inputDecoration().copyWith(hintText: hint),
       style: const TextStyle(color: Colors.white),
+    );
+  }
+
+  Widget _buildCategoryField() {
+    if (_categoriesLoading) {
+      return TextFormField(
+        enabled: false,
+        decoration: _inputDecoration().copyWith(
+          hintText: 'Cargando categorias...',
+        ),
+        style: const TextStyle(color: Colors.white54),
+      );
+    }
+
+    if (_categoriesError != null) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            _categoriesError!,
+            style: const TextStyle(color: Colors.white70),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: _loadCategories,
+            child: const Text('Reintentar'),
+          ),
+        ],
+      );
+    }
+
+    final items = _categories
+        .map(
+          (c) => DropdownMenuItem<String>(
+            value: c.name,
+            child: Text(c.name),
+          ),
+        )
+        .toList();
+
+    return DropdownButtonFormField<String>(
+      value: _category.isNotEmpty ? _category : null,
+      dropdownColor: const Color(0xFF1E1A22),
+      decoration: _inputDecoration().copyWith(
+        hintText: 'Selecciona una categoria',
+      ),
+      items: items,
+      onChanged: (value) {
+        setState(() {
+          _category = value ?? '';
+        });
+      },
     );
   }
 
