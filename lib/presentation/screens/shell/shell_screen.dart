@@ -87,6 +87,7 @@ class _ShellScreenState extends State<ShellScreen> {
         libraryCubit: widget.libraryCubit,
         kahootController: widget.kahootController,
         mediaController: widget.mediaController,
+        discoveryController: widget.discoveryController,
         reportsController: widget.reportsController,
       ),
 
@@ -209,6 +210,7 @@ class _ShellScreenState extends State<ShellScreen> {
         builder: (_) => KahootEditorScreen(
           kahootController: widget.kahootController,
           mediaController: widget.mediaController,
+          discoveryController: widget.discoveryController,
           defaultAuthorId: widget.defaultKahootAuthorId,
           defaultThemeId: widget.defaultKahootThemeId,
         ),
