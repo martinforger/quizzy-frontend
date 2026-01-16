@@ -78,149 +78,157 @@ class _PlayerLobbyScreenState extends State<PlayerLobbyScreen> {
             body: SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    if (!hasNickname) ...[
-                      // Nickname Entry
-                      const Text(
-                        '¡CASI LISTO!',
-                        style: TextStyle(
-                          color: AppColors.mpOrange,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                        ),
-                      ).animate().fadeIn(),
-                      const SizedBox(height: 12),
-                      const Text(
-                        'Ingresa tu apodo',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ).animate().fadeIn(delay: 100.ms),
-                      const SizedBox(height: 32),
-                      TextField(
-                            controller: _nicknameController,
+                child: Center(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        if (!hasNickname) ...[
+                          // Nickname Entry
+                          const Text(
+                            '¡CASI LISTO!',
+                            style: TextStyle(
+                              color: AppColors.mpOrange,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 2,
+                            ),
+                          ).animate().fadeIn(),
+                          const SizedBox(height: 12),
+                          const Text(
+                            'Ingresa tu apodo',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ).animate().fadeIn(delay: 100.ms),
+                          const SizedBox(height: 32),
+                          TextField(
+                                controller: _nicknameController,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                                decoration: InputDecoration(
+                                  hintText: 'Tu nombre aquí...',
+                                  hintStyle: TextStyle(
+                                    color: Colors.white.withOpacity(0.3),
+                                  ),
+                                  filled: true,
+                                  fillColor: Colors.white.withOpacity(0.05),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide(
+                                      color: Colors.white.withOpacity(0.1),
+                                    ),
+                                  ),
+                                  enabledBorder: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide(
+                                      color: Colors.white.withOpacity(0.1),
+                                    ),
+                                  ),
+                                ),
+                                onSubmitted: (_) => _submitNickname(),
+                              )
+                              .animate()
+                              .fadeIn(delay: 200.ms)
+                              .slideY(begin: 0.2, end: 0),
+                          const SizedBox(height: 24),
+                          SizedBox(
+                            width: double.infinity,
+                            height: 56,
+                            child: ElevatedButton(
+                              onPressed: _submitNickname,
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.mpOrange,
+                                foregroundColor: Colors.white,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: const Text(
+                                '¡ENTRAR!',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ).animate().fadeIn(delay: 300.ms),
+                        ] else ...[
+                          // Waiting State
+                          const Icon(
+                            Icons.check_circle,
+                            color: AppColors.accentTeal,
+                            size: 100,
+                          ).animate().scale(curve: Curves.elasticOut),
+                          const SizedBox(height: 24),
+                          const Text(
+                            '¡ESTÁS DENTRO!',
+                            style: TextStyle(
+                              color: AppColors.mpOrange,
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 2,
+                            ),
+                          ).animate().fadeIn(delay: 400.ms),
+                          const SizedBox(height: 12),
+                          Text(
+                            state.nickname,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               color: Colors.white,
-                              fontSize: 20,
+                              fontSize: 32,
                               fontWeight: FontWeight.bold,
                             ),
-                            decoration: InputDecoration(
-                              hintText: 'Tu nombre aquí...',
-                              hintStyle: TextStyle(
-                                color: Colors.white.withOpacity(0.3),
+                          ).animate().fadeIn(delay: 500.ms),
+                          const SizedBox(height: 48),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 16,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.1),
                               ),
-                              filled: true,
-                              fillColor: Colors.white.withOpacity(0.05),
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(
-                                  color: Colors.white.withOpacity(0.1),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: AppColors.accentTeal,
+                                  ),
                                 ),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide(
-                                  color: Colors.white.withOpacity(0.1),
+                                const SizedBox(width: 18),
+                                Text(
+                                  'Esperando al anfitrión...',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.7),
+                                    fontSize: 16,
+                                  ),
                                 ),
-                              ),
+                              ],
                             ),
-                            onSubmitted: (_) => _submitNickname(),
-                          )
-                          .animate()
-                          .fadeIn(delay: 200.ms)
-                          .slideY(begin: 0.2, end: 0),
-                      const SizedBox(height: 24),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _submitNickname,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.mpOrange,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            elevation: 0,
-                          ),
-                          child: const Text(
-                            '¡ENTRAR!',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ).animate().fadeIn(delay: 300.ms),
-                    ] else ...[
-                      // Waiting State
-                      const Icon(
-                        Icons.check_circle,
-                        color: AppColors.accentTeal,
-                        size: 80,
-                      ).animate().scale(curve: Curves.elasticOut),
-                      const SizedBox(height: 24),
-                      const Text(
-                        '¡ESTÁS DENTRO!',
-                        style: TextStyle(
-                          color: AppColors.mpOrange,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 2,
-                        ),
-                      ).animate().fadeIn(delay: 400.ms),
-                      const SizedBox(height: 12),
-                      Text(
-                        state.nickname,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ).animate().fadeIn(delay: 500.ms),
-                      const SizedBox(height: 48),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 24,
-                          vertical: 16,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.05),
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.1),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const SizedBox(
-                              width: 16,
-                              height: 16,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: AppColors.accentTeal,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Text(
-                              'Esperando al anfitrión...',
-                              style: TextStyle(
-                                color: Colors.white.withOpacity(0.7),
-                                fontSize: 16,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ).animate().fadeIn(delay: 600.ms),
-                    ],
-                  ],
+                          ).animate().fadeIn(delay: 600.ms),
+                        ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
