@@ -89,6 +89,10 @@ class MultiplayerSocketService {
     _socket = io.io(
       '$baseUrl/multiplayer-sessions',
       io.OptionBuilder()
+          .setTransports([
+            'polling',
+            'websocket',
+          ]) // Permitir polling para que los headers se envíen en Web
           .setQuery({'pin': pin, 'role': role, 'jwt': jwt})
           .setExtraHeaders({
             'pin': pin,
@@ -102,7 +106,7 @@ class MultiplayerSocketService {
             'jwt': jwt,
             'authorization': 'Bearer $jwt',
           })
-          .enableAutoConnect()
+          .disableAutoConnect() // Conectaremos manualmente abajo
           .enableReconnection()
           .build(),
     );
