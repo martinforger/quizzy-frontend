@@ -18,6 +18,8 @@ class MockAuthRepository implements AuthRepository {
       username: username,
       email: email,
       userType: userType,
+      state: 'ACTIVE',
+      isPremium: false,
       createdAt: DateTime.now(),
     );
     
@@ -80,6 +82,8 @@ class MockAuthRepository implements AuthRepository {
       username: profile.username,
       email: profile.email,
       userType: profile.userType,
+      state: profile.state,
+      isPremium: profile.isPremium,
       createdAt: profile.createdAt,
     );
   }

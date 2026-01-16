@@ -543,12 +543,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                   
                   // Stats
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 16,
+                    runSpacing: 16,
                     children: [
-                      _buildStatCard('Racha Actual', '${profile.gameStreak}', Icons.local_fire_department_rounded, const Color(0xFFFF5722)),
-                      const SizedBox(width: 16),
-                      _buildStatCard('Membresía', profile.userType, Icons.workspace_premium_rounded, const Color(0xFFFFD700)),
+                      _buildStatCard('Racha Actual', '${profile.gameStreak}',
+                          Icons.local_fire_department_rounded, const Color(0xFFFF5722)),
+                      _buildStatCard(
+                        'Membresía',
+                        profile.isPremium ? 'Premium' : profile.userType,
+                        profile.isPremium
+                            ? Icons.star_rounded
+                            : Icons.workspace_premium_rounded,
+                        const Color(0xFFFFD700),
+                      ),
+                      if (profile.state.toUpperCase() != 'ACTIVE') ...[
+                        _buildStatCard(
+                          'Estado',
+                          profile.state,
+                          Icons.info_outline,
+                          Colors.redAccent,
+                        ),
+                      ],
                     ],
                   ).animate().slideY(begin: 0.2, end: 0, duration: 600.ms, curve: Curves.easeOut),
                   const SizedBox(height: 24),
