@@ -18,13 +18,20 @@ class UserDto {
   });
 
   factory UserDto.fromJson(Map<String, dynamic> json) {
+    if (json.containsKey('userProfileDetails')) {
+      final details = json['userProfileDetails'] as Map<String, dynamic>;
+      json['name'] = details['name'];
+    }
+    
     return UserDto(
       id: json['id'] as String,
-      name: json['name'] as String,
-      username: json['username'] as String? ?? json['name'] as String,
+      name: json['name'] as String? ?? 'Unknown',
+      username: json['username'] as String,
       email: json['email'] as String,
-      userType: json['userType'] as String,
-      createdAt: DateTime.parse(json['createdAt'] as String),
+      userType: json['type'] as String? ?? json['userType'] as String,
+      createdAt: json['createdAt'] != null 
+          ? DateTime.parse(json['createdAt'] as String) 
+          : DateTime.now(),
     );
   }
 
