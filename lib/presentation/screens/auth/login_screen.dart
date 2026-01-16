@@ -23,10 +23,12 @@ class _LoginScreenState extends State<LoginScreen> {
   final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
   bool _isLoading = false;
   bool _isRegistering = false;
   bool _isPasswordVisible = false;
+  bool _isConfirmPasswordVisible = false;
   String _selectedUserType = 'STUDENT';
 
   final _nameController = TextEditingController();
@@ -36,6 +38,7 @@ class _LoginScreenState extends State<LoginScreen> {
     _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _nameController.dispose();
     super.dispose();
   }
@@ -150,6 +153,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _nameController,
                       label: 'Nombre',
                       icon: Icons.badge_outlined,
+                      validator: (v) =>
+                          v?.isEmpty ?? true ? 'El nombre es requerido' : null,
                     ).animate().fadeIn(delay: 100.ms).slideX(),
                     const SizedBox(height: 16),
                     _buildModernTextField(
@@ -157,6 +162,15 @@ class _LoginScreenState extends State<LoginScreen> {
                       label: 'Email',
                       icon: Icons.email_outlined,
                       keyboardType: TextInputType.emailAddress,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Requerido';
+                        final emailRegex =
+                            RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+                        if (!emailRegex.hasMatch(v)) {
+                          return 'Ingresa un correo electrónico válido';
+                        }
+                        return null;
+                      },
                     ).animate().fadeIn(delay: 160.ms).slideX(),
                     const SizedBox(height: 16),
                   ],
@@ -184,8 +198,43 @@ class _LoginScreenState extends State<LoginScreen> {
                         });
                       },
                     ),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Requerido';
+                      if (_isRegistering && v.length < 6) {
+                        return 'Mínimo 6 caracteres';
+                      }
+                      return null;
+                    },
                   ).animate().fadeIn(delay: 300.ms).slideX(),
                   if (_isRegistering) ...[
+                    const SizedBox(height: 16),
+                    _buildModernTextField(
+                      controller: _confirmPasswordController,
+                      label: 'Confirmar Contraseña',
+                      icon: Icons.lock_reset,
+                      obscureText: !_isConfirmPasswordVisible,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _isConfirmPasswordVisible
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                          color: Colors.grey[400],
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _isConfirmPasswordVisible =
+                                !_isConfirmPasswordVisible;
+                          });
+                        },
+                      ),
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Requerido';
+                        if (v != _passwordController.text) {
+                          return 'Las contraseñas no coinciden';
+                        }
+                        return null;
+                      },
+                    ).animate().fadeIn(delay: 320.ms).slideX(),
                     const SizedBox(height: 16),
                     DropdownButtonFormField<String>(
                       value: _selectedUserType,
@@ -300,6 +349,7 @@ class _LoginScreenState extends State<LoginScreen> {
     bool obscureText = false,
     TextInputType? keyboardType,
     Widget? suffixIcon,
+    String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: controller,
@@ -329,8 +379,9 @@ class _LoginScreenState extends State<LoginScreen> {
           horizontal: 20,
           vertical: 18,
         ),
+        errorMaxLines: 2,
       ),
-      validator: (v) => v?.isEmpty ?? true ? 'Requerido' : null,
+      validator: validator ?? (v) => v?.isEmpty ?? true ? 'Requerido' : null,
     );
   }
 
