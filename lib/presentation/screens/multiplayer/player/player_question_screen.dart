@@ -90,6 +90,23 @@ class PlayerQuestionScreen extends StatelessWidget {
 
                   const SizedBox(height: 24),
 
+                  // Question Text
+                  if (!hasAnswered)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: Text(
+                        slide.questionText,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ).animate().fadeIn().slideY(begin: -0.1, end: 0),
+                    ),
+
+                  const SizedBox(height: 32),
+
                   if (hasAnswered)
                     Expanded(
                       child: Center(
@@ -126,18 +143,16 @@ class PlayerQuestionScreen extends StatelessWidget {
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 20),
-                        child: GridView.builder(
-                          gridDelegate:
-                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                crossAxisCount: 1,
-                                childAspectRatio: 4,
-                                mainAxisSpacing: 16,
-                              ),
+                        child: ListView.separated(
+                          padding: const EdgeInsets.only(bottom: 32),
                           itemCount: slide.options.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
                           itemBuilder: (context, index) {
                             final option = slide.options[index];
                             return _OptionButton(
                               index: index,
+                              text: option.text ?? '',
                               onPressed: () {
                                 context
                                     .read<MultiplayerGameCubit>()
@@ -164,9 +179,14 @@ class PlayerQuestionScreen extends StatelessWidget {
 
 class _OptionButton extends StatelessWidget {
   final int index;
+  final String text;
   final VoidCallback onPressed;
 
-  const _OptionButton({required this.index, required this.onPressed});
+  const _OptionButton({
+    required this.index,
+    required this.text,
+    required this.onPressed,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -185,20 +205,31 @@ class _OptionButton extends StatelessWidget {
 
     return Material(
           color: colors[index % colors.length],
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(16),
           clipBehavior: Clip.antiAlias,
           child: InkWell(
             onTap: onPressed,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              constraints: const BoxConstraints(minHeight: 70),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   shapes[index % shapes.length],
+                  const SizedBox(width: 20),
+                  Expanded(
+                    child: Text(
+                      text,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                   const Icon(
                     Icons.arrow_forward_ios,
                     color: Colors.white24,
-                    size: 20,
+                    size: 16,
                   ),
                 ],
               ),

@@ -82,13 +82,26 @@ class MultiplayerSocketService {
     final baseUrl = BackendSettings.baseUrl.replaceAll('/api', '');
 
     debugPrint('🔌 [Socket] Connecting to $baseUrl/multiplayer-sessions');
-    debugPrint('🔌 [Socket] Headers: pin=$pin, role=$role');
+    debugPrint(
+      '🔌 [Socket] Handshake Data: pin=$pin, role=$role, jwt=${jwt.isNotEmpty ? "PRESENT" : "MISSING"}',
+    );
 
     _socket = io.io(
       '$baseUrl/multiplayer-sessions',
       io.OptionBuilder()
-          .setTransports(['websocket'])
-          .setExtraHeaders({'pin': pin, 'role': role, 'jwt': jwt})
+          .setQuery({'pin': pin, 'role': role, 'jwt': jwt})
+          .setExtraHeaders({
+            'pin': pin,
+            'role': role,
+            'jwt': jwt,
+            'authorization': 'Bearer $jwt',
+          })
+          .setAuth({
+            'pin': pin,
+            'role': role,
+            'jwt': jwt,
+            'authorization': 'Bearer $jwt',
+          })
           .enableAutoConnect()
           .enableReconnection()
           .build(),

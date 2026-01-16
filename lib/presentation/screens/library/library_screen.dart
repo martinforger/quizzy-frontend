@@ -115,69 +115,82 @@ class _LibraryScreenState extends State<LibraryScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      // backgroundColor uses theme default (AppColors.surface)
-      body: NestedScrollView(
-        headerSliverBuilder: (context, innerBoxIsScrolled) {
-          return [
-            SliverAppBar(
-              title: const Text(
-                'Biblioteca',
-                style: TextStyle(
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1.0,
+    return BlocListener<MultiplayerGameCubit, MultiplayerGameState>(
+      listener: (context, state) {
+        if (state is HostLobbyState) {
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const HostLobbyScreen()));
+        } else if (state is MultiplayerError) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
+        }
+      },
+      child: Scaffold(
+        // backgroundColor uses theme default (AppColors.surface)
+        body: NestedScrollView(
+          headerSliverBuilder: (context, innerBoxIsScrolled) {
+            return [
+              SliverAppBar(
+                title: const Text(
+                  'Biblioteca',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+                centerTitle: false,
+                expandedHeight: 120.0,
+                pinned: true,
+                floating: true,
+                forceElevated: innerBoxIsScrolled,
+                bottom: TabBar(
+                  controller: _tabController,
+                  isScrollable: true,
+                  indicatorWeight: 4,
+                  indicatorColor: AppColors.primary,
+                  labelColor: AppColors.primary,
+                  unselectedLabelColor: Colors.white60,
+                  labelStyle: const TextStyle(fontWeight: FontWeight.bold),
+                  tabs: const [
+                    Tab(text: "Explorar"),
+                    Tab(text: "Creaciones"),
+                    Tab(text: "Favoritos"),
+                    Tab(text: "En Progreso"),
+                    Tab(text: "Completados"),
+                    Tab(text: "Resultados"),
+                  ],
                 ),
               ),
-              centerTitle: false,
-              expandedHeight: 120.0,
-              pinned: true,
-              floating: true,
-              forceElevated: innerBoxIsScrolled,
-              bottom: TabBar(
-                controller: _tabController,
-                isScrollable: true,
-                indicatorWeight: 4,
-                indicatorColor: AppColors.primary,
-                labelColor: AppColors.primary,
-                unselectedLabelColor: Colors.white60,
-                labelStyle: const TextStyle(fontWeight: FontWeight.bold),
-                tabs: const [
-                  Tab(text: "Explorar"),
-                  Tab(text: "Creaciones"),
-                  Tab(text: "Favoritos"),
-                  Tab(text: "En Progreso"),
-                  Tab(text: "Completados"),
-                  Tab(text: "Resultados"),
-                ],
-              ),
-            ),
-          ];
-        },
-        body: BlocBuilder<LibraryCubit, LibraryState>(
-          bloc: widget.libraryCubit,
-          builder: (context, state) {
-            return TabBarView(
-              controller: _tabController,
-              children: [
-                _buildExploreTab(),
-                _buildLibraryList(
-                  state,
-                  (s) => s.creations,
-                  allowFavToggle: false,
-                  canEdit: true,
-                ),
-                _buildLibraryList(
-                  state,
-                  (s) => s.favorites,
-                  allowFavToggle: true,
-                  isFavList: true,
-                ),
-                _buildLibraryList(state, (s) => s.inProgress),
-                _buildLibraryList(state, (s) => s.completed),
-                ReportsHistoryTab(controller: widget.reportsController),
-              ],
-            );
+            ];
           },
+          body: BlocBuilder<LibraryCubit, LibraryState>(
+            bloc: widget.libraryCubit,
+            builder: (context, state) {
+              return TabBarView(
+                controller: _tabController,
+                children: [
+                  _buildExploreTab(),
+                  _buildLibraryList(
+                    state,
+                    (s) => s.creations,
+                    allowFavToggle: false,
+                    canEdit: true,
+                  ),
+                  _buildLibraryList(
+                    state,
+                    (s) => s.favorites,
+                    allowFavToggle: true,
+                    isFavList: true,
+                  ),
+                  _buildLibraryList(state, (s) => s.inProgress),
+                  _buildLibraryList(state, (s) => s.completed),
+                  ReportsHistoryTab(controller: widget.reportsController),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
@@ -446,128 +459,112 @@ class _LibraryScreenState extends State<LibraryScreen>
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (sheetContext) {
-        return BlocListener<MultiplayerGameCubit, MultiplayerGameState>(
-          listener: (context, state) {
-            if (state is HostLobbyState) {
-              Navigator.of(sheetContext).push(
-                MaterialPageRoute(builder: (_) => const HostLobbyScreen()),
-              );
-            } else if (state is MultiplayerError) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: Text(state.message),
-                  backgroundColor: Colors.red,
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Opciones',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              if (!isDraft) ...[
+                ListTile(
+                  leading: const Icon(
+                    Icons.person,
+                    size: 32,
+                    color: Colors.blue,
+                  ),
+                  title: const Text('Play Solo'),
+                  subtitle: const Text('Practice on your own'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _startSoloGame(quizId);
+                  },
                 ),
-              );
-            }
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 24.0),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Opciones',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 16),
-                if (!isDraft) ...[
-                  ListTile(
-                    leading: const Icon(
-                      Icons.person,
-                      size: 32,
-                      color: Colors.blue,
-                    ),
-                    title: const Text('Play Solo'),
-                    subtitle: const Text('Practice on your own'),
-                    onTap: () {
-                      Navigator.pop(sheetContext);
-                      _startSoloGame(quizId);
-                    },
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(
-                      Icons.people,
-                      size: 32,
-                      color: Colors.purple,
-                    ),
-                    title: const Text('Host Party'),
-                    subtitle: const Text('Play with friends live'),
-                    onTap: () {
-                      Navigator.pop(sheetContext);
-
-                      final prefs = getIt<SharedPreferences>();
-                      final token = prefs.getString('accessToken');
-
-                      if (token == null || token.isEmpty) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text(
-                              "Debes iniciar sesión para ser Anfitrión",
-                            ),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                        return;
-                      }
-
-                      context.read<MultiplayerGameCubit>().createSessionAsHost(
-                        quizId,
-                        token,
-                      );
-                    },
-                  ),
-                ],
-                if (canEdit) ...[
-                  if (!isDraft) const Divider(),
-                  ListTile(
-                    leading: const Icon(
-                      Icons.edit,
-                      size: 32,
-                      color: Colors.orange,
-                    ),
-                    title: const Text('Editar Kahoot'),
-                    subtitle: const Text('Modificar contenido del kahoot'),
-                    onTap: () {
-                      Navigator.of(sheetContext).pop(); // Close sheet
-                      _editKahoot(context, quizId);
-                    },
-                  ),
-                  const Divider(),
-                  ListTile(
-                    leading: const Icon(
-                      Icons.delete_forever,
-                      size: 32,
-                      color: Colors.red,
-                    ),
-                    title: const Text(
-                      'Eliminar Kahoot',
-                      style: TextStyle(color: Colors.red),
-                    ),
-                    subtitle: const Text('Borrar permanentemente'),
-                    onTap: () {
-                      Navigator.of(sheetContext).pop(); // Close sheet
-                      _deleteKahoot(context, quizId);
-                    },
-                  ),
-                ],
                 const Divider(),
                 ListTile(
                   leading: const Icon(
-                    Icons.group_add,
+                    Icons.people,
                     size: 32,
-                    color: Colors.green,
+                    color: Colors.purple,
                   ),
-                  title: const Text('Añadir a un grupo'),
-                  subtitle: const Text('Asignar este kahoot a tus estudiantes'),
+                  title: const Text('Host Party'),
+                  subtitle: const Text('Play with friends live'),
                   onTap: () {
                     Navigator.pop(sheetContext);
-                    _showAssignToGroupDialog(context, quizId);
+
+                    final prefs = getIt<SharedPreferences>();
+                    final token = prefs.getString('accessToken');
+
+                    if (token == null || token.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text(
+                            "Debes iniciar sesión para ser Anfitrión",
+                          ),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                      return;
+                    }
+
+                    context.read<MultiplayerGameCubit>().createSessionAsHost(
+                      quizId,
+                      token,
+                    );
                   },
                 ),
               ],
-            ),
+              if (canEdit) ...[
+                if (!isDraft) const Divider(),
+                ListTile(
+                  leading: const Icon(
+                    Icons.edit,
+                    size: 32,
+                    color: Colors.orange,
+                  ),
+                  title: const Text('Editar Kahoot'),
+                  subtitle: const Text('Modificar contenido del kahoot'),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop(); // Close sheet
+                    _editKahoot(context, quizId);
+                  },
+                ),
+                const Divider(),
+                ListTile(
+                  leading: const Icon(
+                    Icons.delete_forever,
+                    size: 32,
+                    color: Colors.red,
+                  ),
+                  title: const Text(
+                    'Eliminar Kahoot',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  subtitle: const Text('Borrar permanentemente'),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop(); // Close sheet
+                    _deleteKahoot(context, quizId);
+                  },
+                ),
+              ],
+              const Divider(),
+              ListTile(
+                leading: const Icon(
+                  Icons.group_add,
+                  size: 32,
+                  color: Colors.green,
+                ),
+                title: const Text('Añadir a un grupo'),
+                subtitle: const Text('Asignar este kahoot a tus estudiantes'),
+                onTap: () {
+                  Navigator.pop(sheetContext);
+                  _showAssignToGroupDialog(context, quizId);
+                },
+              ),
+            ],
           ),
         );
       },
