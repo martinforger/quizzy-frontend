@@ -90,7 +90,7 @@ class _HostQuestionScreenState extends State<HostQuestionScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'QUIZ QUESTION',
+                              'PREGUNTA DEL QUIZ',
                               style: TextStyle(
                                 color: AppColors.mpOrange,
                                 fontSize: 10,
@@ -99,7 +99,7 @@ class _HostQuestionScreenState extends State<HostQuestionScreen>
                               ),
                             ),
                             Text(
-                              'Question $current ${total > 0 ? "of $total" : ""}',
+                              'Pregunta $current ${total > 0 ? "de $total" : ""}',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -118,7 +118,7 @@ class _HostQuestionScreenState extends State<HostQuestionScreen>
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
-                            '${progress.toInt()}% complete',
+                            '${progress.toInt()}% completado',
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 12,
@@ -268,7 +268,7 @@ class _HostQuestionScreenState extends State<HostQuestionScreen>
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              '$submissionCount players answered',
+                              '$submissionCount jugadores respondieron',
                               style: const TextStyle(
                                 color: Colors.white70,
                                 fontWeight: FontWeight.bold,
@@ -290,7 +290,7 @@ class _HostQuestionScreenState extends State<HostQuestionScreen>
                               vertical: 12,
                             ),
                           ),
-                          child: const Text('Show Results'),
+                          child: const Text('Ver Resultados'),
                         ),
                       ],
                     ),

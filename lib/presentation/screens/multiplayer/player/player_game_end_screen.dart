@@ -42,7 +42,7 @@ class PlayerGameEndScreen extends StatelessWidget {
                     const SizedBox(height: 48),
 
                     const Text(
-                      'CONGRATULATIONS!',
+                      '¡FELICITACIONES!',
                       style: TextStyle(
                         color: AppColors.mpOrange,
                         fontSize: 14,
@@ -54,7 +54,7 @@ class PlayerGameEndScreen extends StatelessWidget {
                     const SizedBox(height: 8),
 
                     const Text(
-                      'Game Finished',
+                      'Juego Terminado',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 32,
@@ -86,7 +86,7 @@ class PlayerGameEndScreen extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Text(
-                              'YOUR RANK',
+                              'TU POSICIÓN',
                               style: TextStyle(
                                 color: Colors.grey,
                                 fontSize: 14,
@@ -125,7 +125,7 @@ class PlayerGameEndScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               _EndStat(
-                                label: 'TOTAL SCORE',
+                                label: 'PUNTOS TOTALES',
                                 value: '${gameEnd.totalScore}',
                                 icon: Icons.stars,
                               ),
@@ -135,7 +135,7 @@ class PlayerGameEndScreen extends StatelessWidget {
                                 color: Colors.white10,
                               ),
                               _EndStat(
-                                label: 'ACCURACY',
+                                label: 'PRECISIÓN',
                                 value: '85%', // Mocked for now
                                 icon: Icons.timer,
                               ),
@@ -166,7 +166,7 @@ class PlayerGameEndScreen extends StatelessWidget {
                           elevation: 0,
                         ),
                         child: const Text(
-                          'Back to Start',
+                          'Volver al Inicio',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

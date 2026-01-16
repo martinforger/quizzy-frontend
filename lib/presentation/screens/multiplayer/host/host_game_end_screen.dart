@@ -83,7 +83,7 @@ class _HostGameEndScreenState extends State<HostGameEndScreen> {
                       Column(
                         children: [
                           const Text(
-                            'GAME OVER',
+                            'FIN DEL JUEGO',
                             style: TextStyle(
                               color: AppColors.mpOrange,
                               fontSize: 14,
@@ -93,7 +93,7 @@ class _HostGameEndScreenState extends State<HostGameEndScreen> {
                           ).animate().fadeIn(),
                           const SizedBox(height: 8),
                           const Text(
-                            'Final Results',
+                            'Resultados Finales',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 32,

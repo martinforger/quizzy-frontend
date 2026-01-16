@@ -55,7 +55,7 @@ class HostResultsScreen extends StatelessWidget {
               elevation: 0,
               centerTitle: true,
               title: const Text(
-                'QUESTION RESULTS',
+                'RESULTADOS DE LA PREGUNTA',
                 style: TextStyle(
                   color: AppColors.mpOrange,
                   fontSize: 10,
@@ -106,7 +106,7 @@ class HostResultsScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         const Text(
-                          'CORRECT ANSWER ID',
+                          'ID RESPUESTA CORRECTA',
                           style: TextStyle(
                             color: Colors.grey,
                             fontSize: 10,
@@ -137,7 +137,7 @@ class HostResultsScreen extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         _StatBadge(
-                          label: 'TOTAL ANSWERS',
+                          label: 'TOTAL RESPUESTAS',
                           value: '${results.stats.totalAnswers}',
                         ),
                       ],
@@ -162,7 +162,7 @@ class HostResultsScreen extends StatelessWidget {
                           elevation: 0,
                         ),
                         child: const Text(
-                          'Next Question',
+                          'Siguiente Pregunta',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
