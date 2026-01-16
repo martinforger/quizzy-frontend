@@ -1,11 +1,11 @@
 name: quizzy_mock_server
-description: Mock server HTTP para Quizzy (Dart + shelf).
+description: Mock server for Quizzy aligned to API unica (epicas 2,3,6)
 version: 0.1.0
 environment:
   sdk: ">=3.2.0 <4.0.0"
 
 dependencies:
-  shelf: ^1.4.1
+  shelf: ^1.4.2
   shelf_router: ^1.1.4
   shelf_cors_headers: ^0.1.5
 

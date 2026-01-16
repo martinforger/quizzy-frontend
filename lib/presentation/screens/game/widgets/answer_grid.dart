@@ -144,23 +144,43 @@ class _AnswerCard extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, color: Colors.white, size: 32),
-              const SizedBox(height: 8),
-              if (option.text != null)
-                Text(
-                  option.text!,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    shadows: [
-                      Shadow(
-                        offset: Offset(0, 1),
-                        blurRadius: 2.0,
-                        color: Colors.black26,
-                      ),
-                    ],
+              // Show image if mediaUrl is available
+              if (option.mediaUrl != null && option.mediaUrl!.isNotEmpty)
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      option.mediaUrl!,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, __, ___) =>
+                          Icon(icon, color: Colors.white, size: 32),
+                    ),
+                  ),
+                )
+              else ...[
+                // Show icon only if no image
+                Icon(icon, color: Colors.white, size: 32),
+                const SizedBox(height: 8),
+              ],
+              // Show text if available
+              if (option.text != null && option.text!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    option.text!,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      shadows: [
+                        Shadow(
+                          offset: Offset(0, 1),
+                          blurRadius: 2.0,
+                          color: Colors.black26,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
             ],
