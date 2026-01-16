@@ -60,6 +60,23 @@ import 'application/notifications/usecases/unregister_device_use_case.dart';
 import 'application/notifications/usecases/get_notifications_use_case.dart';
 import 'application/notifications/usecases/mark_notification_read_use_case.dart';
 
+// Import Groups
+import 'domain/groups/repositories/group_repository.dart';
+import 'infrastructure/groups/repositories_impl/http_group_repository.dart';
+import 'application/groups/usecases/get_groups_use_case.dart';
+import 'application/groups/usecases/create_group_use_case.dart';
+import 'application/groups/usecases/update_group_use_case.dart';
+import 'application/groups/usecases/delete_group_use_case.dart';
+import 'application/groups/usecases/join_group_use_case.dart';
+import 'application/groups/usecases/create_invitation_use_case.dart';
+import 'application/groups/usecases/remove_member_use_case.dart';
+import 'application/groups/usecases/transfer_admin_use_case.dart';
+import 'application/groups/usecases/get_group_quizzes_use_case.dart';
+import 'application/groups/usecases/get_group_leaderboard_use_case.dart';
+import 'application/groups/usecases/get_group_members_use_case.dart';
+import 'presentation/bloc/groups/groups_cubit.dart';
+import 'presentation/bloc/groups/group_details_cubit.dart';
+
 // Import Cubits/Controllers
 import 'presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
 import 'presentation/bloc/game_cubit.dart';
@@ -173,6 +190,24 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => GetNotificationsUseCase(getIt()));
   getIt.registerLazySingleton(() => MarkNotificationReadUseCase(getIt()));
 
+  // Repository - Groups
+  getIt.registerLazySingleton<GroupRepository>(
+    () => HttpGroupRepository(client: getIt<AuthenticatedHttpClient>()),
+  );
+
+  // Use Cases - Groups
+  getIt.registerLazySingleton(() => GetGroupsUseCase(getIt()));
+  getIt.registerLazySingleton(() => CreateGroupUseCase(getIt()));
+  getIt.registerLazySingleton(() => UpdateGroupUseCase(getIt()));
+  getIt.registerLazySingleton(() => DeleteGroupUseCase(getIt()));
+  getIt.registerLazySingleton(() => JoinGroupUseCase(getIt()));
+  getIt.registerLazySingleton(() => CreateInvitationUseCase(getIt()));
+  getIt.registerLazySingleton(() => RemoveMemberUseCase(getIt()));
+  getIt.registerLazySingleton(() => TransferAdminUseCase(getIt()));
+  getIt.registerLazySingleton(() => GetGroupQuizzesUseCase(getIt()));
+  getIt.registerLazySingleton(() => GetGroupLeaderboardUseCase(getIt()));
+  getIt.registerLazySingleton(() => GetGroupMembersUseCase(getIt()));
+
   // Cubits / Controllers
   getIt.registerFactory(
     () => AuthController(
@@ -226,6 +261,30 @@ Future<void> init() async {
     () => NotificationsCubit(
       getNotificationsUseCase: getIt(),
       markNotificationReadUseCase: getIt(),
+      authRepository: getIt(),
+    ),
+  );
+
+  // Groups Cubits
+  getIt.registerFactory(
+    () => GroupsCubit(
+      getGroupsUseCase: getIt(),
+      createGroupUseCase: getIt(),
+      deleteGroupUseCase: getIt(),
+      joinGroupUseCase: getIt(),
+      authRepository: getIt(),
+    ),
+  );
+
+  getIt.registerFactory(
+    () => GroupDetailsCubit(
+      getGroupQuizzesUseCase: getIt(),
+      getGroupLeaderboardUseCase: getIt(),
+      getGroupMembersUseCase: getIt(),
+      updateGroupUseCase: getIt(),
+      removeMemberUseCase: getIt(),
+      transferAdminUseCase: getIt(),
+      createInvitationUseCase: getIt(),
       authRepository: getIt(),
     ),
   );

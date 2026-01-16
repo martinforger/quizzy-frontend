@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quizzy/domain/auth/entities/user_profile.dart';
+import 'package:quizzy/injection_container.dart';
+import 'package:quizzy/presentation/bloc/groups/groups_cubit.dart';
 import 'package:quizzy/presentation/bloc/notifications/notifications_cubit.dart';
 import 'package:quizzy/presentation/bloc/notifications/notifications_state.dart';
+import 'package:quizzy/presentation/screens/groups/groups_list_screen.dart';
 import 'package:quizzy/presentation/screens/notifications/notifications_screen.dart';
 import 'package:quizzy/presentation/state/auth_controller.dart';
 import 'package:quizzy/presentation/state/profile_controller.dart';
@@ -105,6 +108,21 @@ class _HomeScreenState extends State<HomeScreen> {
               },
             ),
             actions: [
+              // Groups button
+              IconButton(
+                icon: const Icon(Icons.groups, color: AppColors.primary),
+                tooltip: 'Grupos de Estudio',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => BlocProvider(
+                        create: (_) => getIt<GroupsCubit>()..loadGroups(),
+                        child: const GroupsListScreen(),
+                      ),
+                    ),
+                  );
+                },
+              ),
               // Icono estilo Kahoot (Formas geométricas) con badge de notificación
               BlocBuilder<NotificationsCubit, NotificationsState>(
                 builder: (context, state) {
@@ -116,12 +134,16 @@ class _HomeScreenState extends State<HomeScreen> {
                   return Stack(
                     children: [
                       IconButton(
-                        icon: const Icon(Icons.category_rounded, color: AppColors.primary),
+                        icon: const Icon(
+                          Icons.category_rounded,
+                          color: AppColors.primary,
+                        ),
                         tooltip: 'Novedades',
                         onPressed: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => const NotificationsScreen(), // Cubit is now global
+                              builder: (context) =>
+                                  const NotificationsScreen(), // Cubit is now global
                             ),
                           );
                         },
@@ -136,7 +158,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             decoration: BoxDecoration(
                               color: Colors.red,
                               shape: BoxShape.circle,
-                              border: Border.all(color: AppColors.surface, width: 2),
+                              border: Border.all(
+                                color: AppColors.surface,
+                                width: 2,
+                              ),
                               boxShadow: [
                                 BoxShadow(
                                   color: Colors.red.withOpacity(0.5),
