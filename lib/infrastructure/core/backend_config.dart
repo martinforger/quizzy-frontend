@@ -17,8 +17,9 @@ class BackendSettings {
 
   /// URLs base de cada equipo.
   static const Map<BackendEnvironment, String> _urls = {
-    BackendEnvironment.equipoA: 'https://quizzy-backend-1-zpvc.onrender.com/api',
-    BackendEnvironment.equipoB: 'https://backcomun-gc5j.onrender.com',
+    BackendEnvironment.equipoA:
+        'https://quizzy-backend-1-zpvc.onrender.com/api',
+    BackendEnvironment.equipoB: 'https://backcomun-mzvy.onrender.com',
     BackendEnvironment.privado: 'https://quizzybackend.app/api',
   };
 
