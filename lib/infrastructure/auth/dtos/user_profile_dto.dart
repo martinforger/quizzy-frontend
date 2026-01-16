@@ -45,7 +45,7 @@ class UserProfileDto {
       description: json['description'] as String? ?? '',
       userType: json['type'] as String? ?? json['userType'] as String,
       avatarUrl: json['avatarUrl'] as String? ?? '',
-      theme: json['preferences'] != null ? (json['preferences']['theme'] as String?) ?? 'light' : 'light',
+      theme: _parseTheme(json),
       language: json['language'] as String? ?? 'es',
       gameStreak: json['gameStreak'] as int? ?? 0,
       createdAt: json['createdAt'] != null ? DateTime.parse(json['createdAt'] as String) : DateTime.now(),
@@ -70,5 +70,13 @@ class UserProfileDto {
       createdAt: createdAt,
       updatedAt: updatedAt,
     );
+  }
+
+  static String _parseTheme(Map<String, dynamic> json) {
+    if (json['theme'] != null) return json['theme'] as String;
+    if (json['preferences'] != null && json['preferences'] is Map) {
+      return (json['preferences']['theme'] as String?) ?? 'light';
+    }
+    return 'light';
   }
 }

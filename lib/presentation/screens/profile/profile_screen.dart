@@ -68,7 +68,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       _descriptionController.text = profile.description;
       _avatarUrlController.text = profile.avatarUrl;
       _selectedLanguage = profile.language;
-      _selectedUserType = profile.userType;
+      // Normalize user type to match dropdown values (uppercase)
+      final type = profile.userType.toUpperCase();
+      const validTypes = ['STUDENT', 'TEACHER', 'PROFESSIONAL', 'OTHER'];
+      _selectedUserType = validTypes.contains(type) ? type : 'OTHER';
     }
   }
 
@@ -531,10 +534,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         prefixIcon: const Icon(Icons.badge, color: Colors.white70),
                       ),
                       items: const [
-                        DropdownMenuItem(value: 'Estudiante', child: Text('Estudiante')),
-                        DropdownMenuItem(value: 'Profesor', child: Text('Profesor')),
-                        DropdownMenuItem(value: 'Profesional', child: Text('Profesional')),
-                        DropdownMenuItem(value: 'Otro', child: Text('Otro')),
+                        DropdownMenuItem(value: 'STUDENT', child: Text('Estudiante')),
+                        DropdownMenuItem(value: 'TEACHER', child: Text('Profesor')),
+                        DropdownMenuItem(value: 'PROFESSIONAL', child: Text('Profesional')),
+                        DropdownMenuItem(value: 'OTHER', child: Text('Otro')),
                       ],
                       onChanged: (v) => setState(() => _selectedUserType = v),
                     ).animate().fadeIn(delay: 600.ms).slideY(begin: 0.2, end: 0),
