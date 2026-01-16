@@ -49,7 +49,7 @@ class PlayerQuestionScreen extends StatelessWidget {
               title: Column(
                 children: [
                   const Text(
-                    'CHOOSE THE CORRECT ANSWER',
+                    'ELIGE LA RESPUESTA CORRECTA',
                     style: TextStyle(
                       color: AppColors.mpOrange,
                       fontSize: 10,
@@ -58,7 +58,7 @@ class PlayerQuestionScreen extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    'Question $current ${total > 0 ? "of $total" : ""}',
+                    'Pregunta $current ${total > 0 ? "de $total" : ""}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 14,

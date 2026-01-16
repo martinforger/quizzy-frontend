@@ -60,7 +60,7 @@ class HostLobbyScreen extends StatelessWidget {
               title: Column(
                 children: [
                   const Text(
-                    'LIVE LOBBY',
+                    'LOBBY EN VIVO',
                     style: TextStyle(
                       color: AppColors.mpOrange,
                       fontSize: 10,
@@ -131,7 +131,7 @@ class HostLobbyScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       const Text(
-                        'GAME PIN',
+                        'PIN DEL JUEGO',
                         style: TextStyle(
                           color: Colors.grey,
                           fontSize: 12,
@@ -154,13 +154,13 @@ class HostLobbyScreen extends StatelessWidget {
                         children: [
                           _SmallActionButton(
                             icon: Icons.copy,
-                            label: 'Copy Link',
+                            label: 'Copiar Link',
                             onPressed: () {},
                           ),
                           const SizedBox(width: 8),
                           _SmallActionButton(
                             icon: Icons.share_outlined,
-                            label: 'Share',
+                            label: 'Compartir',
                             onPressed: () {},
                           ),
                         ],
@@ -180,7 +180,7 @@ class HostLobbyScreen extends StatelessWidget {
                       Row(
                         children: [
                           const Text(
-                            'Players',
+                            'Jugadores',
                             style: TextStyle(
                               color: Colors.white,
                               fontSize: 22,
@@ -219,7 +219,7 @@ class HostLobbyScreen extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           const Text(
-                            'RECEIVING CONNECTIONS',
+                            'RECIBIENDO CONEXIONES',
                             style: TextStyle(
                               color: AppColors.accentTeal,
                               fontSize: 9,
@@ -247,7 +247,7 @@ class HostLobbyScreen extends StatelessWidget {
                             ),
                             const SizedBox(height: 8),
                             Text(
-                              'WAITING FOR FRIENDS...',
+                              'ESPERANDO AMIGOS...',
                               style: TextStyle(
                                 color: Colors.white.withOpacity(0.3),
                                 fontSize: 12,
@@ -290,7 +290,7 @@ class HostLobbyScreen extends StatelessWidget {
                             ),
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
-                          child: const Text('Lock Lobby'),
+                          child: const Text('Bloquear Lobby'),
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -313,7 +313,7 @@ class HostLobbyScreen extends StatelessWidget {
                             elevation: 0,
                           ),
                           child: const Text(
-                            'Start Game',
+                            'Empezar Juego',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
