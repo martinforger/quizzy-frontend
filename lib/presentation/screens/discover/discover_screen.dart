@@ -56,6 +56,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   List<QuizSummary> _quizzes = [];
   List<QuizSummary> _filteredQuizzes = [];
   final Set<String> _selectedThemes = {};
+  List<Category> _categoriesCache = [];
   bool _isLoadingQuizzes = true;
   bool _isSearching = false;
   String? _errorMessage;
@@ -64,6 +65,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
   void initState() {
     super.initState();
     _categoriesFuture = widget.controller.fetchCategories();
+    _categoriesFuture
+        .then((items) {
+          if (!mounted) return;
+          setState(() => _categoriesCache = items);
+        })
+        .catchError((_) {});
     _themesFuture = widget.controller.fetchThemes();
     _loadFeaturedQuizzes();
   }
@@ -103,36 +110,7 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       onChanged: _onQueryChanged,
                     ),
                     const SizedBox(height: 12),
-                    FutureBuilder<List<QuizTheme>>(
-                      future: _themesFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const SizedBox(
-                            height: 36,
-                            child: Center(
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                          );
-                        }
-                        if (snapshot.hasError) {
-                          return DiscoverInlineError(
-                            message: 'No pudimos cargar los temas',
-                            onRetry: () {
-                              setState(() {
-                                _themesFuture = widget.controller.fetchThemes();
-                              });
-                            },
-                          );
-                        }
-                        final themes = snapshot.data ?? [];
-                        return ThemeFilterChips(
-                          themes: themes,
-                          selectedThemes: _selectedThemes,
-                          onToggled: _onThemeToggled,
-                        );
-                      },
-                    ),
+                    const SizedBox(height: 4),
                   ],
                 ),
               ),
@@ -145,6 +123,12 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                       _themesFuture = widget.controller.fetchThemes();
                       _errorMessage = null;
                     });
+                    _categoriesFuture
+                        .then((items) {
+                          if (!mounted) return;
+                          setState(() => _categoriesCache = items);
+                        })
+                        .catchError((_) {});
                     await Future.wait([
                       _categoriesFuture,
                       _themesFuture,
@@ -162,9 +146,10 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                     children: [
                       _buildHeader(context),
                       const SizedBox(height: 24),
-                      const DiscoverSectionHeader(
+                      DiscoverSectionHeader(
                         title: 'Categories',
                         actionText: 'See all',
+                        onAction: _openCategoriesSheet,
                       ),
                       const SizedBox(height: 12),
                       SizedBox(
@@ -195,6 +180,11 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                               itemBuilder: (context, index) =>
                                   DiscoverCategoryCard(
                                     category: categories[index],
+                                    isSelected: _selectedThemes.contains(
+                                      categories[index].id,
+                                    ),
+                                    onTap: () =>
+                                        _onCategorySelected(categories[index]),
                                   ),
                               separatorBuilder: (_, __) =>
                                   const SizedBox(width: 12),
@@ -220,13 +210,17 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
                           final title = isDefaultView
                               ? 'Featured Quizzes'
                               : 'Results';
+                          final actionLabel = isDefaultView ? 'See all' : '';
 
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               DiscoverSectionHeader(
                                 title: title,
-                                actionText: isDefaultView ? 'See all' : '',
+                                actionText: actionLabel,
+                                onAction: isDefaultView
+                                    ? _openFeaturedSheet
+                                    : null,
                               ),
                               const SizedBox(height: 12),
                               if (isLoading)
@@ -441,6 +435,21 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
     _runSearch();
   }
 
+  void _onCategorySelected(Category category) {
+    final id = category.id;
+    setState(() {
+      _searchController.clear();
+      if (_selectedThemes.contains(id) && _selectedThemes.length == 1) {
+        _selectedThemes.clear();
+      } else {
+        _selectedThemes
+          ..clear()
+          ..add(id);
+      }
+    });
+    _runSearch();
+  }
+
   Widget _buildHeader(BuildContext context) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -559,6 +568,149 @@ class _DiscoverScreenState extends State<DiscoverScreen> {
           child: GameScreen(quizId: quizId),
         ),
       ),
+    );
+  }
+
+  Future<void> _openCategoriesSheet() async {
+    final categories = _categoriesCache;
+    if (categories.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay categorias disponibles')),
+      );
+      return;
+    }
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1A22),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Categorias',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: categories.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
+                    itemBuilder: (context, index) {
+                      final category = categories[index];
+                      final isSelected = _selectedThemes.contains(category.id);
+                      return ListTile(
+                        leading: Icon(
+                          Icons.category_outlined,
+                          color: isSelected
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white70,
+                        ),
+                        title: Text(category.name),
+                        trailing: isSelected
+                            ? Icon(
+                                Icons.check,
+                                color: Theme.of(context).colorScheme.primary,
+                              )
+                            : null,
+                        onTap: () {
+                          Navigator.of(ctx).pop();
+                          _onCategorySelected(category);
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _openFeaturedSheet() async {
+    if (_quizzes.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No hay destacados disponibles')),
+      );
+      return;
+    }
+    await showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1A22),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Destacados',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Flexible(
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: _quizzes.length,
+                    itemBuilder: (context, index) {
+                      final quiz = _quizzes[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: DiscoverFeaturedCard(
+                          quiz: quiz,
+                          index: index + 1,
+                          onTap: () {
+                            Navigator.of(ctx).pop();
+                            _navigateToGame(quiz.id);
+                          },
+                          onFavoriteToggle: () => _toggleFavorite(quiz),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
