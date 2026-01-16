@@ -5,6 +5,7 @@ class MultiplayerQuestionEntity {
   final String state;
   final SlideEntity currentSlideData;
   final int position;
+  final int totalQuestions;
   final int? timeRemainingMs;
   final bool? hasAnswered;
 
@@ -12,6 +13,7 @@ class MultiplayerQuestionEntity {
     required this.state,
     required this.currentSlideData,
     required this.position,
+    this.totalQuestions = 0,
     this.timeRemainingMs,
     this.hasAnswered,
   });

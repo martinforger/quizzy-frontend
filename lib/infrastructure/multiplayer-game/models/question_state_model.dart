@@ -7,6 +7,7 @@ class MultiplayerQuestionModel extends MultiplayerQuestionEntity {
     required super.state,
     required super.currentSlideData,
     required super.position,
+    super.totalQuestions,
     super.timeRemainingMs,
     super.hasAnswered,
   });
@@ -18,6 +19,7 @@ class MultiplayerQuestionModel extends MultiplayerQuestionEntity {
       state: json['state'] as String? ?? 'question',
       currentSlideData: SlideEntityModel.fromJson(slideData),
       position: slideData['position'] as int? ?? 1,
+      totalQuestions: json['totalQuestions'] as int? ?? 0,
       timeRemainingMs: json['timeRemainingMs'] as int?,
       hasAnswered: json['hasAnswered'] as bool?,
     );

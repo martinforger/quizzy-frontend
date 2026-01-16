@@ -282,7 +282,7 @@ class HttpGroupRepository implements GroupRepository {
       }),
     );
 
-    if (response.statusCode == 201) {
+    if (response.statusCode == 200 || response.statusCode == 201) {
       return;
     } else if (response.statusCode == 400) {
       throw Exception('Invalid dates');

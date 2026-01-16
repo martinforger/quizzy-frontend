@@ -22,6 +22,8 @@ import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_state.dart
 import 'package:quizzy/presentation/screens/multiplayer/host/host_lobby_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:quizzy/injection_container.dart';
+import 'package:quizzy/presentation/screens/library/widgets/assign_group_dialog.dart';
+import 'package:quizzy/presentation/bloc/groups/groups_cubit.dart';
 
 class LibraryScreen extends StatefulWidget {
   const LibraryScreen({
@@ -224,6 +226,14 @@ class _LibraryScreenState extends State<LibraryScreen>
                   widget.libraryCubit.toggleFavorite(item.id, isFavList);
                 }
               : null,
+          onOptions: () {
+            _showGameOptions(
+              context,
+              item.id,
+              canEdit: canEdit,
+              isDraft: item.status?.toLowerCase() == 'draft',
+            );
+          },
           onTap: () {
             if (canEdit) {
               _showGameOptions(
@@ -542,12 +552,47 @@ class _LibraryScreenState extends State<LibraryScreen>
                     },
                   ),
                 ],
+                const Divider(),
+                ListTile(
+                  leading: const Icon(
+                    Icons.group_add,
+                    size: 32,
+                    color: Colors.green,
+                  ),
+                  title: const Text('Añadir a un grupo'),
+                  subtitle: const Text('Asignar este kahoot a tus estudiantes'),
+                  onTap: () {
+                    Navigator.pop(sheetContext);
+                    _showAssignToGroupDialog(context, quizId);
+                  },
+                ),
               ],
             ),
           ),
         );
       },
     );
+  }
+
+  void _showAssignToGroupDialog(BuildContext context, String quizId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => BlocProvider(
+        create: (_) => getIt<GroupsCubit>()..loadGroups(),
+        child: AssignGroupDialog(quizId: quizId),
+      ),
+    ).then((result) {
+      if (result == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Kahoot asignado al grupo correctamente'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      }
+    });
   }
 
   void _startSoloGame(String quizId) {

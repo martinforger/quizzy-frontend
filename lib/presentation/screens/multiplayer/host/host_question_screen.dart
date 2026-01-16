@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../domain/solo-game/entities/slide_entity.dart';
-import '../../../bloc/multiplayer/multiplayer_game_cubit.dart';
-import '../../../bloc/multiplayer/multiplayer_game_state.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
+import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_state.dart';
+import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'host_results_screen.dart';
 
-/// Pantalla de pregunta para el HOST.
-///
-/// Muestra la pregunta, opciones, timer, y contador de respuestas recibidas.
+/// Pantalla de pregunta para el HOST rediseñada.
 class HostQuestionScreen extends StatefulWidget {
   const HostQuestionScreen({super.key});
 
@@ -33,6 +31,8 @@ class _HostQuestionScreenState extends State<HostQuestionScreen>
   }
 
   void _initTimer(int seconds, int? remainingMs) {
+    if (seconds <= 0) return;
+
     final totalMs = seconds * 1000;
     final startValue = remainingMs != null ? remainingMs / totalMs : 1.0;
 
@@ -42,7 +42,7 @@ class _HostQuestionScreenState extends State<HostQuestionScreen>
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<MultiplayerGameCubit, MultiplayerGameState>(
+    return BlocListener<MultiplayerGameCubit, MultiplayerGameState>(
       listener: (context, state) {
         if (state is HostQuestionState) {
           _initTimer(
@@ -53,259 +53,391 @@ class _HostQuestionScreenState extends State<HostQuestionScreen>
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const HostResultsScreen()),
           );
+        } else if (state is MultiplayerSessionClosed ||
+            state is MultiplayerInitial) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
         }
       },
-      builder: (context, state) {
-        if (state is! HostQuestionState) {
-          return const Center(child: CircularProgressIndicator());
-        }
+      child: BlocBuilder<MultiplayerGameCubit, MultiplayerGameState>(
+        builder: (context, state) {
+          if (state is! HostQuestionState) {
+            return const Scaffold(
+              backgroundColor: AppColors.mpBackground,
+              body: Center(
+                child: CircularProgressIndicator(color: AppColors.mpOrange),
+              ),
+            );
+          }
 
-        final slide = state.question.currentSlideData;
-        final submissionCount = state.submissionCount;
+          final slide = state.question.currentSlideData;
+          final submissionCount = state.submissionCount;
+          final current = state.question.position;
+          final total = state.question.totalQuestions;
+          final progress = total > 0 ? (current / total) * 100 : 0;
 
-        return Scaffold(
-          backgroundColor: Theme.of(
-            context,
-          ).colorScheme.primary, // Match Solo Game BG
-          body: SafeArea(
-            child: Column(
-              children: [
-                // Header: Position & Submission count in Pills
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2), // Light pill
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          '${state.question.position}', // Simplified like "1/10"
-                          style: const TextStyle(
-                            fontFamily: 'Onest',
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Row(
+          return Scaffold(
+            backgroundColor: AppColors.mpBackground,
+            body: SafeArea(
+              child: Column(
+                children: [
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.all(20.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Icon(
-                              Icons.people,
-                              color: Colors.white,
-                              size: 16,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              '$submissionCount',
-                              style: const TextStyle(
-                                fontFamily: 'Onest',
+                            const Text(
+                              'QUIZ QUESTION',
+                              style: TextStyle(
+                                color: AppColors.mpOrange,
+                                fontSize: 10,
                                 fontWeight: FontWeight.bold,
+                                letterSpacing: 1.5,
+                              ),
+                            ),
+                            Text(
+                              'Question $current ${total > 0 ? "of $total" : ""}',
+                              style: const TextStyle(
                                 color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
                         ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                // Question Text
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child:
-                      Text(
-                            slide.questionText,
-                            textAlign: TextAlign.center,
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white12,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            '${progress.toInt()}% complete',
                             style: const TextStyle(
-                              fontFamily: 'Onest',
+                              color: Colors.white,
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  // Question Area with Timer
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        // Circular Timer
+                        Stack(
+                          alignment: Alignment.center,
+                          children: [
+                            SizedBox(
+                              width: 60,
+                              height: 60,
+                              child: AnimatedBuilder(
+                                animation: _timerController,
+                                builder: (context, child) {
+                                  return CircularProgressIndicator(
+                                    value: _timerController.value,
+                                    strokeWidth: 6,
+                                    backgroundColor: Colors.white12,
+                                    color: _getTimerColor(
+                                      _timerController.value,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            AnimatedBuilder(
+                              animation: _timerController,
+                              builder: (context, child) {
+                                final seconds =
+                                    (_timerController.value *
+                                            (slide.timeLimitSeconds))
+                                        .ceil();
+                                return Text(
+                                  '$seconds',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 20,
+                                  ),
+                                );
+                              },
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 20),
+                        Expanded(
+                          child: Text(
+                            slide.questionText,
+                            style: const TextStyle(
+                              color: Colors.white,
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Colors.white,
                             ),
-                          )
-                          .animate()
-                          .fadeIn(duration: 500.ms)
-                          .slideY(begin: -0.2, end: 0),
-                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn().slideX(begin: -0.1, end: 0),
 
-                const SizedBox(height: 20),
+                  const SizedBox(height: 24),
 
-                // Media
-                if (slide.mediaUrl != null)
+                  // Media Container
                   Expanded(
                     child: Container(
                       margin: const EdgeInsets.symmetric(horizontal: 20),
+                      width: double.infinity,
                       decoration: BoxDecoration(
-                        color: Colors.black12,
-                        borderRadius: BorderRadius.circular(16),
-                        image: DecorationImage(
-                          image: NetworkImage(slide.mediaUrl!),
-                          fit: BoxFit.contain,
-                        ),
+                        color: Colors.white.withOpacity(0.05),
+                        borderRadius: BorderRadius.circular(32),
+                        image: slide.mediaUrl != null
+                            ? DecorationImage(
+                                image: NetworkImage(slide.mediaUrl!),
+                                fit: BoxFit.cover,
+                              )
+                            : null,
                       ),
-                    ).animate().fadeIn(delay: 200.ms).scale(),
-                  ),
-
-                const SizedBox(height: 20),
-
-                // Timer Bar
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: AnimatedBuilder(
-                    animation: _timerController,
-                    builder: (context, child) {
-                      return ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: LinearProgressIndicator(
-                          value: _timerController.value,
-                          backgroundColor: Colors.white24,
-                          color: _getTimerColor(_timerController.value),
-                          minHeight: 12,
-                        ),
-                      );
-                    },
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Answer Options Display (Host View)
-                Expanded(
-                  flex: 2,
-                  child: _HostAnswerDisplay(options: slide.options),
-                ),
-
-                // Next Phase Button
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        context.read<MultiplayerGameCubit>().nextPhase();
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF6C63FF),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        elevation: 4,
-                      ),
-                      child: const Text(
-                        'Mostrar Resultados',
-                        style: TextStyle(
-                          fontFamily: 'Onest',
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      child: slide.mediaUrl == null
+                          ? const Center(
+                              child: Icon(
+                                Icons.image_outlined,
+                                color: Colors.white10,
+                                size: 80,
+                              ),
+                            )
+                          : null,
                     ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+                  ).animate().fadeIn(delay: 200.ms).scale(delay: 200.ms),
 
-  Color _getTimerColor(double value) {
-    if (value > 0.5) return const Color(0xFF6C63FF);
-    if (value > 0.2) return Colors.orange;
-    return Colors.red;
-  }
-}
+                  const SizedBox(height: 24),
 
-/// Display de opciones para el Host (solo visualización).
-class _HostAnswerDisplay extends StatelessWidget {
-  final List<OptionEntity> options;
-
-  const _HostAnswerDisplay({required this.options});
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = [Colors.red, Colors.blue, Colors.amber, Colors.green];
-    final icons = [
-      Icons.change_history,
-      Icons.diamond,
-      Icons.circle,
-      Icons.square,
-    ];
-
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: GridView.builder(
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          childAspectRatio: 2.5,
-          crossAxisSpacing: 8,
-          mainAxisSpacing: 8,
-        ),
-        itemCount: options.length,
-        itemBuilder: (context, index) {
-          final option = options[index];
-          return Container(
-                decoration: BoxDecoration(
-                  color: colors[index % colors.length],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      icons[index % icons.length],
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                    if (option.text != null && option.text!.isNotEmpty) ...[
-                      const SizedBox(width: 12),
-                      Flexible(
-                        child: Text(
-                          option.text!,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                  // Answers Grid
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                            crossAxisCount: 2,
+                            childAspectRatio: 2.2,
+                            crossAxisSpacing: 12,
+                            mainAxisSpacing: 12,
                           ),
-                          overflow: TextOverflow.ellipsis,
+                      itemCount: slide.options.length,
+                      itemBuilder: (context, index) {
+                        final option = slide.options[index];
+                        return _AnswerBox(
+                          index: index,
+                          text: option.text ?? '',
+                        );
+                      },
+                    ),
+                  ),
+
+                  // Submissions Footer
+                  Container(
+                    padding: const EdgeInsets.all(24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: AppColors.accentTeal.withOpacity(0.1),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.people,
+                                color: AppColors.accentTeal,
+                                size: 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Text(
+                              '$submissionCount players answered',
+                              style: const TextStyle(
+                                color: Colors.white70,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
                         ),
-                      ),
-                    ],
-                  ],
-                ),
-              )
-              .animate()
-              .slideY(
-                begin: 1,
-                end: 0,
-                delay: Duration(milliseconds: 300 + (index * 100)),
-                duration: 400.ms,
-              )
-              .fadeIn();
+                        ElevatedButton(
+                          onPressed: () =>
+                              context.read<MultiplayerGameCubit>().nextPhase(),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.white12,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 20,
+                              vertical: 12,
+                            ),
+                          ),
+                          child: const Text('Show Results'),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
         },
       ),
     );
   }
+
+  Color _getTimerColor(double value) {
+    if (value > 0.5) return AppColors.accentTeal;
+    if (value > 0.2) return AppColors.mpOrange;
+    return AppColors.triangle;
+  }
+}
+
+class _AnswerBox extends StatelessWidget {
+  final int index;
+  final String text;
+
+  const _AnswerBox({required this.index, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = [
+      AppColors.triangle,
+      AppColors.diamond,
+      AppColors.circle,
+      AppColors.square,
+    ];
+    final shapes = [
+      _TriangleIcon(),
+      _DiamondIcon(),
+      _CircleIcon(),
+      _SquareIcon(),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: colors[index % colors.length],
+        borderRadius: BorderRadius.circular(20),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Row(
+        children: [
+          shapes[index % shapes.length],
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
+      ),
+    ).animate().fadeIn(delay: Duration(milliseconds: 400 + (index * 100)));
+  }
+}
+
+// Custom Shape Icons
+class _TriangleIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(20, 20),
+      painter: _ShapePainter(shapeType: 'triangle'),
+    );
+  }
+}
+
+class _DiamondIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(20, 20),
+      painter: _ShapePainter(shapeType: 'diamond'),
+    );
+  }
+}
+
+class _CircleIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 18,
+      height: 18,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+      ),
+    );
+  }
+}
+
+class _SquareIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 18,
+      height: 18,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+}
+
+class _ShapePainter extends CustomPainter {
+  final String shapeType;
+
+  _ShapePainter({required this.shapeType});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    if (shapeType == 'triangle') {
+      final path = Path();
+      path.moveTo(size.width / 2, 0);
+      path.lineTo(size.width, size.height);
+      path.lineTo(0, size.height);
+      path.close();
+      canvas.drawPath(path, paint);
+    } else if (shapeType == 'diamond') {
+      final path = Path();
+      path.moveTo(size.width / 2, 0);
+      path.lineTo(size.width, size.height / 2);
+      path.lineTo(size.width / 2, size.height);
+      path.lineTo(0, size.height / 2);
+      path.close();
+      canvas.drawPath(path, paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../../domain/multiplayer-game/entities/player_entity.dart';
-import '../../../bloc/multiplayer/multiplayer_game_cubit.dart';
-import '../../../bloc/multiplayer/multiplayer_game_state.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
+import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_state.dart';
+import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'host_question_screen.dart';
 import 'host_game_end_screen.dart';
 
-/// Pantalla de resultados para el HOST.
-///
-/// Muestra la respuesta correcta, distribución de respuestas, y leaderboard.
+/// Pantalla de resultados de la pregunta para el HOST rediseñada.
 class HostResultsScreen extends StatelessWidget {
   const HostResultsScreen({super.key});
 
@@ -25,157 +23,147 @@ class HostResultsScreen extends StatelessWidget {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const HostGameEndScreen()),
           );
+        } else if (state is MultiplayerSessionClosed ||
+            state is MultiplayerInitial) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
         }
       },
       child: BlocBuilder<MultiplayerGameCubit, MultiplayerGameState>(
         builder: (context, state) {
           if (state is! HostResultsState) {
-            return const Center(child: CircularProgressIndicator());
+            return const Scaffold(
+              backgroundColor: AppColors.mpBackground,
+              body: Center(
+                child: CircularProgressIndicator(color: AppColors.mpOrange),
+              ),
+            );
           }
 
           final results = state.results;
-          final progress = results.progress;
+          final distribution = results.stats.distribution;
+          final keys = distribution.keys.toList()..sort();
+
+          final maxCount = distribution.isEmpty
+              ? 1
+              : distribution.values.reduce((a, b) => a > b ? a : b);
+          if (maxCount == 0) {} // handle no responses?
 
           return Scaffold(
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.primary, // Match Solo Game
+            backgroundColor: AppColors.mpBackground,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              title: const Text(
+                'QUESTION RESULTS',
+                style: TextStyle(
+                  color: AppColors.mpOrange,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
+              ),
+            ),
             body: SafeArea(
               child: Column(
                 children: [
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Resultados',
-                          style: TextStyle(
-                            fontFamily: 'Onest',
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            '${progress.current} / ${progress.total}',
-                            style: const TextStyle(
-                              fontFamily: 'Onest',
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  const SizedBox(height: 20),
+                  // Bar Chart
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: List.generate(4, (index) {
+                          final key = index.toString();
+                          final count = distribution[key] ?? 0;
+                          final isCorrect = results.correctAnswerId.contains(
+                            key,
+                          );
 
-                  // Answer Distribution
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Distribución de Respuestas',
-                          style: TextStyle(
-                            fontFamily: 'Onest',
-                            color: Colors.white70,
-                            fontSize: 14,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        _AnswerDistribution(
-                          distribution: results.stats.distribution,
-                          correctIds: results.correctAnswerId,
-                          totalAnswers: results.stats.totalAnswers,
-                        ),
-                      ],
-                    ),
-                  ).animate().fadeIn(duration: 500.ms),
-
-                  const SizedBox(height: 16),
-
-                  // Leaderboard Title
-                  const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16),
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        'Top 5 Jugadores',
-                        style: TextStyle(
-                          fontFamily: 'Onest',
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                          return _ResultBar(
+                            index: index,
+                            count: count,
+                            total: maxCount == 0 ? 1 : maxCount,
+                            isCorrect: isCorrect,
+                          );
+                        }),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 40),
 
-                  // Leaderboard
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: results.leaderboard.length,
-                      itemBuilder: (context, index) {
-                        final player = results.leaderboard[index];
-                        return _LeaderboardTile(player: player, index: index)
-                            .animate()
-                            .slideX(
-                              begin: 1,
-                              end: 0,
-                              delay: Duration(milliseconds: 100 * index),
-                              duration: 400.ms,
-                            )
-                            .fadeIn();
-                      },
+                  // Correct Answer Reveal
+                  Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 24),
+                    padding: const EdgeInsets.all(24),
+                    decoration: BoxDecoration(
+                      color: AppColors.mpCard,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text(
+                          'CORRECT ANSWER ID',
+                          style: TextStyle(
+                            color: Colors.grey,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          results.correctAnswerId.join(', '),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.black87,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ).animate().fadeIn().slideY(begin: 0.2, end: 0),
+
+                  const SizedBox(height: 40),
+
+                  // Footer Stats
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _StatBadge(
+                          label: 'TOTAL ANSWERS',
+                          value: '${results.stats.totalAnswers}',
+                        ),
+                      ],
                     ),
                   ),
 
-                  // Next Button
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
+                  // Next Action
+                  Container(
+                    padding: const EdgeInsets.all(24),
                     child: SizedBox(
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton(
-                        onPressed: () {
-                          context.read<MultiplayerGameCubit>().nextPhase();
-                        },
+                        onPressed: () =>
+                            context.read<MultiplayerGameCubit>().nextPhase(),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: progress.isLastSlide == true
-                              ? const Color(0xFF00D9A5)
-                              : const Color(0xFF6C63FF),
+                          backgroundColor: AppColors.mpOrange,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
-                          elevation: 4,
+                          elevation: 0,
                         ),
-                        child: Text(
-                          progress.isLastSlide == true
-                              ? 'Ver Podio Final'
-                              : 'Siguiente Pregunta',
-                          style: const TextStyle(
-                            fontFamily: 'Onest',
+                        child: const Text(
+                          'Next Question',
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
@@ -193,209 +181,182 @@ class HostResultsScreen extends StatelessWidget {
   }
 }
 
-class _AnswerDistribution extends StatelessWidget {
-  final Map<String, int> distribution;
-  final List<String> correctIds;
-  final int totalAnswers;
+class _ResultBar extends StatelessWidget {
+  final int index;
+  final int count;
+  final int total;
+  final bool isCorrect;
 
-  const _AnswerDistribution({
-    required this.distribution,
-    required this.correctIds,
-    required this.totalAnswers,
+  const _ResultBar({
+    required this.index,
+    required this.count,
+    required this.total,
+    required this.isCorrect,
   });
 
   @override
   Widget build(BuildContext context) {
-    final colors = [Colors.red, Colors.blue, Colors.amber, Colors.green];
+    final colors = [
+      AppColors.triangle,
+      AppColors.diamond,
+      AppColors.circle,
+      AppColors.square,
+    ];
+    final shapes = [
+      _TriangleIcon(),
+      _DiamondIcon(),
+      _CircleIcon(),
+      _SquareIcon(),
+    ];
 
-    final sortedKeys = distribution.keys.toList()..sort();
+    final double heightFactor = total > 0
+        ? (count / total).clamp(0.05, 1.0)
+        : 0.05;
 
     return Column(
-      children: sortedKeys.asMap().entries.map((entry) {
-        final index = entry.key;
-        final key = entry.value;
-        final count = distribution[key] ?? 0;
-        final percentage = totalAnswers > 0 ? count / totalAnswers : 0.0;
-        final isCorrect = correctIds.contains(key);
-
-        return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
-          child: Row(
-            children: [
-              Container(
-                width: 40,
-                height: 40,
-                decoration: BoxDecoration(
-                  color: colors[index % colors.length],
-                  borderRadius: BorderRadius.circular(8),
-                  border: isCorrect
-                      ? Border.all(color: Colors.white, width: 3)
-                      : null,
-                ),
-                child: Center(
-                  child: isCorrect
-                      ? const Icon(Icons.check, color: Colors.white, size: 24)
-                      : Text(
-                          '${index + 1}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Stack(
-                  children: [
-                    Container(
-                      height: 32,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    FractionallySizedBox(
-                      widthFactor: percentage,
-                      child: Container(
-                        height: 32,
-                        decoration: BoxDecoration(
-                          color: colors[index % colors.length],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                    ),
-                    Container(
-                      height: 32,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      alignment: Alignment.centerRight,
-                      child: Text(
-                        '$count',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Text(
+          '$count',
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
           ),
-        );
-      }).toList(),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: 50,
+          height: 200 * heightFactor,
+          decoration: BoxDecoration(
+            color: colors[index % colors.length],
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: isCorrect
+              ? const Center(
+                  child: Icon(Icons.check, color: Colors.white, size: 24),
+                )
+              : null,
+        ).animate().scaleY(
+          alignment: Alignment.bottomCenter,
+          duration: 800.ms,
+          curve: Curves.easeOutBack,
+        ),
+        const SizedBox(height: 12),
+        shapes[index % shapes.length],
+      ],
     );
   }
 }
 
-class _LeaderboardTile extends StatelessWidget {
-  final PlayerEntity player;
-  final int index;
+class _StatBadge extends StatelessWidget {
+  final String label;
+  final String value;
 
-  const _LeaderboardTile({required this.player, required this.index});
+  const _StatBadge({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    final medals = ['🥇', '🥈', '🥉'];
-    final isTopThree = index < 3;
+    return Column(
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: Colors.white.withOpacity(0.3),
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+}
 
+// Custom Shape Icons (same as Question Screen)
+class _TriangleIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(20, 20),
+      painter: _ShapePainter(shapeType: 'triangle'),
+    );
+  }
+}
+
+class _DiamondIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(20, 20),
+      painter: _ShapePainter(shapeType: 'diamond'),
+    );
+  }
+}
+
+class _CircleIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        gradient: isTopThree
-            ? LinearGradient(
-                colors: [
-                  _getMedalColor(index).withValues(alpha: 0.3),
-                  _getMedalColor(index).withValues(alpha: 0.1),
-                ],
-              )
-            : null,
-        color: isTopThree ? null : Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          // Rank
-          SizedBox(
-            width: 40,
-            child: Text(
-              isTopThree ? medals[index] : '#${player.rank}',
-              style: TextStyle(
-                fontFamily: 'Onest',
-                fontSize: isTopThree ? 24 : 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Name
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  player.nickname,
-                  style: const TextStyle(
-                    fontFamily: 'Onest',
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                if (player.previousRank != player.rank)
-                  Row(
-                    children: [
-                      Icon(
-                        player.rank < player.previousRank
-                            ? Icons.arrow_upward
-                            : Icons.arrow_downward,
-                        color: player.rank < player.previousRank
-                            ? Colors.green
-                            : Colors.red,
-                        size: 14,
-                      ),
-                      Text(
-                        '${(player.previousRank - player.rank).abs()} posiciones',
-                        style: TextStyle(
-                          fontFamily: 'Onest',
-                          color: player.rank < player.previousRank
-                              ? Colors.green
-                              : Colors.red,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-              ],
-            ),
-          ),
-          // Score
-          Text(
-            '${player.score} pts',
-            style: const TextStyle(
-              fontFamily: 'Onest',
-              color: Color(0xFF00D9A5),
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
+      width: 18,
+      height: 18,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
       ),
     );
   }
+}
 
-  Color _getMedalColor(int index) {
-    switch (index) {
-      case 0:
-        return const Color(0xFFFFD700); // Gold
-      case 1:
-        return const Color(0xFFC0C0C0); // Silver
-      case 2:
-        return const Color(0xFFCD7F32); // Bronze
-      default:
-        return Colors.grey;
+class _SquareIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 18,
+      height: 18,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(2),
+      ),
+    );
+  }
+}
+
+class _ShapePainter extends CustomPainter {
+  final String shapeType;
+
+  _ShapePainter({required this.shapeType});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    if (shapeType == 'triangle') {
+      final path = Path();
+      path.moveTo(size.width / 2, 0);
+      path.lineTo(size.width, size.height);
+      path.lineTo(0, size.height);
+      path.close();
+      canvas.drawPath(path, paint);
+    } else if (shapeType == 'diamond') {
+      final path = Path();
+      path.moveTo(size.width / 2, 0);
+      path.lineTo(size.width, size.height / 2);
+      path.lineTo(size.width / 2, size.height);
+      path.lineTo(0, size.height / 2);
+      path.close();
+      canvas.drawPath(path, paint);
     }
   }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

@@ -19,6 +19,9 @@ import 'infrastructure/multiplayer-game/repositories/multiplayer_game_repository
 import 'domain/auth/repositories/auth_repository.dart';
 import 'domain/library/repositories/i_library_repository.dart';
 import 'infrastructure/library/repositories/http_library_repository.dart';
+// Import Profile
+import 'domain/auth/repositories/profile_repository.dart';
+import 'infrastructure/auth/repositories_impl/http_profile_repository.dart';
 
 // Import Use Cases - Multiplayer
 import 'application/multiplayer-game/usecases/create_session_use_case.dart';
@@ -43,6 +46,7 @@ import 'application/auth/usecases/register_use_case.dart';
 import 'application/auth/usecases/logout_use_case.dart';
 import 'application/auth/usecases/request_password_reset_use_case.dart';
 import 'application/auth/usecases/confirm_password_reset_use_case.dart';
+import 'application/auth/usecases/get_profile_use_case.dart';
 
 // Import Use Cases - Library
 import 'application/library/usecases/get_my_creations.dart';
@@ -74,6 +78,7 @@ import 'application/groups/usecases/transfer_admin_use_case.dart';
 import 'application/groups/usecases/get_group_quizzes_use_case.dart';
 import 'application/groups/usecases/get_group_leaderboard_use_case.dart';
 import 'application/groups/usecases/get_group_members_use_case.dart';
+import 'application/groups/usecases/assign_quiz_use_case.dart';
 import 'presentation/bloc/groups/groups_cubit.dart';
 import 'presentation/bloc/groups/group_details_cubit.dart';
 
@@ -130,6 +135,10 @@ Future<void> init() async {
     ),
   );
 
+  getIt.registerLazySingleton<ProfileRepository>(
+    () => HttpProfileRepository(client: getIt<AuthenticatedHttpClient>()),
+  );
+
   getIt.registerLazySingleton<GameRepository>(
     () =>
         GameRepositoryImpl(getIt<HttpGameService>(), getIt<LocalGameStorage>()),
@@ -175,6 +184,7 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => LogoutUseCase(getIt()));
   getIt.registerLazySingleton(() => RequestPasswordResetUseCase(getIt()));
   getIt.registerLazySingleton(() => ConfirmPasswordResetUseCase(getIt()));
+  getIt.registerLazySingleton(() => GetProfileUseCase(getIt()));
 
   // Use Cases - Library
   getIt.registerLazySingleton(() => GetMyCreationsUseCase(getIt()));
@@ -207,6 +217,7 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => GetGroupQuizzesUseCase(getIt()));
   getIt.registerLazySingleton(() => GetGroupLeaderboardUseCase(getIt()));
   getIt.registerLazySingleton(() => GetGroupMembersUseCase(getIt()));
+  getIt.registerLazySingleton(() => AssignQuizUseCase(getIt()));
 
   // Cubits / Controllers
   getIt.registerFactory(
@@ -285,6 +296,8 @@ Future<void> init() async {
       removeMemberUseCase: getIt(),
       transferAdminUseCase: getIt(),
       createInvitationUseCase: getIt(),
+      deleteGroupUseCase: getIt(),
+      getProfileUseCase: getIt(),
       authRepository: getIt(),
     ),
   );

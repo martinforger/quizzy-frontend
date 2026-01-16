@@ -75,8 +75,8 @@ class _GroupsListScreenState extends State<GroupsListScreen> {
     }
   }
 
-  void _navigateToGroup(Group group) {
-    Navigator.of(context).push(
+  Future<void> _navigateToGroup(Group group) async {
+    final result = await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => BlocProvider(
           create: (_) => getIt<GroupDetailsCubit>()
@@ -86,6 +86,10 @@ class _GroupsListScreenState extends State<GroupsListScreen> {
         ),
       ),
     );
+
+    if (result == true && mounted) {
+      context.read<GroupsCubit>().loadGroups();
+    }
   }
 
   @override

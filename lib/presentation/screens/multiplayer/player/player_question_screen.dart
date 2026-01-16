@@ -1,13 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import '../../../bloc/multiplayer/multiplayer_game_cubit.dart';
-import '../../../bloc/multiplayer/multiplayer_game_state.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_cubit.dart';
+import 'package:quizzy/presentation/bloc/multiplayer/multiplayer_game_state.dart';
+import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'player_results_screen.dart';
 
-/// Pantalla de pregunta para el JUGADOR.
-///
-/// Muestra las opciones de respuesta (Grid) para que el jugador participe.
+/// Pantalla de pregunta para el JUGADOR rediseñada.
 class PlayerQuestionScreen extends StatelessWidget {
   const PlayerQuestionScreen({super.key});
 
@@ -19,79 +18,140 @@ class PlayerQuestionScreen extends StatelessWidget {
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (_) => const PlayerResultsScreen()),
           );
+        } else if (state is MultiplayerSessionClosed ||
+            state is MultiplayerInitial ||
+            state is HostDisconnected) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
         }
       },
       child: BlocBuilder<MultiplayerGameCubit, MultiplayerGameState>(
         builder: (context, state) {
           if (state is! PlayerQuestionState) {
-            return const Center(child: CircularProgressIndicator());
+            return const Scaffold(
+              backgroundColor: AppColors.mpBackground,
+              body: Center(
+                child: CircularProgressIndicator(color: AppColors.mpOrange),
+              ),
+            );
           }
 
-          final question = state.question;
+          final slide = state.question.currentSlideData;
           final hasAnswered = state.hasAnswered;
+          final current = state.question.position;
+          final total = state.question.totalQuestions;
 
           return Scaffold(
-            backgroundColor: Theme.of(
-              context,
-            ).colorScheme.primary, // Match Solo Game
+            backgroundColor: AppColors.mpBackground,
+            appBar: AppBar(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              centerTitle: true,
+              title: Column(
+                children: [
+                  const Text(
+                    'CHOOSE THE CORRECT ANSWER',
+                    style: TextStyle(
+                      color: AppColors.mpOrange,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  Text(
+                    'Question $current ${total > 0 ? "of $total" : ""}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
             body: SafeArea(
               child: Column(
                 children: [
-                  // Header: Position & Status
+                  // Progress bar
                   Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Text(
-                            '${question.position}',
-                            style: const TextStyle(
-                              fontFamily: 'Onest',
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'Jugando',
-                            style: TextStyle(
-                              fontFamily: 'Onest',
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                      ],
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 8,
+                    ),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: LinearProgressIndicator(
+                        value: total > 0 ? current / total : 0,
+                        backgroundColor: Colors.white10,
+                        color: AppColors.accentTeal,
+                        minHeight: 6,
+                      ),
                     ),
                   ),
 
-                  // Content
-                  Expanded(
-                    child: hasAnswered
-                        ? _WaitingForOthersView()
-                        : _ActiveQuestionView(
-                            slide: question
-                                .currentSlideData, // Pass full slide for Text/Media
-                          ),
-                  ),
+                  const SizedBox(height: 24),
+
+                  if (hasAnswered)
+                    Expanded(
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.check_circle_outline,
+                              color: AppColors.accentTeal,
+                              size: 100,
+                            ).animate().scale(curve: Curves.elasticOut),
+                            const SizedBox(height: 24),
+                            const Text(
+                              '¡RESPUESTA ENVIADA!',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            const Text(
+                              'Espera a que termine el tiempo...',
+                              style: TextStyle(
+                                color: Colors.white70,
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: GridView.builder(
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 1,
+                                childAspectRatio: 4,
+                                mainAxisSpacing: 16,
+                              ),
+                          itemCount: slide.options.length,
+                          itemBuilder: (context, index) {
+                            final option = slide.options[index];
+                            return _OptionButton(
+                              index: index,
+                              onPressed: () {
+                                context
+                                    .read<MultiplayerGameCubit>()
+                                    .submitAnswer(
+                                      questionId: slide.slideId,
+                                      answerIds: [option.index],
+                                      timeElapsedMs: 0,
+                                    );
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -102,245 +162,133 @@ class PlayerQuestionScreen extends StatelessWidget {
   }
 }
 
-class _ActiveQuestionView extends StatelessWidget {
-  final dynamic slide; // Using dynamic or SlideEntity to access text/media
+class _OptionButton extends StatelessWidget {
+  final int index;
+  final VoidCallback onPressed;
 
-  const _ActiveQuestionView({required this.slide});
+  const _OptionButton({required this.index, required this.onPressed});
 
   @override
   Widget build(BuildContext context) {
-    // We access properties safely
-    final String questionText = slide.questionText;
-    final String? mediaUrl = slide.mediaUrl;
-    final List<dynamic> options = slide.options;
-    final String slideId = slide.slideId;
+    final colors = [
+      AppColors.triangle,
+      AppColors.diamond,
+      AppColors.circle,
+      AppColors.square,
+    ];
+    final shapes = [
+      _TriangleIcon(),
+      _DiamondIcon(),
+      _CircleIcon(),
+      _SquareIcon(),
+    ];
 
-    return Column(
-      children: [
-        // Question Text
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text(
-            questionText,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontFamily: 'Onest',
-              fontSize: 20, // Slightly smaller for mobile players
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ).animate().fadeIn(duration: 500.ms).slideY(begin: -0.2, end: 0),
-        ),
-
-        const SizedBox(height: 16),
-
-        // Media (Optional for player, but requested to look like Solo Game)
-        if (mediaUrl != null)
-          Expanded(
-            flex: 2,
+    return Material(
+          color: colors[index % colors.length],
+          borderRadius: BorderRadius.circular(24),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onPressed,
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20),
-              decoration: BoxDecoration(
-                color: Colors.black12,
-                borderRadius: BorderRadius.circular(16),
-                image: DecorationImage(
-                  image: NetworkImage(mediaUrl),
-                  fit: BoxFit.contain,
-                ),
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  shapes[index % shapes.length],
+                  const Icon(
+                    Icons.arrow_forward_ios,
+                    color: Colors.white24,
+                    size: 20,
+                  ),
+                ],
               ),
-            ).animate().fadeIn(delay: 200.ms).scale(),
-          )
-        else
-          const Spacer(),
-
-        const SizedBox(height: 16),
-
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
-          child: Text(
-            'Selecciona respuesta',
-            style: TextStyle(
-              fontFamily: 'Onest',
-              fontSize: 16,
-              color: Colors.white70,
             ),
-            textAlign: TextAlign.center,
           ),
-        ),
+        )
+        .animate()
+        .fadeIn(delay: Duration(milliseconds: 100 * index))
+        .slideX(begin: 0.2, end: 0);
+  }
+}
 
-        const SizedBox(height: 8),
-
-        Expanded(
-          flex: 3,
-          child: _MultiplayerAnswerGrid(options: options, slideId: slideId),
-        ),
-      ],
+// Custom Shape Icons
+class _TriangleIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: const Size(32, 32),
+      painter: _ShapePainter(shapeType: 'triangle'),
     );
   }
 }
 
-class _WaitingForOthersView extends StatelessWidget {
+class _DiamondIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: const Color(0xFF00D9A5),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0xFF00D9A5).withOpacity(0.4),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            child: const Icon(Icons.check, size: 60, color: Colors.white),
-          ).animate().scale(duration: 400.ms, curve: Curves.elasticOut),
-          const SizedBox(height: 32),
-          const Text(
-            'Respuesta enviada',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFF2d3436),
-            ),
-          ),
-          const SizedBox(height: 16),
-          const Text(
-            'Esperando a que todos respondan...',
-            style: TextStyle(fontSize: 16, color: Colors.grey),
-          ),
-        ],
+    return CustomPaint(
+      size: const Size(32, 32),
+      painter: _ShapePainter(shapeType: 'diamond'),
+    );
+  }
+}
+
+class _CircleIcon extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
       ),
     );
   }
 }
 
-class _MultiplayerAnswerGrid extends StatelessWidget {
-  final List<dynamic> options;
-  final String slideId;
-
-  const _MultiplayerAnswerGrid({required this.options, required this.slideId});
-
+class _SquareIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: Column(
-        children: [
-          Expanded(
-            child: Row(
-              children: [
-                if (options.isNotEmpty)
-                  Expanded(
-                    child: _AnswerButton(
-                      option: options[0],
-                      color: Colors.red,
-                      icon: Icons.change_history,
-                      slideId: slideId,
-                    ),
-                  ),
-                if (options.length > 1)
-                  Expanded(
-                    child: _AnswerButton(
-                      option: options[1],
-                      color: Colors.blue,
-                      icon: Icons.diamond,
-                      slideId: slideId,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Row(
-              children: [
-                if (options.length > 2)
-                  Expanded(
-                    child: _AnswerButton(
-                      option: options[2],
-                      color: Colors.amber,
-                      icon: Icons.circle,
-                      slideId: slideId,
-                    ),
-                  ),
-                if (options.length > 3)
-                  Expanded(
-                    child: _AnswerButton(
-                      option: options[3],
-                      color: Colors.green,
-                      icon: Icons.square,
-                      slideId: slideId,
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ],
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(4),
       ),
     );
   }
 }
 
-class _AnswerButton extends StatelessWidget {
-  final dynamic option;
-  final Color color;
-  final IconData icon;
-  final String slideId;
+class _ShapePainter extends CustomPainter {
+  final String shapeType;
 
-  const _AnswerButton({
-    required this.option,
-    required this.color,
-    required this.icon,
-    required this.slideId,
-  });
+  _ShapePainter({required this.shapeType});
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        final index = int.tryParse(option.index.toString()) ?? 0;
-        context.read<MultiplayerGameCubit>().submitAnswer(
-          questionId: slideId,
-          answerIds: [index.toString()],
-          timeElapsedMs: 5000, // Using dummy time or calculate real time
-        );
-      },
-      child: Container(
-        margin: const EdgeInsets.all(4),
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, color: Colors.white, size: 48),
-            if (option.text != null) ...[
-              const SizedBox(height: 8),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                child: Text(
-                  option.text!,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    if (shapeType == 'triangle') {
+      final path = Path();
+      path.moveTo(size.width / 2, 0);
+      path.lineTo(size.width, size.height);
+      path.lineTo(0, size.height);
+      path.close();
+      canvas.drawPath(path, paint);
+    } else if (shapeType == 'diamond') {
+      final path = Path();
+      path.moveTo(size.width / 2, 0);
+      path.lineTo(size.width, size.height / 2);
+      path.lineTo(size.width / 2, size.height);
+      path.lineTo(0, size.height / 2);
+      path.close();
+      canvas.drawPath(path, paint);
+    }
   }
+
+  @override
+  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }

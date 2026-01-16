@@ -7,6 +7,9 @@ import '../../bloc/groups/group_details_cubit.dart';
 import '../../bloc/groups/group_details_state.dart';
 import '../../theme/app_theme.dart';
 import 'manage_group_screen.dart';
+import '../../bloc/game_cubit.dart';
+import '../game/game_screen.dart';
+import '../../../injection_container.dart';
 
 /// Screen showing details of a specific group with tabs.
 class GroupDetailsScreen extends StatefulWidget {
@@ -52,6 +55,86 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen>
     }
   }
 
+  void _showDeleteGroupConfirmation(Group group) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.card,
+        title: const Text('Eliminar Grupo'),
+        content: const Text(
+          '¿Estás seguro de que deseas eliminar este grupo? Esta acción no se puede deshacer. Todas las pruebas, puntuaciones y miembros se eliminarán permanentemente.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              final success = await context
+                  .read<GroupDetailsCubit>()
+                  .deleteGroup(group.id);
+              if (success && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Grupo eliminado'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                Navigator.of(context).pop(true); // Return to groups list
+              }
+            },
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLeaveGroupConfirmation(Group group) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.card,
+        title: const Text('Abandonar Grupo'),
+        content: Text('¿Estás seguro de que deseas abandonar "${group.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.orange,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              final success = await context
+                  .read<GroupDetailsCubit>()
+                  .leaveGroup(group.id);
+              if (success && mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Has abandonado "${group.name}"'),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+                Navigator.of(context).pop(true); // Return to groups list
+              }
+            },
+            child: const Text('Abandonar'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<GroupDetailsCubit, GroupDetailsState>(
@@ -74,11 +157,61 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen>
             backgroundColor: AppColors.surface,
             title: const Text('Detalles del Grupo'),
             actions: [
-              if (group.isAdmin)
-                IconButton(
-                  icon: const Icon(Icons.more_vert),
-                  onPressed: _navigateToManage,
-                ),
+              PopupMenuButton<String>(
+                onSelected: (value) async {
+                  switch (value) {
+                    case 'manage':
+                      _navigateToManage();
+                      break;
+                    case 'delete':
+                      _showDeleteGroupConfirmation(group);
+                      break;
+                    case 'leave':
+                      _showLeaveGroupConfirmation(group);
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  if (group.isAdmin) ...[
+                    const PopupMenuItem(
+                      value: 'manage',
+                      child: Row(
+                        children: [
+                          Icon(Icons.settings, color: Colors.white70),
+                          SizedBox(width: 12),
+                          Text('Administrar grupo'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, color: Colors.red),
+                          SizedBox(width: 12),
+                          Text(
+                            'Eliminar grupo',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ] else
+                    const PopupMenuItem(
+                      value: 'leave',
+                      child: Row(
+                        children: [
+                          Icon(Icons.exit_to_app, color: Colors.orange),
+                          SizedBox(width: 12),
+                          Text(
+                            'Abandonar grupo',
+                            style: TextStyle(color: Colors.orange),
+                          ),
+                        ],
+                      ),
+                    ),
+                ],
+              ),
             ],
           ),
           body: Column(
@@ -116,6 +249,8 @@ class _GroupDetailsScreenState extends State<GroupDetailsScreen>
                     _MembersTab(
                       members: state.members,
                       isLoading: state.isLoading,
+                      isAdmin: group.isAdmin,
+                      groupId: group.id,
                     ),
                   ],
                 ),
@@ -502,8 +637,23 @@ class _QuizCard extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Navigate to play quiz
+                onPressed: () async {
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => BlocProvider(
+                        create: (_) => getIt<GameCubit>(),
+                        child: GameScreen(quizId: quiz.quizId),
+                      ),
+                    ),
+                  );
+
+                  // Refresh group data after returning to reflect progress and leaderboard changes
+                  if (context.mounted) {
+                    final cubit = context.read<GroupDetailsCubit>();
+                    if (cubit.state.group != null) {
+                      cubit.loadAll(cubit.state.group!.id);
+                    }
+                  }
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -657,8 +807,96 @@ class _LeaderboardTab extends StatelessWidget {
 class _MembersTab extends StatelessWidget {
   final List members;
   final bool isLoading;
+  final bool isAdmin;
+  final String groupId;
 
-  const _MembersTab({required this.members, required this.isLoading});
+  const _MembersTab({
+    required this.members,
+    required this.isLoading,
+    required this.isAdmin,
+    required this.groupId,
+  });
+
+  void _showRemoveConfirmation(BuildContext context, dynamic member) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.card,
+        title: const Text('Eliminar Miembro'),
+        content: Text('¿Eliminar a ${member.name} del grupo?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              final success = await context
+                  .read<GroupDetailsCubit>()
+                  .removeMember(groupId, member.id);
+              if (success && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('${member.name} eliminado del grupo'),
+                    duration: const Duration(seconds: 2),
+                  ),
+                );
+              }
+            },
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showTransferAdminConfirmation(BuildContext context, dynamic member) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        backgroundColor: AppColors.card,
+        title: const Text('Transferir Administración'),
+        content: Text(
+          '¿Transferir derechos de administrador a ${member.name}? Pasarás a ser un miembro normal.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () async {
+              Navigator.pop(dialogContext);
+              final success = await context
+                  .read<GroupDetailsCubit>()
+                  .transferAdmin(groupId, member.id);
+              // Show success message
+              if (success && context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Administración transferida a ${member.name}',
+                    ),
+                    backgroundColor: Colors.green,
+                  ),
+                );
+              }
+            },
+            child: const Text('Transferir'),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -687,6 +925,9 @@ class _MembersTab extends StatelessWidget {
       itemCount: members.length,
       itemBuilder: (context, index) {
         final member = members[index];
+        // Only admin can remove/transfer, and only for non-admin members
+        final canManage = isAdmin && !member.isAdmin;
+
         return Container(
           margin: const EdgeInsets.only(bottom: 8),
           padding: const EdgeInsets.all(12),
@@ -698,8 +939,13 @@ class _MembersTab extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundColor: Colors.grey[700],
-                child: Text(member.name[0].toUpperCase()),
+                backgroundColor: member.isAdmin
+                    ? AppColors.primary
+                    : Colors.grey[700],
+                child: Text(
+                  member.name.isNotEmpty ? member.name[0].toUpperCase() : '?',
+                  style: const TextStyle(color: Colors.white),
+                ),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -722,6 +968,24 @@ class _MembersTab extends StatelessWidget {
                   ],
                 ),
               ),
+              if (canManage) ...[
+                // Transfer admin button
+                IconButton(
+                  icon: const Icon(Icons.swap_horiz, color: AppColors.primary),
+                  onPressed: () =>
+                      _showTransferAdminConfirmation(context, member),
+                  tooltip: 'Transferir administración',
+                ),
+                // Remove member button
+                IconButton(
+                  icon: Icon(
+                    Icons.remove_circle_outline,
+                    color: Colors.red[400],
+                  ),
+                  onPressed: () => _showRemoveConfirmation(context, member),
+                  tooltip: 'Eliminar miembro',
+                ),
+              ],
             ],
           ),
         );

@@ -57,7 +57,7 @@ class _ManageGroupScreenState extends State<ManageGroupScreen> {
   void _showDeleteConfirmation() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.card,
         title: const Text('Eliminar Grupo'),
         content: const Text(
@@ -65,18 +65,24 @@ class _ManageGroupScreenState extends State<ManageGroupScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              // Note: We'd need to access GroupsCubit to delete
-              Navigator.pop(
-                context,
-                true,
-              ); // Return to indicate deletion needed
+            onPressed: () async {
+              Navigator.pop(dialogContext); // Close dialog
+
+              final success = await context
+                  .read<GroupDetailsCubit>()
+                  .deleteGroup(widget.group.id);
+
+              if (success && mounted) {
+                Navigator.pop(
+                  context,
+                  true,
+                ); // Return to indicate deletion needed
+              }
             },
             child: const Text('Eliminar'),
           ),
@@ -191,7 +197,19 @@ class _ManageGroupScreenState extends State<ManageGroupScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<GroupDetailsCubit, GroupDetailsState>(
+    return BlocConsumer<GroupDetailsCubit, GroupDetailsState>(
+      listener: (context, state) {
+        if (state.error != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.error!), backgroundColor: Colors.red),
+          );
+        }
+
+        // If user is no longer admin (e.g. transferred rights), close manage screen
+        if (state.group != null && !state.group!.isAdmin) {
+          Navigator.of(context).pop();
+        }
+      },
       builder: (context, state) {
         return Scaffold(
           appBar: AppBar(
