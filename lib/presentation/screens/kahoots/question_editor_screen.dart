@@ -386,121 +386,225 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final previewUrl = _answerMediaUrls[idx];
+            final hasImage = previewUrl != null && previewUrl.isNotEmpty;
+            final hasText = controller.text.trim().isNotEmpty;
+            return Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 32,
-                    height: 32,
-                    decoration: BoxDecoration(
-                      color: color,
-                      borderRadius: BorderRadius.circular(10),
+                  Row(
+                    children: [
+                      Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: color,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Respuesta ${idx + 1}',
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const Spacer(),
+                      IconButton(
+                        onPressed: () {
+                          Navigator.of(ctx).maybePop();
+                          if (_answers.length <= 1) return;
+                          setState(() {
+                            _answers.removeAt(idx);
+                            _answerMediaUrls.remove(idx);
+                          });
+                        },
+                        icon: const Icon(
+                          Icons.delete_forever,
+                          color: Colors.redAccent,
+                        ),
+                        tooltip: 'Eliminar respuesta',
+                      ),
+                      IconButton(
+                        onPressed: () {
+                          _toggleCorrect(idx);
+                          setSheetState(() {});
+                        },
+                        icon: Icon(
+                          answer.isCorrect
+                              ? Icons.check_circle
+                              : Icons.radio_button_unchecked,
+                          color: Colors.white,
+                        ),
+                        tooltip: 'Marcar correcta',
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
+                    child: Container(
+                      height: 160,
+                      width: double.infinity,
+                      color: const Color(0xFF27222C),
+                      child: hasImage
+                          ? Image.network(
+                              previewUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Center(
+                                child: Icon(
+                                  Icons.broken_image_outlined,
+                                  color: Colors.white70,
+                                  size: 28,
+                                ),
+                              ),
+                            )
+                          : Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: const [
+                                Icon(
+                                  Icons.photo_outlined,
+                                  color: Colors.white60,
+                                  size: 30,
+                                ),
+                                SizedBox(height: 8),
+                                Text(
+                                  'Añadir imagen de respuesta',
+                                  style: TextStyle(color: Colors.white70),
+                                ),
+                              ],
+                            ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Respuesta ${idx + 1}',
-                    style: const TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  const Spacer(),
-                  IconButton(
-                    onPressed: () {
-                      Navigator.of(ctx).maybePop();
-                      if (_answers.length <= 1) return;
-                      setState(() {
-                        _answers.removeAt(idx);
-                        _answerMediaUrls.remove(idx);
-                      });
-                    },
-                    icon: const Icon(
-                      Icons.delete_forever,
-                      color: Colors.redAccent,
-                    ),
-                    tooltip: 'Eliminar respuesta',
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      Navigator.of(ctx).maybePop();
-                      _toggleCorrect(idx);
-                    },
-                    icon: Icon(
-                      answer.isCorrect
-                          ? Icons.check_circle
-                          : Icons.radio_button_unchecked,
-                      color: Colors.white,
-                    ),
-                    tooltip: 'Marcar correcta',
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                decoration: const InputDecoration(
-                  labelText: 'Texto de respuesta',
-                  filled: true,
-                  fillColor: Color(0xFF27222C),
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide.none,
-                    borderRadius: BorderRadius.all(Radius.circular(12)),
-                  ),
-                ),
-                onChanged: (v) {
-                  setState(() {
-                    final updated = List<KahootAnswer>.from(_answers);
-                    updated[idx] = KahootAnswer(
-                      id: answer.id,
-                      text: v,
-                      mediaId: answer.mediaId,
-                      isCorrect: answer.isCorrect,
-                    );
-                    _answers = updated;
-                  });
-                },
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.of(ctx).maybePop();
-                      _pickAnswerMedia(idx);
-                    },
-                    icon: const Icon(Icons.image_outlined),
-                    label: const Text('Añadir imagen'),
-                  ),
-                  const SizedBox(width: 12),
-                  TextButton.icon(
-                    onPressed: () {
-                      Navigator.of(ctx).maybePop();
-                      _openMediaLibrary(
-                        onSelected: (asset) {
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      TextButton.icon(
+                        onPressed: () async {
+                          if (hasText) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'No puedes usar texto e imagen al mismo tiempo.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          await _pickAnswerMedia(idx);
+                          controller.text = '';
                           setState(() {
                             final current = _answers[idx];
                             _answers[idx] = KahootAnswer(
                               id: current.id,
-                              text: current.text,
-                              mediaId: asset.assetId,
+                              text: '',
+                              mediaId: current.mediaId,
                               isCorrect: current.isCorrect,
                             );
-                            _answerMediaUrls[idx] = asset.url;
                           });
+                          setSheetState(() {});
                         },
-                      );
+                        icon: const Icon(Icons.image_outlined),
+                        label: const Text('Subir'),
+                      ),
+                      const SizedBox(width: 8),
+                      TextButton.icon(
+                        onPressed: () async {
+                          if (hasText) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'No puedes usar texto e imagen al mismo tiempo.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          await _openMediaLibrary(
+                            onSelected: (asset) {
+                              setState(() {
+                                final current = _answers[idx];
+                                _answers[idx] = KahootAnswer(
+                                  id: current.id,
+                                  text: '',
+                                  mediaId: asset.assetId,
+                                  isCorrect: current.isCorrect,
+                                );
+                                _answerMediaUrls[idx] = asset.url;
+                              });
+                              controller.text = '';
+                              setSheetState(() {});
+                            },
+                          );
+                        },
+                        icon: const Icon(Icons.photo_library_outlined),
+                        label: const Text('Banco'),
+                      ),
+                      const Spacer(),
+                      if (hasImage)
+                        TextButton.icon(
+                          onPressed: () {
+                            setState(() {
+                              final current = _answers[idx];
+                              _answers[idx] = KahootAnswer(
+                                id: current.id,
+                                text: current.text,
+                                mediaId: null,
+                                isCorrect: current.isCorrect,
+                              );
+                              _answerMediaUrls.remove(idx);
+                            });
+                            setSheetState(() {});
+                          },
+                          icon: const Icon(Icons.close),
+                          label: const Text('Quitar'),
+                        ),
+                    ],
+                  ),
+                  if (hasText && !hasImage) ...[
+                    const SizedBox(height: 6),
+                    const Text(
+                      'Elimina el texto para poder subir una imagen.',
+                      style: TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                  ],
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: controller,
+                    autofocus: true,
+                    enabled: !hasImage,
+                    decoration: InputDecoration(
+                      labelText: hasImage
+                          ? 'Texto deshabilitado (quita la imagen)'
+                          : 'Texto de respuesta',
+                      filled: true,
+                      fillColor: const Color(0xFF27222C),
+                      border: const OutlineInputBorder(
+                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.all(Radius.circular(12)),
+                      ),
+                    ),
+                    onChanged: (v) {
+                      setState(() {
+                        final updated = List<KahootAnswer>.from(_answers);
+                        updated[idx] = KahootAnswer(
+                          id: answer.id,
+                          text: v,
+                          mediaId: answer.mediaId,
+                          isCorrect: answer.isCorrect,
+                        );
+                        _answers = updated;
+                      });
+                      setSheetState(() {});
                     },
-                    icon: const Icon(Icons.photo_library_outlined),
-                    label: const Text('Buscar'),
                   ),
                 ],
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -552,9 +656,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
         children: [
           Positioned.fill(
             child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: const Color(0xFF121014),
-              ),
+              decoration: BoxDecoration(color: const Color(0xFF121014)),
             ),
           ),
           SingleChildScrollView(
