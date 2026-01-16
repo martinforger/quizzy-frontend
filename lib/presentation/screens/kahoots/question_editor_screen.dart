@@ -3,7 +3,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_answer.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_question.dart';
 import 'package:quizzy/domain/media/entities/media_asset.dart';
+<<<<<<< HEAD
 import 'package:quizzy/infrastructure/ai/openai_image_service.dart';
+=======
+>>>>>>> 4fbc71b3d50e17809b5a23695b7770f5bf3b6109
 import 'package:quizzy/presentation/state/media_controller.dart';
 
 class QuestionEditorScreen extends StatefulWidget {
@@ -32,9 +35,13 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
   String? _mediaUrl;
   String? _mediaAssetId;
   bool _mediaUploading = false;
+<<<<<<< HEAD
   bool _aiQuestionLoading = false;
   final Map<int, String> _answerMediaUrls = {};
   final OpenAiImageService _openAiImageService = OpenAiImageService();
+=======
+  final Map<int, String> _answerMediaUrls = {};
+>>>>>>> 4fbc71b3d50e17809b5a23695b7770f5bf3b6109
 
   final List<int> _allowedTimes = [5, 10, 20, 30, 45, 60, 90, 120, 180, 240];
 
@@ -157,6 +164,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
     }
   }
 
+<<<<<<< HEAD
   Future<void> _suggestQuestionMedia() async {
     final promptText = _textController.text.trim();
     if (promptText.isEmpty) {
@@ -187,6 +195,8 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
     }
   }
 
+=======
+>>>>>>> 4fbc71b3d50e17809b5a23695b7770f5bf3b6109
   Future<void> _pickAnswerMedia(int idx) async {
     try {
       final file = await _imagePicker.pickImage(
@@ -762,6 +772,7 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                               ),
                               const SizedBox(width: 8),
                               ElevatedButton.icon(
+<<<<<<< HEAD
                                 onPressed: _aiQuestionLoading
                                     ? null
                                     : _suggestQuestionMedia,
@@ -794,6 +805,8 @@ class _QuestionEditorScreenState extends State<QuestionEditorScreen> {
                               ),
                               const SizedBox(width: 8),
                               ElevatedButton.icon(
+=======
+>>>>>>> 4fbc71b3d50e17809b5a23695b7770f5bf3b6109
                                 onPressed: _mediaUploading
                                     ? null
                                     : _pickQuestionMedia,

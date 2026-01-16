@@ -13,6 +13,10 @@ import 'package:quizzy/presentation/widgets/discovery/discover_featured_card.dar
 import 'package:quizzy/presentation/widgets/discovery/discover_inline_error.dart';
 import 'package:quizzy/presentation/widgets/discovery/discover_search_bar.dart';
 import 'package:quizzy/presentation/widgets/discovery/discover_section_header.dart';
+<<<<<<< HEAD
+=======
+import 'package:quizzy/presentation/widgets/discovery/theme_filter_chips.dart';
+>>>>>>> 4fbc71b3d50e17809b5a23695b7770f5bf3b6109
 import 'package:quizzy/presentation/widgets/quizzy_logo.dart';
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';
