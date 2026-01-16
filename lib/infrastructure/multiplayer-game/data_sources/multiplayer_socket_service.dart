@@ -90,9 +90,9 @@ class MultiplayerSocketService {
       '$baseUrl/multiplayer-sessions',
       io.OptionBuilder()
           .setTransports([
-            'polling',
             'websocket',
-          ]) // Permitir polling para que los headers se envíen en Web
+            'polling',
+          ]) // Preferir websocket primero, polling como fallback
           .setQuery({'pin': pin, 'role': role, 'jwt': jwt})
           .setExtraHeaders({
             'pin': pin,
@@ -108,6 +108,11 @@ class MultiplayerSocketService {
           })
           .disableAutoConnect() // Conectaremos manualmente abajo
           .enableReconnection()
+          .setReconnectionAttempts(5)
+          .setReconnectionDelay(2000)
+          .setTimeout(
+            45000,
+          ) // 45 segundos de timeout (Render puede tardar en despertar)
           .build(),
     );
 
@@ -143,8 +148,10 @@ class MultiplayerSocketService {
     _socket!.connect();
 
     return completer.future.timeout(
-      const Duration(seconds: 10),
-      onTimeout: () => throw Exception('Timeout al conectar con el servidor'),
+      const Duration(seconds: 45),
+      onTimeout: () => throw Exception(
+        'Timeout al conectar con el servidor. El servidor puede estar iniciando, intenta de nuevo en unos segundos.',
+      ),
     );
   }
 
