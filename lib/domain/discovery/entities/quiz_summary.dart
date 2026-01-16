@@ -7,6 +7,7 @@ class QuizSummary {
     this.thumbnailUrl = '',
     this.description,
     this.playCount,
+    this.isFavorite = false,
   });
 
   final String id;
@@ -16,4 +17,27 @@ class QuizSummary {
   final String thumbnailUrl;
   final String? description;
   final int? playCount;
+  final bool isFavorite;
+
+  QuizSummary copyWith({
+    String? id,
+    String? title,
+    String? author,
+    String? tag,
+    String? thumbnailUrl,
+    String? description,
+    int? playCount,
+    bool? isFavorite,
+  }) {
+    return QuizSummary(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      author: author ?? this.author,
+      tag: tag ?? this.tag,
+      thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
+      description: description ?? this.description,
+      playCount: playCount ?? this.playCount,
+      isFavorite: isFavorite ?? this.isFavorite,
+    );
+  }
 }

@@ -9,6 +9,15 @@ class AppColors {
   static const accentTeal = Color(0xFF1DD8D2);
   static const textMuted = Color(0xFFCCCCCC);
   static const border = Color(0xFF2C2830);
+
+  // Multiplayer Colors
+  static const triangle = Color(0xFFF22D5E);
+  static const diamond = Color(0xFF13E5D0);
+  static const circle = Color(0xFFD0F02A);
+  static const square = Color(0xFFFF7320);
+  static const mpBackground = Color(0xFF121A2A);
+  static const mpCard = Color(0xFFFFFFFF);
+  static const mpOrange = Color(0xFFF59E0B);
 }
 
 class AppSpacing {

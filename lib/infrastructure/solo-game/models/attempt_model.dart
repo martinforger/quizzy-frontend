@@ -3,25 +3,18 @@ import 'slide_model.dart'; // Asegúrate de tener este archivo creado también
 
 class AttemptModel extends AttemptEntity {
   AttemptModel({
-    required String attemptId,
-    required String state,
-    required int currentScore,
+    required super.attemptId,
+    required super.state,
+    required super.currentScore,
     SlideModel? firstSlide,
     SlideModel? nextSlide,
-    bool? wasCorrect,
-    int? pointsEarned,
-    int currentQuestionIndex = 0,
-    int totalQuestions = 0,
+    super.wasCorrect,
+    super.pointsEarned,
+    super.currentQuestionIndex = 0,
+    super.totalQuestions = 0,
   }) : super(
-         attemptId: attemptId,
-         state: state,
-         currentScore: currentScore,
-         currentQuestionIndex: currentQuestionIndex,
-         totalQuestions: totalQuestions,
          firstSlide: firstSlide,
          nextSlide: nextSlide,
-         wasCorrect: wasCorrect,
-         pointsEarned: pointsEarned,
        );
 
   factory AttemptModel.fromJson(Map<String, dynamic> json) {

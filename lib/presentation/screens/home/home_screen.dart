@@ -1,8 +1,71 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:quizzy/domain/auth/entities/user_profile.dart';
+import 'package:quizzy/injection_container.dart';
+import 'package:quizzy/presentation/bloc/groups/groups_cubit.dart';
+import 'package:quizzy/presentation/bloc/notifications/notifications_cubit.dart';
+import 'package:quizzy/presentation/bloc/notifications/notifications_state.dart';
+import 'package:quizzy/presentation/screens/groups/groups_list_screen.dart';
+import 'package:quizzy/presentation/screens/notifications/notifications_screen.dart';
+import 'package:quizzy/presentation/state/auth_controller.dart';
+import 'package:quizzy/presentation/state/profile_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
+import 'package:quizzy/presentation/screens/profile/profile_screen.dart';
+import 'package:quizzy/presentation/widgets/user_avatar.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  const HomeScreen({
+    super.key,
+    required this.profileController,
+    required this.authController,
+    required this.onLogout,
+  });
+
+  final ProfileController profileController;
+  final AuthController authController;
+  final VoidCallback onLogout;
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  late Future<UserProfile> _profileFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadProfile();
+  }
+
+  void _loadProfile() {
+    setState(() {
+      _profileFuture = widget.profileController.getProfile();
+    });
+  }
+
+  Future<void> _openProfile() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => ProfileScreen(
+          profileController: widget.profileController,
+          authController: widget.authController,
+          onLogout: widget.onLogout,
+        ),
+      ),
+    );
+    _loadProfile();
+  }
+
+  Future<void> _handleLogout() async {
+    try {
+      await widget.authController.logout();
+    } catch (e) {
+      debugPrint("Logout warning: $e");
+    } finally {
+      widget.onLogout();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -12,33 +75,110 @@ class HomeScreen extends StatelessWidget {
           SliverAppBar(
             floating: true,
             backgroundColor: AppColors.surface,
-            title: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: const BoxDecoration(
-                    color: Colors.grey,
-                    shape: BoxShape.circle,
+            title: FutureBuilder<UserProfile>(
+              future: _profileFuture,
+              builder: (context, snapshot) {
+                final String name;
+                final String? avatarUrl;
+
+                if (snapshot.hasData) {
+                  name = snapshot.data!.name;
+                  avatarUrl = snapshot.data!.avatarUrl;
+                } else {
+                  name = '...';
+                  avatarUrl = null;
+                }
+
+                return GestureDetector(
+                  onTap: _openProfile,
+                  child: Row(
+                    children: [
+                      UserAvatar(avatarUrl: avatarUrl, radius: 16),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          'Hola, $name',
+                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/images/carlos.png',
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                const Text(
-                  'Hola, Carlos',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ],
+                );
+              },
             ),
             actions: [
+              // Groups button
               IconButton(
-                icon: const Icon(Icons.notifications_outlined),
-                onPressed: () {},
+                icon: const Icon(Icons.groups, color: AppColors.primary),
+                tooltip: 'Grupos de Estudio',
+                onPressed: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => BlocProvider(
+                        create: (_) => getIt<GroupsCubit>()..loadGroups(),
+                        child: const GroupsListScreen(),
+                      ),
+                    ),
+                  );
+                },
+              ),
+              // Icono estilo Kahoot (Formas geométricas) con badge de notificación
+              BlocBuilder<NotificationsCubit, NotificationsState>(
+                builder: (context, state) {
+                  bool hasUnread = false;
+                  if (state is NotificationsLoaded) {
+                    hasUnread = state.notifications.any((n) => !n.isRead);
+                  }
+
+                  return Stack(
+                    children: [
+                      IconButton(
+                        icon: const Icon(
+                          Icons.category_rounded,
+                          color: AppColors.primary,
+                        ),
+                        tooltip: 'Novedades',
+                        onPressed: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  const NotificationsScreen(), // Cubit is now global
+                            ),
+                          );
+                        },
+                      ),
+                      if (hasUnread)
+                        Positioned(
+                          right: 8,
+                          top: 8,
+                          child: Container(
+                            width: 10,
+                            height: 10,
+                            decoration: BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: AppColors.surface,
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.red.withOpacity(0.5),
+                                  blurRadius: 4,
+                                  spreadRadius: 1,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.logout, color: Colors.redAccent),
+                onPressed: _handleLogout,
               ),
             ],
           ),
@@ -55,7 +195,7 @@ class HomeScreen extends StatelessWidget {
                         child: _ActionCard(
                           title: 'Crear Quiz',
                           subtitle: 'Crea tu propio juego',
-                          color: AppColors.primary, // Orange
+                          color: AppColors.primary,
                           icon: Icons.add_circle_outline,
                           onTap: () {},
                         ),
@@ -65,7 +205,7 @@ class HomeScreen extends StatelessWidget {
                         child: _ActionCard(
                           title: 'Hostear',
                           subtitle: 'Inicia un juego en vivo',
-                          color: const Color(0xFFE21B3C), // Kahoot Red-ish
+                          color: const Color(0xFFE21B3C),
                           icon: Icons.play_circle_outline,
                           onTap: () {},
                         ),
@@ -79,7 +219,7 @@ class HomeScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 160,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF46178F), // Purple
+                      color: const Color(0xFF46178F),
                       borderRadius: BorderRadius.circular(16),
                       image: const DecorationImage(
                         image: NetworkImage(
@@ -107,32 +247,28 @@ class HomeScreen extends StatelessWidget {
                             child: const Text(
                               'DESTACADO',
                               style: TextStyle(
-                                color: Colors.white,
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
+                                color: Colors.white,
                               ),
                             ),
                           ),
                           const SizedBox(height: 8),
                           const Text(
-                            'Explora el Océano',
+                            'Desafío de la Semana',
                             style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 24,
+                              fontSize: 18,
                               fontWeight: FontWeight.bold,
+                              color: Colors.white,
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          ElevatedButton(
-                            onPressed: () {},
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: Colors.black,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
+                          const SizedBox(height: 4),
+                          const Text(
+                            'Pon a prueba tus conocimientos',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.white70,
                             ),
-                            child: const Text('Jugar Ahora'),
                           ),
                         ],
                       ),
@@ -171,6 +307,7 @@ class HomeScreen extends StatelessWidget {
                     icon: Icons.science,
                     color: Colors.green,
                   ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
@@ -226,16 +363,13 @@ class _ActionCard extends StatelessWidget {
                   title,
                   style: const TextStyle(
                     color: Colors.white,
-                    fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    fontSize: 16,
                   ),
                 ),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    color: Colors.white.withOpacity(0.8),
-                    fontSize: 12,
-                  ),
+                  style: const TextStyle(color: Colors.white70, fontSize: 12),
                 ),
               ],
             ),

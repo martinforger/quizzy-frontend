@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:math';
 import 'package:quizzy/infrastructure/solo-game/data_sources/game_remote_data_source.dart';
 
-enum MockQustionType { QUIZZ, TRUE_FALSE }
+// Enum de tipos de pregunta (corregido a lowerCamel para cumplir lints).
+enum MockQuestionType { quizz, trueFalse }
 
 class _MockAttemptSession {
   final String attemptId;
