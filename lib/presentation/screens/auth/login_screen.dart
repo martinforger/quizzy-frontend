@@ -51,15 +51,11 @@ class _LoginScreenState extends State<LoginScreen> {
           _usernameController.text,
           _emailController.text,
           _passwordController.text,
-          'student', // Default user type
+          'STUDENT', // Default user type
         );
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Registro exitoso. Por favor inicia sesión.'),
-            ),
-          );
-          setState(() => _isRegistering = false);
+          // Auto-login logic handled in repository
+          widget.onLoginSuccess();
         }
       } else {
         await widget.authController.login(
