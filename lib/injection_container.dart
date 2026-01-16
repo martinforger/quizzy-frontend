@@ -55,7 +55,6 @@ import 'application/library/usecases/get_completed.dart';
 // Import Notifications
 import 'domain/notifications/repositories/notification_repository.dart';
 import 'infrastructure/notifications/repositories_impl/http_notification_repository.dart';
-import 'infrastructure/notifications/repositories_impl/mock_notification_repository.dart';
 import 'application/notifications/usecases/register_device_use_case.dart';
 import 'application/notifications/usecases/unregister_device_use_case.dart';
 import 'application/notifications/usecases/get_notifications_use_case.dart';

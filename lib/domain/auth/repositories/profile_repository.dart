@@ -3,6 +3,10 @@ import 'package:quizzy/domain/auth/entities/user_profile.dart';
 abstract class ProfileRepository {
   Future<UserProfile> getProfile();
 
+  Future<UserProfile> getUserById(String id);
+  
+  Future<UserProfile> getUserByUsername(String username);
+
   Future<UserProfile> updateProfile({
     String? name,
     String? email,
@@ -15,5 +19,6 @@ abstract class ProfileRepository {
   Future<void> updatePassword({
     required String currentPassword,
     required String newPassword,
+    required String confirmNewPassword,
   });
 }
