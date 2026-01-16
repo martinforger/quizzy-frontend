@@ -5,10 +5,7 @@ import 'package:quizzy/domain/kahoots/entities/kahoot_answer.dart';
 import 'package:quizzy/domain/kahoots/entities/kahoot_question.dart';
 import 'package:quizzy/domain/discovery/entities/category.dart';
 import 'package:quizzy/domain/media/entities/media_asset.dart';
-<<<<<<< HEAD
 import 'package:quizzy/infrastructure/ai/openai_image_service.dart';
-=======
->>>>>>> 4fbc71b3d50e17809b5a23695b7770f5bf3b6109
 import 'package:quizzy/presentation/screens/kahoots/question_editor_screen.dart';
 import 'package:quizzy/presentation/state/discovery_controller.dart';
 import 'package:quizzy/presentation/state/kahoot_controller.dart';
@@ -49,13 +46,9 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
   String? _coverUrl;
   String? _coverAssetId;
   bool _coverUploading = false;
-<<<<<<< HEAD
   bool _aiCoverLoading = false;
   final ImagePicker _imagePicker = ImagePicker();
   final OpenAiImageService _openAiImageService = OpenAiImageService();
-=======
-  final ImagePicker _imagePicker = ImagePicker();
->>>>>>> 4fbc71b3d50e17809b5a23695b7770f5bf3b6109
   bool _saving = false;
   String? _error;
   final List<KahootQuestion> _questions = [];
@@ -233,7 +226,6 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
     }
   }
 
-<<<<<<< HEAD
   Future<void> _suggestCoverImage() async {
     final title = _titleController.text.trim();
     final description = _descriptionController.text.trim();
@@ -248,7 +240,7 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
       final prompt = description.isEmpty
           ? 'Crea una imagen para un kahoot titulado "$title".'
           : 'Crea una imagen para un kahoot titulado "$title". '
-              'Descripcion: $description.';
+                'Descripcion: $description.';
       final url = await _openAiImageService.generateImageUrl(prompt: prompt);
       if (!mounted) return;
       setState(() {
@@ -260,14 +252,12 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _aiCoverLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al sugerir imagen: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error al sugerir imagen: $e')));
     }
   }
 
-=======
->>>>>>> 4fbc71b3d50e17809b5a23695b7770f5bf3b6109
   Future<void> _openCoverLibrary() async {
     final future = widget.mediaController.listThemes();
     await showModalBottomSheet(
@@ -704,15 +694,10 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
                 _CoverField(
                   controller: _coverController,
                   isUploading: _coverUploading,
-<<<<<<< HEAD
                   isAiLoading: _aiCoverLoading,
                   onPick: _pickCoverImage,
                   onLibrary: _openCoverLibrary,
                   onAiSuggest: _suggestCoverImage,
-=======
-                  onPick: _pickCoverImage,
-                  onLibrary: _openCoverLibrary,
->>>>>>> 4fbc71b3d50e17809b5a23695b7770f5bf3b6109
                   previewUrl: _coverUrl,
                 ),
                 const SizedBox(height: 16),
@@ -774,10 +759,7 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
                   ),
                 ),
                 const SizedBox(height: 12),
-                _LabeledField(
-                  label: 'Categoría',
-                  child: _buildCategoryField(),
-                ),
+                _LabeledField(label: 'Categoría', child: _buildCategoryField()),
                 const SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -922,10 +904,7 @@ class _KahootEditorScreenState extends State<KahootEditorScreen> {
 
     final items = _categories
         .map(
-          (c) => DropdownMenuItem<String>(
-            value: c.name,
-            child: Text(c.name),
-          ),
+          (c) => DropdownMenuItem<String>(value: c.name, child: Text(c.name)),
         )
         .toList();
 
@@ -1283,26 +1262,18 @@ class _CoverField extends StatelessWidget {
     required this.controller,
     required this.onPick,
     required this.onLibrary,
-<<<<<<< HEAD
     required this.onAiSuggest,
     required this.isUploading,
     required this.isAiLoading,
-=======
-    required this.isUploading,
->>>>>>> 4fbc71b3d50e17809b5a23695b7770f5bf3b6109
     this.previewUrl,
   });
 
   final TextEditingController controller;
   final VoidCallback onPick;
   final VoidCallback onLibrary;
-<<<<<<< HEAD
   final VoidCallback onAiSuggest;
   final bool isUploading;
   final bool isAiLoading;
-=======
-  final bool isUploading;
->>>>>>> 4fbc71b3d50e17809b5a23695b7770f5bf3b6109
   final String? previewUrl;
 
   @override
@@ -1366,7 +1337,6 @@ class _CoverField extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
-<<<<<<< HEAD
                     onPressed: isAiLoading ? null : onAiSuggest,
                     icon: isAiLoading
                         ? const SizedBox(
@@ -1390,8 +1360,6 @@ class _CoverField extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   ElevatedButton.icon(
-=======
->>>>>>> 4fbc71b3d50e17809b5a23695b7770f5bf3b6109
                     onPressed: isUploading ? null : onPick,
                     icon: isUploading
                         ? const SizedBox(
