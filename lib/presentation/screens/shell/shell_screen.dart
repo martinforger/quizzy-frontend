@@ -13,7 +13,6 @@ import 'package:quizzy/presentation/state/profile_controller.dart';
 import 'package:quizzy/presentation/state/reports_controller.dart';
 import 'package:quizzy/presentation/theme/app_theme.dart';
 import 'package:quizzy/presentation/screens/kahoots/kahoot_editor_screen.dart';
-import 'package:quizzy/presentation/screens/profile/profile_screen.dart';
 
 import 'package:quizzy/application/solo-game/useCases/start_attempt_use_case.dart';
 import 'package:quizzy/application/solo-game/useCases/submit_answer_use_case.dart';

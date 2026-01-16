@@ -33,6 +33,34 @@ class HttpProfileRepository implements ProfileRepository {
   }
 
   @override
+  Future<UserProfile> getUserById(String id) async {
+    final uri = _resolve('user/profile/id/$id');
+    final response = await client.get(uri, headers: _headers);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final userData = data['user'] != null ? data['user'] : data;
+      return UserProfileDto.fromJson(userData).toDomain();
+    } else {
+      throw Exception('Failed to get user by id: ${response.body}');
+    }
+  }
+
+  @override
+  Future<UserProfile> getUserByUsername(String username) async {
+    final uri = _resolve('user/profile/username/$username');
+    final response = await client.get(uri, headers: _headers);
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final userData = data['user'] != null ? data['user'] : data;
+      return UserProfileDto.fromJson(userData).toDomain();
+    } else {
+      throw Exception('Failed to get user by username: ${response.body}');
+    }
+  }
+
+  @override
   Future<UserProfile> updateProfile({
     String? name,
     String? email,
@@ -47,9 +75,14 @@ class HttpProfileRepository implements ProfileRepository {
     if (name != null) bodyMap['name'] = name;
     if (email != null) bodyMap['email'] = email;
     if (description != null) bodyMap['description'] = description;
-    if (avatarUrl != null) bodyMap['avatarUrl'] = avatarUrl;
-    if (userType != null) bodyMap['userType'] = userType;
-    if (language != null) bodyMap['language'] = language;
+    // Map avatarUrl to avatarAssetId as per spec
+    // Note: If avatarUrl is a URL, this might fail if backend expects an ID.
+    // Assuming backend might accept the URL or we need to change how we handle avatars.
+    if (avatarUrl != null) bodyMap['avatarAssetId'] = avatarUrl;
+    
+    // Remove unsupported fields to avoid 400 Bad Request
+    // if (userType != null) bodyMap['userType'] = userType;
+    // if (language != null) bodyMap['language'] = language;
 
     final response = await client.patch(
       uri,
@@ -70,18 +103,24 @@ class HttpProfileRepository implements ProfileRepository {
   Future<void> updatePassword({
     required String currentPassword,
     required String newPassword,
+    required String confirmNewPassword,
   }) async {
-    final uri = _resolve('user/password');
+    // According to spec, password update is part of the general profile update
+    final uri = _resolve('user/profile');
 
     final body = json.encode({
       'currentPassword': currentPassword,
       'newPassword': newPassword,
+      'confirmNewPassword': confirmNewPassword,
     });
 
     final response = await client.patch(uri, headers: _headers, body: body);
 
-    if (response.statusCode != 204) {
-      throw Exception('Failed to update password: ${response.body}');
+    if (response.statusCode == 200) {
+      // Success - backend returns the updated user, but we return void here.
+      return;
+    } else {
+      throw Exception('Failed to update password (${response.statusCode}): ${response.body}');
     }
   }
 }

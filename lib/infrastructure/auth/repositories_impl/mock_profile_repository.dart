@@ -11,6 +11,18 @@ class MockProfileRepository implements ProfileRepository {
   }
 
   @override
+  Future<UserProfile> getUserById(String id) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    return MockDataStore().currentUser;
+  }
+
+  @override
+  Future<UserProfile> getUserByUsername(String username) async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    return MockDataStore().currentUser;
+  }
+
+  @override
   Future<UserProfile> updateProfile({
     String? name,
     String? email,
@@ -40,6 +52,7 @@ class MockProfileRepository implements ProfileRepository {
   Future<void> updatePassword({
     required String currentPassword,
     required String newPassword,
+    required String confirmNewPassword,
   }) async {
     await Future.delayed(const Duration(milliseconds: 500));
     // Simulate successful password update

@@ -36,10 +36,12 @@ class ProfileController {
     );
   }
 
-  Future<void> updatePassword(String currentPassword, String newPassword) {
+  Future<void> updatePassword(
+      String currentPassword, String newPassword, String confirmNewPassword) {
     return updatePasswordUseCase(
       currentPassword: currentPassword,
       newPassword: newPassword,
+      confirmNewPassword: confirmNewPassword,
     );
   }
 }

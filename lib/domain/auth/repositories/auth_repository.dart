@@ -24,4 +24,6 @@ abstract class AuthRepository {
   });
 
   Future<String?> getToken();
+
+  Future<User?> checkStatus();
 }

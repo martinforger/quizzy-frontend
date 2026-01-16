@@ -68,4 +68,19 @@ class MockAuthRepository implements AuthRepository {
   Future<String?> getToken() async {
     return 'mock-access-token';
   }
+
+  @override
+  Future<User?> checkStatus() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    // Simulate valid token by returning current user from store
+    final profile = MockDataStore().currentUser;
+    return User(
+      id: profile.id,
+      name: profile.name,
+      username: profile.username,
+      email: profile.email,
+      userType: profile.userType,
+      createdAt: profile.createdAt,
+    );
+  }
 }

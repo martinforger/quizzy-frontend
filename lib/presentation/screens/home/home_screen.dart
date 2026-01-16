@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:quizzy/domain/auth/entities/user_profile.dart';
-import 'package:quizzy/injection_container.dart';
 import 'package:quizzy/presentation/bloc/notifications/notifications_cubit.dart';
 import 'package:quizzy/presentation/bloc/notifications/notifications_state.dart';
 import 'package:quizzy/presentation/screens/notifications/notifications_screen.dart';

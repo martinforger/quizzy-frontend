@@ -16,10 +16,6 @@ class HttpAuthRepository implements AuthRepository {
   /// Builds URL dynamically using current backend from BackendSettings
   Uri _resolve(String path) => Uri.parse('${BackendSettings.baseUrl}/$path');
 
-  Future<String?> _getToken() async {
-    return getToken();
-  }
-
   Future<void> _saveToken(String token) async {
     await sharedPreferences.setString('accessToken', token);
   }
@@ -151,5 +147,39 @@ class HttpAuthRepository implements AuthRepository {
     if (response.statusCode != 204) {
       throw Exception('Failed to confirm password reset: ${response.body}');
     }
+  }
+
+  @override
+  Future<User?> checkStatus() async {
+    final token = await getToken();
+    if (token == null) return null;
+
+    final uri = _resolve('auth/check-status');
+    // Assuming backend expects Bearer token in Authorization header
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+
+    try {
+      final response = await client
+          .post(uri, headers: headers)
+          .timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['user'] != null) {
+          return UserDto.fromJson(data['user']).toDomain();
+        }
+      } else if (response.statusCode == 401) {
+        // Token invalid
+        await _deleteToken();
+        return null;
+      }
+    } catch (e) {
+      print('Check status failed: $e');
+      return null;
+    }
+    return null;
   }
 }

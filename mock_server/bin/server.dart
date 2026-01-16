@@ -20,8 +20,28 @@ void main(List<String> args) async {
       themeMediaAssets.map((e) => Map<String, dynamic>.from(e)).toList();
 
   // Auth & Profile endpoints
+  // Mantener endpoints originales por compatibilidad
   router.mount('/auth', AuthRoutes().router.call);
   router.mount('/profile', ProfileRoutes().router.call);
+
+  // Configuración /api para compatibilidad con cliente (BackendSettings.baseUrl)
+  final apiRouter = Router();
+
+  // /api/auth -> AuthRoutes (login, etc)
+  apiRouter.mount('/auth', AuthRoutes().router.call);
+
+  // /api/user -> User routes (profile, register)
+  final userRouter = Router();
+  
+  // Specific routes first: /api/user/profile
+  userRouter.mount('/profile', ProfileRoutes().router.call);
+  
+  // Fallback/General routes: /api/user/register comes from AuthRoutes
+  // This exposes /register, /login etc under /api/user/
+  userRouter.mount('/', AuthRoutes().router.call);
+
+  apiRouter.mount('/user', userRouter.call);
+  router.mount('/api', apiRouter.call);
 
   // Explore endpoints (epica 6)
   router.get('/explore', (Request req) {
