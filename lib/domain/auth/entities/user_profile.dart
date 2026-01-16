@@ -5,6 +5,8 @@ class UserProfile {
   final String email;
   final String description;
   final String userType;
+  final String state;
+  final bool isPremium;
   final String avatarUrl;
   final String theme;
   final String language;
@@ -19,6 +21,8 @@ class UserProfile {
     required this.email,
     required this.description,
     required this.userType,
+    required this.state,
+    required this.isPremium,
     required this.avatarUrl,
     required this.theme,
     required this.language,
@@ -34,6 +38,8 @@ class UserProfile {
     String? email,
     String? description,
     String? userType,
+    String? state,
+    bool? isPremium,
     String? avatarUrl,
     String? theme,
     String? language,
@@ -48,6 +54,8 @@ class UserProfile {
       email: email ?? this.email,
       description: description ?? this.description,
       userType: userType ?? this.userType,
+      state: state ?? this.state,
+      isPremium: isPremium ?? this.isPremium,
       avatarUrl: avatarUrl ?? this.avatarUrl,
       theme: theme ?? this.theme,
       language: language ?? this.language,

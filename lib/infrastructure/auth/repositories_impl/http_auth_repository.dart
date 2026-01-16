@@ -168,6 +168,12 @@ class HttpAuthRepository implements AuthRepository {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
+        
+        // Save token if present in check-status response (token refresh pattern)
+        if (data['token'] != null && data['token'] is String) {
+           await _saveToken(data['token']);
+        }
+
         if (data['user'] != null) {
           return UserDto.fromJson(data['user']).toDomain();
         }

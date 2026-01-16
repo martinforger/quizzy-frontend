@@ -7,6 +7,8 @@ class UserProfileDto {
   final String email;
   final String description;
   final String userType;
+  final String state;
+  final bool isPremium;
   final String avatarUrl;
   final String theme;
   final String language;
@@ -21,6 +23,8 @@ class UserProfileDto {
     required this.email,
     required this.description,
     required this.userType,
+    required this.state,
+    required this.isPremium,
     required this.avatarUrl,
     required this.theme,
     required this.language,
@@ -44,6 +48,8 @@ class UserProfileDto {
       email: json['email'] as String,
       description: json['description'] as String? ?? '',
       userType: json['type'] as String? ?? json['userType'] as String,
+      state: json['state'] as String? ?? 'ACTIVE',
+      isPremium: json['isPremium'] as bool? ?? false,
       avatarUrl: json['avatarUrl'] as String? ?? '',
       theme: _parseTheme(json),
       language: json['language'] as String? ?? 'es',
@@ -63,6 +69,8 @@ class UserProfileDto {
       email: email,
       description: description,
       userType: userType,
+      state: state,
+      isPremium: isPremium,
       avatarUrl: avatarUrl,
       theme: theme,
       language: language,

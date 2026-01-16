@@ -12,6 +12,8 @@ class MockDataStore {
     email: 'carlos@example.com',
     description: 'Amante de los quizzes y la tecnología.',
     userType: 'Estudiante',
+    state: 'ACTIVE',
+    isPremium: false,
     avatarUrl: 'https://i.pravatar.cc/150?u=carlos',
     theme: 'light',
     language: 'es',
@@ -35,6 +37,8 @@ class MockDataStore {
       email: identifier.contains('@') ? identifier : '$namePart@example.com',
       description: 'Perfil simulado para $name',
       userType: 'Estudiante',
+      state: 'ACTIVE',
+      isPremium: false,
       avatarUrl: 'https://i.pravatar.cc/150?u=$namePart', // Generates deterministic avatar
       theme: 'light',
       language: 'es',

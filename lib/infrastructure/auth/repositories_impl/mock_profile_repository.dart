@@ -5,6 +5,13 @@ import 'package:quizzy/infrastructure/auth/repositories_impl/mock_data_store.dar
 class MockProfileRepository implements ProfileRepository {
   
   @override
+  Future<List<UserProfile>> getAllUsers() async {
+    await Future.delayed(const Duration(milliseconds: 300));
+    // Return a list with just the current mock user for simulation
+    return [MockDataStore().currentUser];
+  }
+
+  @override
   Future<UserProfile> getProfile() async {
     await Future.delayed(const Duration(milliseconds: 300));
     return MockDataStore().currentUser;
